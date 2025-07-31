@@ -35,8 +35,9 @@ function updateCanvasSize() {
   const parent = canvasAreaRef.value
   if (parent) {
     const rect = parent.getBoundingClientRect()
-    const size = Math.floor(Math.min(rect.width, rect.height) - 50)
-    canvasSize.value = Math.max(size, 50)
+    // 减少边距，给画布更多空间
+    const size = Math.floor(Math.min(rect.width, rect.height) - 20)
+    canvasSize.value = Math.max(size, 200) // 增加最小尺寸
     if (canvas) {
       resizeCanvasForDPR()
     }
@@ -91,7 +92,11 @@ watch(brushWidth, (val) => {
 
 onMounted(async () => {
   await nextTick()
-  updateCanvasSize()
+  // 延迟一下确保DOM完全渲染
+  setTimeout(() => {
+    updateCanvasSize()
+  }, 100)
+  
   if (canvasEl.value) {
     canvas = new Canvas(canvasEl.value, {
       backgroundColor: '#ffffff',
@@ -139,6 +144,8 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="bg-gray-900 flex h-full min-h-0 min-w-0 w-full">
+    <!-- 幻灯片历史区 - 移动到左侧 -->
+    <HistoryPanel :history="history" @select="handleHistorySelect" @delete="handleDeleteHistory" />
     <!-- 主画布区域 -->
     <div ref="canvasAreaRef"
       class="p-2 border-r border-[#e6e6e6] bg-[#E5E5E5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden">
@@ -180,8 +187,6 @@ onBeforeUnmount(() => {
       <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" :width="brushWidth"
         @update:width="brushWidth = $event" />
     </div>
-    <!-- 幻灯片历史区 -->
-    <HistoryPanel :history="history" @select="handleHistorySelect" @delete="handleDeleteHistory" />
   </section>
 </template>
 

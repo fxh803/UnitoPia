@@ -5,7 +5,7 @@ const props = defineProps<{ history: { json: string, preview: string }[] }>()
 const emit = defineEmits(['select', 'delete'])
 
 // 折叠状态
-const isCollapsed = ref(true)
+const isCollapsed = ref(false)
 
 function handleClick(idx: number) {
   emit('select', idx)
@@ -22,28 +22,28 @@ function toggleCollapse() {
 
 <template>
   <div class="relative flex h-full">
-    <!-- 左侧把手按钮 -->
-    <button
-      @click="toggleCollapse"
-      class="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1/2 z-20 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-2"
-      :title="isCollapsed ? 'Expand' : 'Collapse'"
-    >
-      <svg 
-        class="w-4 h-4 text-gray-500 transition-transform duration-300"
-        :class="isCollapsed ? '' : 'rotate-180'"
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-      >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-      </svg>
-    </button>
-
     <!-- 面板内容 -->
     <aside 
-      class="py-4 bg-white flex flex-col h-full items-center overflow-y-auto transition-all duration-300 shadow-left border-l border-gray-200 overflow-x-hidden"
+      class="py-4 bg-white flex flex-col h-full items-center overflow-y-auto transition-all duration-300 shadow-right border-r border-gray-200 overflow-x-hidden relative"
       :class="isCollapsed ? 'w-13' : 'w-48'"
     >
+      <!-- 收起按钮 - 放在右上角 -->
+      <button
+        @click="toggleCollapse"
+        class="absolute top-3 right-3 z-20 bg-white border border-gray-200 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 p-1.5"
+        :title="isCollapsed ? 'Expand' : 'Collapse'"
+      >
+        <svg 
+          class="w-4 h-4 text-gray-500 transition-transform duration-300"
+          :class="isCollapsed ? 'rotate-180' : ''"
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
       <!-- 标题 -->
       <div class="w-full px-2 mb-2">
         <h3 
@@ -80,19 +80,13 @@ function toggleCollapse() {
         v-else 
         class="flex flex-col items-center space-y-2"
       >
-        <div class="text-xs text-gray-500 font-medium">
-          {{ props.history.length }}
-        </div>
-        <div class="text-xs text-gray-400">
-          Records
-        </div>
       </div>
     </aside>
   </div>
 </template>
 
 <style scoped>
-.shadow-left {
-  box-shadow: -4px 0 8px -4px rgba(0,0,0,0.08);
+.shadow-right {
+  box-shadow: 4px 0 8px -4px rgba(0,0,0,0.08);
 }
 </style>

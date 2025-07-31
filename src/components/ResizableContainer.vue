@@ -16,7 +16,7 @@ function onDrag(e: MouseEvent) {
     return
   const rect = container.value.getBoundingClientRect()
   let newWidth = e.clientX - rect.left
-  newWidth = Math.max(180, Math.min(newWidth, rect.width * 0.6))
+  newWidth = Math.max(400, Math.min(newWidth, rect.width * 0.8))
   leftWidth.value = newWidth
 }
 
@@ -41,7 +41,7 @@ onMounted(() => {
   nextTick(() => {
     if (container.value) {
       const containerWidth = container.value.offsetWidth
-      leftWidth.value = containerWidth * 0.4
+      leftWidth.value = containerWidth * 0.7
     }
   })
   window.addEventListener('mousemove', onDrag)
@@ -58,8 +58,8 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="container" class="flex h-full w-full select-none relative">
-    <!-- 左侧数据编辑器 + 滑动条 -->
-    <div :style="{ width: `${leftWidth}px` }" class="h-full min-w-[180px] border-r border-gray-300 relative">
+    <!-- 左侧画布区 + 滑动条 -->
+    <div :style="{ width: `${leftWidth}px` }" class="h-full border-r border-gray-300 relative">
       <slot name="left" />
       <!-- 滑动条，绝对定位在右侧 -->
       <div
@@ -69,7 +69,7 @@ onBeforeUnmount(() => {
         @mousedown="startDrag"
       />
     </div>
-    <!-- 右侧画布区 -->
+    <!-- 右侧数据编辑器 -->
     <div class="flex-1 h-full">
       <slot name="right" />
     </div>
@@ -85,8 +85,7 @@ onBeforeUnmount(() => {
   z-index: 10;
   cursor: col-resize;
   background: transparent;
-  transition: background 0.2s;
-  transform: translateX(100%);
+  transition: background 0.2s; 
 }
 
 .resizer-bar-active {
