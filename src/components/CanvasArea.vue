@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Canvas, PencilBrush, Rect, Ellipse } from 'fabric'
+import { Canvas, PencilBrush } from 'fabric'
 import BrushSizePanel from './BrushSizePanel.vue'
-import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 import { useCanvasMode } from '~/composables/canvas/useCanvasMode'
 import { useShapeDrawing } from '~/composables/canvas/useShapeDrawing'
@@ -80,7 +80,6 @@ const {
   deleteBtnPosition,
   showClosePathBtn,
   closePathBtnPosition,
-  currentPathObj,
   updateDeleteBtnPosition,
   deleteActiveObject,
   updateClosePathBtnPosition,
@@ -170,7 +169,7 @@ onBeforeUnmount(() => {
     <div ref="canvasAreaRef"
       class="p-2 border-r border-[#e6e6e6] bg-[#E5E5E5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden">
       <!-- 新增canvas-wrapper，包裹canvas和button -->
-      <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
+      <div ref="canvasWrapperRef" style="position: relative;">
         <!-- 删除按钮 -->
         <button v-if="showDeleteBtn" class="delete-btn" :style="deleteBtnPosition" @click="deleteActiveObject">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
