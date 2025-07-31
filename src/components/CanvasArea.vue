@@ -5,7 +5,7 @@ import { computed, ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 import { useCanvasMode } from '~/composables/canvas/useCanvasMode'
 import { useShapeDrawing } from '~/composables/canvas/useShapeDrawing'
-import { useHistory } from '~/composables/canvas/useHistory'
+import { useCollageSeries } from '~/composables/canvas/useCollageSeries'
 import { useObjectActions } from '~/composables/canvas/useObjectActions'
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
@@ -63,17 +63,17 @@ const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
 const { isDrawingShape, shapeStart, previewShape, addShapeEventListeners, removeShapeEventListeners } = useShapeDrawing(() => canvas, mode)
 // 模式切换
 const { setMode } = useCanvasMode(() => canvas, mode, brushWidth, getDpr, removeShapeEventListeners, addShapeEventListeners, previewShape)
-// 历史管理
+// 拼贴系列管理
 const { 
-  history, 
-  currentSlideIndex,
+  collageSeries, 
+  currentSlideIndex, 
   initializeEmptySlide, 
   updateCurrentSlide, 
   addNewSlide, 
-  handleHistorySelect, 
-  handleDeleteHistory,
+  handleCollageSeriesSelect, 
+  handleDeleteCollageSeries,
   setupCanvasChangeListener
-} = useHistory(() => canvas)
+} = useCollageSeries(() => canvas)
 // 对象操作
 const {
   showDeleteBtn,
@@ -158,19 +158,19 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="bg-gray-900 flex h-full min-h-0 min-w-0 w-full">
-    <!-- 幻灯片历史区 - 移动到左侧 -->
-    <HistoryPanel 
-      :history="history" 
+    <!-- 拼贴系列面板 - 移动到左侧 -->
+    <CollageSeriesPanel 
+      :collage-series="collageSeries" 
       :current-slide-index="currentSlideIndex"
-      @select="handleHistorySelect" 
-      @delete="handleDeleteHistory"
+      @select="handleCollageSeriesSelect" 
+      @delete="handleDeleteCollageSeries"
       @add-new="addNewSlide"
     />
     <!-- 主画布区域 -->
     <div ref="canvasAreaRef"
       class="p-2 border-r border-[#e6e6e6] bg-[#E5E5E5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden">
       <!-- 新增canvas-wrapper，包裹canvas和button -->
-      <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative; display: inline-block;">
+      <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
         <!-- 删除按钮 -->
         <button v-if="showDeleteBtn" class="delete-btn" :style="deleteBtnPosition" @click="deleteActiveObject">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">

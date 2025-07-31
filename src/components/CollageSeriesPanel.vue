@@ -2,7 +2,7 @@
 import { defineProps, defineEmits, ref } from 'vue'
 
 const props = defineProps<{ 
-  history: { json: string, preview: string }[]
+  collageSeries: { json: string, preview: string }[]
   currentSlideIndex?: number
 }>()
 const emit = defineEmits(['select', 'delete', 'add-new'])
@@ -52,17 +52,17 @@ function toggleCollapse() {
           class="text-sm text-gray-400 transition-opacity duration-300 border-b border-gray-200 pb-2"
           :class="isCollapsed ? 'opacity-0' : 'opacity-100'"
         >
-          History
+          Collage Series
         </h3>
       </div>
       
-      <!-- 历史记录列表 -->
+      <!-- 拼贴系列列表 -->
       <div 
         v-if="!isCollapsed"
-        class="w-full px-2 h-full overflow-y-auto"
+        class="w-full px-2"
       >
         <div
-          v-for="(item, idx) in props.history"
+          v-for="(item, idx) in props.collageSeries"
           :key="idx"
           class="relative mb-3 border rounded flex h-24 items-center justify-center group cursor-pointer"
           :class="[
@@ -73,7 +73,7 @@ function toggleCollapse() {
           @click="handleClick(idx)"
         >
           <button
-            v-if="props.history.length > 1"
+            v-if="props.collageSeries.length > 1"
             class="absolute top-1 right-1 z-10 hidden group-hover:block bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-500 hover:text-white"
             @click.stop="handleDelete(idx)"
             title="Delete"
@@ -81,11 +81,11 @@ function toggleCollapse() {
           <img :src="item.preview" class="max-h-full max-w-full object-contain">
         </div>
         
-        <!-- 添加新幻灯片按钮 -->
+        <!-- 添加新拼贴按钮 -->
         <button
           @click="handleAddNew"
           class="w-full mb-3 border-2 border-dashed border-gray-300 rounded bg-gray-50 flex h-24 w-40 items-center justify-center hover:bg-gray-100 transition-colors"
-          title="Add New Slide"
+          title="Add New Collage"
         >
           <div class="text-gray-400 text-2xl">+</div>
         </button>

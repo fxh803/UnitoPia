@@ -1,14 +1,13 @@
 import { ref } from 'vue'
 import type { Canvas } from 'fabric'
 
-export function useHistory(canvas: () => Canvas | null) {
-  const history = ref<{ json: string, preview: string }[]>([])
+export function useCollageSeries(canvas: () => Canvas | null) {
+  const collageSeries = ref<{ json: string, preview: string }[]>([])
   const currentSlideIndex = ref(0)
-  const isSliding = ref(false) // 添加标志 
+  const stopListen = ref(false) // 添加标志 
 
   // 初始化一个空白幻灯片
-  function initializeEmptySlide() {
-    console.log('useHistory: initializeEmptySlide')
+  function initializeEmptySlide() { 
     const canvasInstance = canvas()
     if (!canvasInstance) return
 
@@ -18,17 +17,16 @@ export function useHistory(canvas: () => Canvas | null) {
       format: 'png',
       multiplier: 2
     })
-    history.value = [{ json, preview }]
+    collageSeries.value = [{ json, preview }]
     currentSlideIndex.value = 0
   }
 
   // 更新当前幻灯片
-  function updateCurrentSlide() {
-    console.log('useHistory: updateCurrentSlide')
-    if (isSliding.value) return // 如果是幻灯片操作，不更新
+  function updateCurrentSlide() { 
+    if (stopListen.value) return // 如果是幻灯片操作，不更新
 
     const canvasInstance = canvas()
-    if (!canvasInstance || history.value.length === 0) return
+    if (!canvasInstance || collageSeries.value.length === 0) return
 
     canvasInstance.renderAll()
     const json = JSON.stringify(canvasInstance.toJSON())
@@ -36,12 +34,11 @@ export function useHistory(canvas: () => Canvas | null) {
       format: 'png',
       multiplier: 2
     })
-    history.value[currentSlideIndex.value] = { json, preview }
+    collageSeries.value[currentSlideIndex.value] = { json, preview }
   }
 
   // 清空画布
-  function clearCanvas() {
-    console.log('useHistory: clearCanvas')
+  function clearCanvas() { 
     const canvasInstance = canvas()
     if (!canvasInstance) return
 
@@ -53,11 +50,10 @@ export function useHistory(canvas: () => Canvas | null) {
   }
 
   // 添加新幻灯片
-  function addNewSlide() {
-    console.log('useHistory: addNewSlide')
+  function addNewSlide() { 
     const canvasInstance = canvas()
     if (!canvasInstance) return
-    isSliding.value = true
+    stopListen.value = true
     // 清空画布
     clearCanvas()
     
@@ -70,19 +66,18 @@ export function useHistory(canvas: () => Canvas | null) {
       format: 'png',
       multiplier: 2
     })
-    history.value.push({ json, preview })
-    currentSlideIndex.value = history.value.length - 1
-    isSliding.value = false
+    collageSeries.value.push({ json, preview })
+    currentSlideIndex.value = collageSeries.value.length - 1
+    stopListen.value = false
   }
 
   // 选择幻灯片
-  function handleHistorySelect(idx: number) {
-    console.log('useHistory: handleHistorySelect', idx)
+  function handleCollageSeriesSelect(idx: number) { 
     const canvasInstance = canvas()
-    if (!canvasInstance || !history.value[idx]) return
-    isSliding.value = true
+    if (!canvasInstance || !collageSeries.value[idx]) return
+    stopListen.value = true
     currentSlideIndex.value = idx
-    const json = history.value[idx].json
+    const json = collageSeries.value[idx].json
     const jsonObj = typeof json === 'string' ? JSON.parse(json) : json
      
     // 清空当前画布
@@ -94,51 +89,48 @@ export function useHistory(canvas: () => Canvas | null) {
           if (canvasInstance) {
             canvasInstance.renderAll()
           }
-          isSliding.value = false
+          stopListen.value = false
         }, 100)
       })
     }else{
-      isSliding.value = false
+      stopListen.value = false
     }
-    
   }
 
   // 删除幻灯片
-  function handleDeleteHistory(idx: number) {
-    console.log('useHistory: handleDeleteHistory', idx)
+  function handleDeleteCollageSeries(idx: number) { 
 
-    if (history.value.length <= 1) return // 至少保留一个幻灯片
-
+    if (collageSeries.value.length <= 1) return // 至少保留一个幻灯片
 
     // 如果删除的是当前幻灯片 
     if (idx === currentSlideIndex.value) {
       currentSlideIndex.value = Math.max(0, idx - 1)
-      handleHistorySelect(currentSlideIndex.value)
+      handleCollageSeriesSelect(currentSlideIndex.value)
     } else{
       currentSlideIndex.value -= 1
     }
-    history.value.splice(idx, 1)
+    collageSeries.value.splice(idx, 1)
   }
 
   // 监听画布变化，自动更新当前幻灯片
-  function setupCanvasChangeListener() {
-    console.log('useHistory: setupCanvasChangeListener')
+  function setupCanvasChangeListener() { 
     const canvasInstance = canvas()
     if (!canvasInstance) return
 
     canvasInstance.on('object:added', updateCurrentSlide)
     canvasInstance.on('object:modified', updateCurrentSlide)
     canvasInstance.on('object:removed', updateCurrentSlide)
+    canvasInstance.on('object:updated', updateCurrentSlide)
   }
 
   return {
-    history,
+    collageSeries,
     currentSlideIndex,
     initializeEmptySlide,
     updateCurrentSlide,
     addNewSlide,
-    handleHistorySelect,
-    handleDeleteHistory,
+    handleCollageSeriesSelect,
+    handleDeleteCollageSeries,
     setupCanvasChangeListener,
   }
 } 

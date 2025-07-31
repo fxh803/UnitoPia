@@ -15,12 +15,23 @@ export function useObjectActions(canvas: () => Canvas | null) {
       showDeleteBtn.value = false
       return
     }
+    
+    // 获取画布的变换信息
+    const zoom = canvasInstance.getZoom()
+    const vpt = canvasInstance.viewportTransform
+    
+    // 计算对象在画布容器中的实际位置
     const tr = obj.aCoords.tr
     const btnOffsetX = 20
     const btnOffsetY = 20
+    
+    // 应用画布变换
+    const x = (tr.x * zoom) + (vpt[4] || 0)
+    const y = (tr.y * zoom) + (vpt[5] || 0)
+    
     deleteBtnPosition.value = {
-      top: `${tr.y - btnOffsetY}px`,
-      left: `${tr.x + btnOffsetX}px`,
+      top: `${y - btnOffsetY}px`,
+      left: `${x + btnOffsetX}px`,
     }
     showDeleteBtn.value = true
   }
@@ -43,12 +54,23 @@ export function useObjectActions(canvas: () => Canvas | null) {
       showClosePathBtn.value = false
       return
     }
+    
+    // 获取画布的变换信息
+    const zoom = canvasInstance.getZoom()
+    const vpt = canvasInstance.viewportTransform
+    
+    // 计算对象在画布容器中的实际位置
     const tr = obj.aCoords.tr
     const btnOffsetX = -20
     const btnOffsetY = 20
+    
+    // 应用画布变换
+    const x = (tr.x * zoom) + (vpt[4] || 0)
+    const y = (tr.y * zoom) + (vpt[5] || 0)
+    
     closePathBtnPosition.value = {
-      top: `${tr.y - btnOffsetY}px`,
-      left: `${tr.x + btnOffsetX}px`,
+      top: `${y - btnOffsetY}px`,
+      left: `${x + btnOffsetX}px`,
     }
     showClosePathBtn.value = true
   }
