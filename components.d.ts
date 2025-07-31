@@ -15,6 +15,8 @@ declare module 'vue' {
     ColorPicker: typeof import('./src/components/ColorPicker.vue')['default']
     ContainerToolbar: typeof import('./src/components/ContainerToolbar.vue')['default']
     DataEditor: typeof import('./src/components/DataEditor.vue')['default']
+    ElTable: typeof import('element-plus')['ElTable']
+    ElTableColumn: typeof import('element-plus')['ElTableColumn']
     FirstToolbar: typeof import('./src/components/FirstToolbar.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
     MarkerToolbar: typeof import('./src/components/MarkerToolbar.vue')['default']

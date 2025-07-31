@@ -54,6 +54,14 @@ export default defineConfig({
     // https://github.com/antfu/vite-plugin-components
     Components({
       dts: true,
+      resolvers: [
+        // 自动导入 Element Plus 组件
+        (name) => {
+          if (name.startsWith('El')) {
+            return { name, from: 'element-plus' }
+          }
+        },
+      ],
     }),
 
     // https://github.com/antfu/unocss

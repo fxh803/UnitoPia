@@ -9,10 +9,8 @@ const emit = defineEmits<{
   colorChange: [color: string]
 }>()
 
-const selectedColor = ref('#000000')
+const selectedColor = ref('#FFD152')
 const colorPickerRef = ref<HTMLInputElement>()
-
-
 
 // 选择颜色
 const selectColor = (color: string) => {
@@ -33,7 +31,7 @@ const handleColorChange = (event: Event) => {
 </script>
 
 <template>
-  <div v-if="show" class="flex justify-center">
+  <div v-if="show" class="flex justify-center relative">
     <button
       class="w-10 h-10 rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors"
       :style="{ backgroundColor: selectedColor }"
@@ -47,7 +45,8 @@ const handleColorChange = (event: Event) => {
       type="color"
       :value="selectedColor"
       @change="handleColorChange"
-      class="hidden"
+      class="absolute opacity-0 pointer-events-none"
+      style="position: absolute; top: -200px; left: -250px;"
     />
   </div>
 </template>

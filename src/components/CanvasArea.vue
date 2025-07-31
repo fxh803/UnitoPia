@@ -14,7 +14,7 @@ import { useObjectActions } from '~/composables/canvas/useObjectActions'
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
 const canvasWrapperRef = ref<HTMLDivElement | null>(null)
-const brushWidth = ref(3)
+const brushWidth = ref(6)
 const canvasSize = ref(400)
 let canvas: Canvas | null = null
 
@@ -62,7 +62,7 @@ function clearCanvas() {
 
 const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
 const selectedModeType = ref<'marker' | 'container' | null>(null) // 添加模式类型状态
-const selectedColor = ref('#000000') // 添加颜色状态
+const selectedColor = ref('#FFD152') // 添加颜色状态
 
 // 计算是否为Container模式
 const isContainerMode = computed(() => selectedModeType.value === 'container')

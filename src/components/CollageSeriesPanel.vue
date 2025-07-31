@@ -32,7 +32,7 @@ function toggleCollapse() {
     <!-- 面板内容 -->
     <aside 
       class="py-4 bg-white flex flex-col h-full items-center overflow-y-auto transition-all duration-300 shadow-right border-r border-gray-200 overflow-x-hidden relative"
-      :class="isCollapsed ? 'w-13' : 'w-48'"
+      :class="isCollapsed ? 'w-13' : 'w-60'"
     >
       <!-- 收起按钮 - 放在右上角 -->
       <button
@@ -58,7 +58,7 @@ function toggleCollapse() {
         <div
           v-for="(item, idx) in props.collageSeries"
           :key="idx"
-          class="relative mb-3 border rounded flex h-24 items-center justify-center group cursor-pointer"
+          class="relative mb-3 border rounded flex h-32 items-center justify-center group cursor-pointer"
           :class="[
             idx === props.currentSlideIndex 
               ? 'border-blue-500 bg-blue-50' 
@@ -78,7 +78,7 @@ function toggleCollapse() {
         <!-- 添加新拼贴按钮 -->
         <button
           @click="handleAddNew"
-          class="w-full mb-3 border-2 border-dashed border-gray-300 rounded bg-gray-50 flex h-24 w-40 items-center justify-center hover:bg-gray-100 transition-colors"
+          class="w-full mb-3 border-2 border-dashed border-gray-300 rounded bg-gray-50 flex h-32 items-center justify-center hover:bg-gray-100 transition-colors"
           title="Add New Collage"
         >
           <div class="text-gray-400 text-2xl">+</div>
