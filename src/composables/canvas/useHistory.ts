@@ -115,7 +115,7 @@ export function useHistory(canvas: () => Canvas | null) {
       currentSlideIndex.value = Math.max(0, idx - 1)
       handleHistorySelect(currentSlideIndex.value)
     } else{
-      currentSlideIndex.value = Math.max(0, idx - 1)
+      currentSlideIndex.value -= 1
     }
     history.value.splice(idx, 1)
   }
