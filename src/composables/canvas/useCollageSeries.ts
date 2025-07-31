@@ -11,7 +11,6 @@ export function useCollageSeries(canvas: () => Canvas | null) {
     const canvasInstance = canvas()
     if (!canvasInstance) return
 
-    canvasInstance.renderAll()
     const json = JSON.stringify(canvasInstance.toJSON())
     const preview = canvasInstance.toDataURL({
       format: 'png',
@@ -28,7 +27,6 @@ export function useCollageSeries(canvas: () => Canvas | null) {
     const canvasInstance = canvas()
     if (!canvasInstance || collageSeries.value.length === 0) return
 
-    canvasInstance.renderAll()
     const json = JSON.stringify(canvasInstance.toJSON())
     const preview = canvasInstance.toDataURL({
       format: 'png',
@@ -45,7 +43,6 @@ export function useCollageSeries(canvas: () => Canvas | null) {
     const objects = canvasInstance.getObjects().concat() 
     if(objects.length > 0){
       objects.forEach(obj => canvasInstance.remove(obj))
-      canvasInstance.discardActiveObject()
     }
   }
 
@@ -58,7 +55,6 @@ export function useCollageSeries(canvas: () => Canvas | null) {
     clearCanvas()
     
     // 确保画布状态正确
-    canvasInstance.renderAll()
 
     // 创建新的空白幻灯片
     const json = JSON.stringify(canvasInstance.toJSON())
@@ -83,7 +79,6 @@ export function useCollageSeries(canvas: () => Canvas | null) {
     // 清空当前画布
     clearCanvas()
     if(jsonObj.objects.length > 0){
-      // 加载选中的幻灯片
       canvasInstance.loadFromJSON(json, () => {
         setTimeout(() => {
           if (canvasInstance) {
