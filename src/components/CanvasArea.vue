@@ -67,7 +67,6 @@ const { setMode } = useCanvasMode(() => canvas, mode, brushWidth, getDpr, remove
 const { 
   history, 
   currentSlideIndex,
-  isSliding,
   initializeEmptySlide, 
   updateCurrentSlide, 
   addNewSlide, 

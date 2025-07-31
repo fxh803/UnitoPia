@@ -45,9 +45,11 @@ export function useHistory(canvas: () => Canvas | null) {
     const canvasInstance = canvas()
     if (!canvasInstance) return
 
-    const objects = canvasInstance.getObjects().concat()
-    objects.forEach(obj => canvasInstance.remove(obj))
-    canvasInstance.discardActiveObject()
+    const objects = canvasInstance.getObjects().concat() 
+    if(objects.length > 0){
+      objects.forEach(obj => canvasInstance.remove(obj))
+      canvasInstance.discardActiveObject()
+    }
   }
 
   // 添加新幻灯片
@@ -58,6 +60,9 @@ export function useHistory(canvas: () => Canvas | null) {
     isSliding.value = true
     // 清空画布
     clearCanvas()
+    
+    // 确保画布状态正确
+    canvasInstance.renderAll()
 
     // 创建新的空白幻灯片
     const json = JSON.stringify(canvasInstance.toJSON())
@@ -79,19 +84,23 @@ export function useHistory(canvas: () => Canvas | null) {
     currentSlideIndex.value = idx
     const json = history.value[idx].json
     const jsonObj = typeof json === 'string' ? JSON.parse(json) : json
-
+     
     // 清空当前画布
     clearCanvas()
-
-    // 加载选中的幻灯片
-    canvasInstance.loadFromJSON(json, () => {
-      setTimeout(() => {
-        if (canvasInstance) {
-          canvasInstance.renderAll()
-        }
-        isSliding.value = false
-      }, 100)
-    })
+    if(jsonObj.objects.length > 0){
+      // 加载选中的幻灯片
+      canvasInstance.loadFromJSON(json, () => {
+        setTimeout(() => {
+          if (canvasInstance) {
+            canvasInstance.renderAll()
+          }
+          isSliding.value = false
+        }, 100)
+      })
+    }else{
+      isSliding.value = false
+    }
+    
   }
 
   // 删除幻灯片
@@ -100,19 +109,15 @@ export function useHistory(canvas: () => Canvas | null) {
 
     if (history.value.length <= 1) return // 至少保留一个幻灯片
 
-    isSliding.value = true
 
-    // // 如果删除的是当前幻灯片 
-    // if (idx === currentSlideIndex.value) {
-    //   currentSlideIndex.value = Math.max(0, idx - 1)
-    //   handleHistorySelect(currentSlideIndex.value)
-    // }
-    // // 如果删除的幻灯片在当前幻灯片之前，需要调整索引
-    // else if (idx < currentSlideIndex.value) {
-    //   currentSlideIndex.value--
-    // }
+    // 如果删除的是当前幻灯片 
+    if (idx === currentSlideIndex.value) {
+      currentSlideIndex.value = Math.max(0, idx - 1)
+      handleHistorySelect(currentSlideIndex.value)
+    } else{
+      currentSlideIndex.value = Math.max(0, idx - 1)
+    }
     history.value.splice(idx, 1)
-    isSliding.value = false
   }
 
   // 监听画布变化，自动更新当前幻灯片
@@ -129,7 +134,6 @@ export function useHistory(canvas: () => Canvas | null) {
   return {
     history,
     currentSlideIndex,
-    isSliding,
     initializeEmptySlide,
     updateCurrentSlide,
     addNewSlide,
