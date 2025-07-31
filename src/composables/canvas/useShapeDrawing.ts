@@ -3,7 +3,7 @@ import type { Ref } from 'vue'
 import type { Canvas } from 'fabric'
 import { Rect, Ellipse } from 'fabric'
 
-export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | null>) {
+export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | null>, selectedColor: Ref<string>, isContainerMode: Ref<boolean>) {
   const isDrawingShape = ref(false)
   const shapeStart = ref<{ x: number, y: number } | null>(null)
   const previewShape = ref<any>(null)
@@ -16,6 +16,7 @@ export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | 
     const pointer = canvasInstance.getPointer(e)
     shapeStart.value = { x: pointer.x, y: pointer.y }
     // 创建预览形状
+    const strokeColor = isContainerMode.value ? '#000' : selectedColor.value
     if (mode.value === 'rect') {
       previewShape.value = new Rect({
         left: pointer.x,
@@ -23,7 +24,7 @@ export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | 
         width: 1,
         height: 1,
         fill: 'rgba(0,0,0,0)',
-        stroke: '#000',
+        stroke: strokeColor,
         strokeWidth: 3,
         selectable: false
       })
@@ -34,7 +35,7 @@ export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | 
         rx: 1,
         ry: 1,
         fill: 'rgba(0,0,0,0)',
-        stroke: '#000',
+        stroke: strokeColor,
         strokeWidth: 3,
         selectable: false,
         originX: 'left',
@@ -81,6 +82,7 @@ export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | 
     const pointer = canvasInstance.getPointer(e)
     const startX = shapeStart.value.x
     const startY = shapeStart.value.y
+    const strokeColor = isContainerMode.value ? '#000' : selectedColor.value
     let shapeObj = null
     if (mode.value === 'rect') {
       shapeObj = new Rect({
@@ -89,7 +91,7 @@ export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | 
         width: Math.abs(pointer.x - startX),
         height: Math.abs(pointer.y - startY),
         fill: 'rgba(0,0,0,0)',
-        stroke: '#000',
+        stroke: strokeColor,
         strokeWidth: 3,
         selectable: false,
         evented: false,
@@ -101,7 +103,7 @@ export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | 
         rx: Math.abs(pointer.x - startX) / 2,
         ry: Math.abs(pointer.y - startY) / 2,
         fill: 'rgba(0,0,0,0)',
-        stroke: '#000',
+        stroke: strokeColor,
         strokeWidth: 3,
         originX: 'left',
         originY: 'top',
