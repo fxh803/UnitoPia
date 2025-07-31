@@ -11,8 +11,10 @@ export function useCanvasMode(canvas: () => Canvas | null, mode: Ref<string | nu
       mode.value = null;
       canvasInstance.isDrawingMode = false;
       canvasInstance.selection = false;
+      console.log('取消激活')
       canvasInstance.getObjects().forEach(obj => {
         obj.selectable = false;
+        obj.evented = false;
       });
       canvasInstance.discardActiveObject();
       canvasInstance.renderAll();

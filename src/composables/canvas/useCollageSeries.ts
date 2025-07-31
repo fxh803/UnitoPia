@@ -106,7 +106,7 @@ export function useCollageSeries(canvas: () => Canvas | null) {
     if (idx === currentSlideIndex.value) {
       currentSlideIndex.value = Math.max(0, idx - 1)
       handleCollageSeriesSelect(currentSlideIndex.value)
-    } else{
+    } else if(idx < currentSlideIndex.value){
       currentSlideIndex.value -= 1
     }
     collageSeries.value.splice(idx, 1)

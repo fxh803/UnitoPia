@@ -13,6 +13,7 @@ declare module 'vue' {
     CanvasToolbar: typeof import('./src/components/CanvasToolbar.vue')['default']
     CollageSeriesPanel: typeof import('./src/components/CollageSeriesPanel.vue')['default']
     DataEditor: typeof import('./src/components/DataEditor.vue')['default']
+    FirstToolbar: typeof import('./src/components/FirstToolbar.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
     ResizableContainer: typeof import('./src/components/ResizableContainer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

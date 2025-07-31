@@ -41,19 +41,13 @@ function toggleCollapse() {
         :title="isCollapsed ? 'Expand' : 'Collapse'"
       >
         <div 
-          class="w-5 h-5 text-gray-500 transition-all duration-300"
+          class="w-5 h-5 text-black transition-all duration-300"
           :class="isCollapsed ? 'i-carbon:open-panel-left' : 'i-carbon:open-panel-filled-left'"
         ></div>
       </button>
 
       <!-- 标题 -->
-      <div class="w-full px-2 mb-2">
-        <h3 
-          class="text-sm text-gray-400 transition-opacity duration-300 border-b border-gray-200 pb-2"
-          :class="isCollapsed ? 'opacity-0' : 'opacity-100'"
-        >
-          Collage Series
-        </h3>
+      <div class="w-full h-30px mb-2 border-b border-gray-200 "> 
       </div>
       
       <!-- 拼贴系列列表 -->

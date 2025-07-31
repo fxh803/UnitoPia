@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { Canvas, PencilBrush } from 'fabric'
 import BrushSizePanel from './BrushSizePanel.vue'
+import CanvasToolbar from './CanvasToolbar.vue'
+import FirstToolbar from './FirstToolbar.vue'
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 
 import { useCanvasMode } from '~/composables/canvas/useCanvasMode'
@@ -58,6 +60,7 @@ function clearCanvas() {
 }
 
 const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
+const selectedModeType = ref<'marker' | 'container' | null>(null) // 添加模式类型状态
 
 // 形状绘制
 const { isDrawingShape, shapeStart, previewShape, addShapeEventListeners, removeShapeEventListeners } = useShapeDrawing(() => canvas, mode)
@@ -87,6 +90,16 @@ const {
   togglePathClosed,
   hideBtns,
 } = useObjectActions(() => canvas)
+
+// 处理模式类型变化
+const handleModeTypeChange = (type: 'marker' | 'container' | null) => {
+  selectedModeType.value = type
+  // 当模式类型变化时，清空绘制模式
+  if (mode.value !== null) {
+    // 调用当前模式来取消激活
+    setMode(mode.value as 'draw' | 'move' | 'erase' | 'rect' | 'ellipse')
+  }
+}
 
 // 画笔宽度变化时同步到画布
 watch(brushWidth, (val) => {
@@ -200,8 +213,15 @@ onBeforeUnmount(() => {
           </svg>
         </button>
       </div>
-      <!-- 工具栏 -->
-      <CanvasToolbar :mode="mode" :set-mode="setMode" :on-clear="clearCanvas" />
+      <!-- 一级工具栏：模式选择 -->
+      <FirstToolbar :selected-mode-type="selectedModeType" @mode-type-change="handleModeTypeChange" />
+      <!-- 画布工具栏：仅在container模式下显示 -->
+      <CanvasToolbar 
+        :mode="mode" 
+        :set-mode="setMode" 
+        :on-clear="clearCanvas" 
+        :show="selectedModeType === 'container'"
+      />
       <!-- 画笔粗细调节面板，仅在绘制/擦除模式下显示 -->
       <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" :width="brushWidth"
         @update:width="brushWidth = $event" />

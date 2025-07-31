@@ -90,6 +90,8 @@ export function useObjectActions(canvas: () => Canvas | null) {
       currentPathObj.value.set('fill', null)
     }
     canvasInstance?.requestRenderAll()
+    // 触发object:modified事件，让slide能够检测到变化
+    canvasInstance?.fire('object:modified', { target: currentPathObj.value })
   }
 
   function hideBtns() {

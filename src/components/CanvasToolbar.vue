@@ -5,11 +5,12 @@ const props = defineProps<{
   mode: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null
   setMode: (m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') => void
   onClear: () => void
+  show?: boolean
 }>()
 </script>
 
 <template>
-  <div class="px-2 py-4 border border-[#e6e6e6] rounded-xl bg-white flex flex-col gap-3 shadow left-6 top-1/2 absolute z-10 -translate-y-1/2">
+  <div v-if="show" class="px-2 py-4 border border-[#e6e6e6] rounded-xl bg-white flex flex-col gap-3 shadow right-6 top-1/2 absolute z-10 -translate-y-1/2">
     <button
       class="rounded flex h-10 w-10 items-center justify-center "
       :class="[
