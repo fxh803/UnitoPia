@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
+import { defineProps } from 'vue'
 import ColorPicker from './ColorPicker.vue'
 
 const props = defineProps<{
@@ -8,15 +8,6 @@ const props = defineProps<{
   onClear: () => void
   show?: boolean
 }>()
-
-const emit = defineEmits<{
-  colorChange: [color: string]
-}>()
-
-// 处理颜色变化
-const handleColorChange = (color: string) => {
-  emit('colorChange', color)
-}
 </script>
 
 <template>
@@ -96,10 +87,7 @@ const handleColorChange = (color: string) => {
     
     <!-- 颜色选择器按钮 -->
     <div class="flex justify-center pt-2 border-t border-gray-200">
-      <ColorPicker
-        :show="true"
-        @color-change="handleColorChange"
-      />
+      <ColorPicker />
     </div>
   </div>
 </template>

@@ -1,4 +1,5 @@
 import { createApp } from 'vue'
+import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from 'vue-router/auto-routes'
 import App from './App.vue'
@@ -16,10 +17,12 @@ VxeUITable.setI18n('en-US', enUS)
 VxeUITable.setLanguage('en-US')
 
 const app = createApp(App)
+const pinia = createPinia()
 const router = createRouter({
   routes,
   history: createWebHistory(import.meta.env.BASE_URL),
 })
+app.use(pinia)
 app.use(VxeUIAll)
 app.use(VxeUITable)
 app.use(router)

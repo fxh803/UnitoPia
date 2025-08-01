@@ -4,12 +4,13 @@ import BrushSizePanel from './BrushSizePanel.vue'
 import ContainerToolbar from './ContainerToolbar.vue'
 import MarkerToolbar from './MarkerToolbar.vue'
 import FirstToolbar from './FirstToolbar.vue'
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 
 import { useCanvasMode } from '~/composables/canvas/useCanvasMode'
 import { useShapeDrawing } from '~/composables/canvas/useShapeDrawing'
 import { useCollageSeries } from '~/composables/canvas/useCollageSeries'
 import { useObjectActions } from '~/composables/canvas/useObjectActions'
+import { useCanvasStore } from '~/stores/canvas'
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
@@ -17,6 +18,8 @@ const canvasWrapperRef = ref<HTMLDivElement | null>(null)
 const brushWidth = ref(6)
 const canvasSize = ref(400)
 let canvas: Canvas | null = null
+
+const canvasStore = useCanvasStore()
 
 function getDpr() {
   return window.devicePixelRatio || 1
@@ -62,15 +65,14 @@ function clearCanvas() {
 
 const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
 const selectedModeType = ref<'marker' | 'container' | null>(null) // 添加模式类型状态
-const selectedColor = ref('#FFD152') // 添加颜色状态
 
 // 计算是否为Container模式
 const isContainerMode = computed(() => selectedModeType.value === 'container')
 
 // 形状绘制
-const { isDrawingShape, shapeStart, previewShape, addShapeEventListeners, removeShapeEventListeners } = useShapeDrawing(() => canvas, mode, selectedColor, isContainerMode)
+const { isDrawingShape, shapeStart, previewShape, addShapeEventListeners, removeShapeEventListeners } = useShapeDrawing(() => canvas, mode, isContainerMode)
 // 模式切换
-  const { setMode } = useCanvasMode(() => canvas, mode, brushWidth, selectedColor, isContainerMode, getDpr, removeShapeEventListeners, addShapeEventListeners, previewShape)
+  const { setMode } = useCanvasMode(() => canvas, mode, brushWidth, isContainerMode, getDpr, removeShapeEventListeners, addShapeEventListeners, previewShape)
 // 拼贴系列管理
 const { 
   collageSeries, 
@@ -106,14 +108,13 @@ const handleModeTypeChange = (type: 'marker' | 'container' | null) => {
   }
 }
 
-// 处理颜色变化
-const handleColorChange = (color: string) => {
-  selectedColor.value = color
+// 监听颜色变化，更新画笔颜色
+watch(() => canvasStore.selectedColor, (color) => {
   // 更新画笔颜色（仅在Marker模式下）
   if (canvas && canvas.freeDrawingBrush && !isContainerMode.value) {
     canvas.freeDrawingBrush.color = color
   }
-}
+})
 
 // 画笔宽度变化时同步到画布
 watch(brushWidth, (val) => {
@@ -242,7 +243,6 @@ onBeforeUnmount(() => {
         :set-mode="setMode" 
         :on-clear="clearCanvas" 
         :show="selectedModeType === 'marker'"
-        @color-change="handleColorChange"
       />
       <!-- 画笔粗细调节面板，仅在绘制/擦除模式下显示 -->
       <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" :width="brushWidth"
