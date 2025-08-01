@@ -1,188 +1,80 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref } from 'vue'
+import Table from './Table.vue'
+
 interface TableData {
   [key: string]: any
 }
 
 const tableData = ref<TableData[]>([])
 const tableColumns = ref<string[]>([])
-const isDragOver = ref(false)
 const isLoading = ref(false)
 
-// 为了兼容VXE表格，重命名变量
-const csvData = computed(() => tableData.value)
-const csvHeaders = computed(() => tableColumns.value)
+// 切换状态
+const activeTab = ref<'table' | 'overview'>('table')
 
-// 处理滚动事件
-const handleScrolling = () => {
-  // 可以在这里添加滚动处理逻辑
-  console.log('表格滚动中...')
+// 切换标签页
+const switchTab = (tab: 'table' | 'overview') => {
+  activeTab.value = tab
 }
 
-// 单元格类名处理
-const cellClassName = ({ row, column }: any) => {
-  // 可以根据需要返回自定义的CSS类名
-  return ''
+// 处理数据更新
+const handleDataUpdate = (data: TableData[], columns: string[]) => {
+  tableData.value = data
+  tableColumns.value = columns
 }
 
-// 处理文件上传
-const handleFileUpload = async (file: File) => {
-  if (!file.name.toLowerCase().endsWith('.csv')) {
-    ElMessage.error('请上传 CSV 文件')
-    return
-  }
-
-  isLoading.value = true
-  try {
-    const text = await file.text()
-    const lines = text.split('\n').filter(line => line.trim())
-
-    if (lines.length === 0) {
-      ElMessage.error('CSV 文件为空')
-      return
-    }
-
-    // 解析 CSV
-    const headers = parseCSVLine(lines[0])
-    tableColumns.value = headers
-
-        const data: TableData[] = []
-    const maxRows = 300 // 限制最大行数
-    const rowsToProcess = Math.min(lines.length - 1, maxRows)
-    
-    for (let i = 1; i <= rowsToProcess; i++) {
-      const values = parseCSVLine(lines[i])
-      const row: TableData = {}
-      headers.forEach((header, index) => {
-        row[header] = values[index] || ''
-      })
-      data.push(row)
-    }
-    
-    tableData.value = data
-    const totalRows = lines.length - 1
-    const loadedRows = data.length
-    ElMessage.success(`成功上传 ${file.name}，加载了 ${loadedRows} 行数据${totalRows > maxRows ? `（共 ${totalRows} 行，仅显示前 ${maxRows} 行）` : ''}`)
-  } catch (error) {
-    ElMessage.error('文件解析失败')
-    console.error('CSV 解析错误:', error)
-  } finally {
-    isLoading.value = false
-  }
-}
-
-// 解析 CSV 行
-const parseCSVLine = (line: string): string[] => {
-  const result: string[] = []
-  let current = ''
-  let inQuotes = false
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i]
-
-    if (char === '"') {
-      inQuotes = !inQuotes
-    } else if (char === ',' && !inQuotes) {
-      result.push(current.trim())
-      current = ''
-    } else {
-      current += char
-    }
-  }
-
-  result.push(current.trim())
-  return result
-}
-
-// 处理拖拽
-const handleDragOver = (e: DragEvent) => {
-  e.preventDefault()
-  isDragOver.value = true
-}
-
-const handleDragLeave = (e: DragEvent) => {
-  e.preventDefault()
-  isDragOver.value = false
-}
-
-const handleDrop = (e: DragEvent) => {
-  e.preventDefault()
-  isDragOver.value = false
-
-  const files = e.dataTransfer?.files
-  if (files && files.length > 0) {
-    handleFileUpload(files[0])
-  }
-}
-
-// 处理文件选择
-const handleFileSelect = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  const file = target.files?.[0]
-  if (file) {
-    handleFileUpload(file)
-  }
-}
-
- 
 </script>
 
 <template>
   <aside class="border-r border-gray-200 bg-gray-50 h-full w-full flex flex-col relative">
-    <div class="h-1/2 border-b border-gray-200 relative">
-      <!-- 上传区域 - 只在没有数据时显示 -->
-      <div v-if="tableData.length === 0 && !isLoading" class="h-full w-full p-5">
-        <div
-          class="border-2 h-full w-full border-dashed border-gray-300 rounded-lg  transition-colors cursor-pointer flex justify-center items-center"
-          :class="{
-            'border-blue-500 bg-blue-50': isDragOver,
-            'hover:border-gray-400': !isDragOver
-          }" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop"
-          @click="$refs.fileInput.click()">
-          <input ref="fileInput" type="file" class="hidden" accept=".csv" @change="handleFileSelect" />
-          <span class="i-carbon:add-alt text-4xl text-gray-400"></span>
-        </div>
-
-      </div>
-
-      <!-- 数据表格区域 - 只在有数据时显示 -->
-      <div v-else-if="tableData.length > 0" class="h-full w-full overflow-hidden" style="min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; contain: layout size;">
-        <vxe-table 
-          :data="csvData" 
-          :scroll-y="{ enabled: true }" 
-          :scroll-x="{ enabled: true }"
-          height="100%"  
-          @scroll="handleScrolling()"
-          :row-config="{ isHover: true }" 
-          :cell-config="{ height: 30 }" 
-          show-header-overflow 
-          show-overflow
-          size="small" 
-          border 
-          :cell-class-name="cellClassName"
-          :auto-resize="true" >
-          <vxe-column 
-            v-for="(item, index) in csvHeaders" 
-            :key="index" 
-            :field="item" 
-            :title="item" 
-            row-resize  
-            min-width="80" />
-        </vxe-table>
+    <!-- 切换栏 -->
+    <div class="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2">
+      <div class="flex justify-center space-x-6">
+        <button class="relative px-1 py-2 text-sm font-medium transition-colors duration-200" :class="[
+          activeTab === 'table'
+            ? 'text-[#0d99ff]'
+            : 'text-gray-400 hover:text-gray-600'
+        ]" @click="switchTab('table')">
+          Table
+          <!-- 下划线指示器 -->
+          <div v-if="activeTab === 'table'"
+            class="absolute bottom-0 left-0 h-0.5 bg-[#0d99ff] transition-all duration-200 w-full"></div>
+        </button>
+        <button class="relative px-1 py-2 text-sm font-medium transition-colors duration-200" :class="[
+          activeTab === 'overview'
+            ? 'text-[#0d99ff]'
+            : 'text-gray-400 hover:text-gray-600'
+        ]" @click="switchTab('overview')">
+          Overview
+          <!-- 下划线指示器 -->
+          <div v-if="activeTab === 'overview'"
+            class="absolute bottom-0 left-0 h-0.5 bg-[#0d99ff] transition-all duration-200 w-full"></div>
+        </button>
       </div>
     </div>
-    <div class="h-1/2"></div>
 
+    <!-- 内容区域 -->
+    <div class="flex-1 overflow-hidden">
+      <!-- Table 模式 -->
+      <div v-if="activeTab === 'table'" class="h-full">
+        <Table 
+          :table-data="tableData" 
+          :table-columns="tableColumns" 
+          :is-loading="isLoading"
+          @data-update="handleDataUpdate" />
+      </div>
 
-
+      <!-- Overview 模式 -->
+      <div v-else-if="activeTab === 'overview'" class="h-full p-6">
+        <div class="flex items-center justify-center h-full">
+          <div class="text-center text-gray-500">
+            <div class="text-6xl mb-4">📊</div>
+            <h3 class="text-lg font-medium mb-2">Overview 模式</h3>
+            <p class="text-sm">这里将显示数据概览和统计信息</p>
+          </div>
+        </div>
+      </div>
+    </div>
   </aside>
 </template>
-
-<style scoped>
-/* Carbon 图标样式 */
-.i-carbon\:add-alt::before {
-  content: '\f0c9';
-  font-family: 'carbon-icons';
-}
-</style>
