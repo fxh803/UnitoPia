@@ -85,30 +85,3 @@ const props = defineProps<{
     </button>
   </div>
 </template>
-
-<style scoped>
-.i-carbon-pen::before {
-  content: '\f1c6';
-  font-family: 'carbon-icons';
-}
-.i-carbon-move::before {
-  content: '\f1b2';
-  font-family: 'carbon-icons';
-}
-.i-carbon-erase::before {
-  content: '\f1c0';
-  font-family: 'carbon-icons';
-}
-.i-carbon-trash-can::before {
-  content: '\f1bb';
-  font-family: 'carbon-icons';
-}
-.i-carbon:checkbox::before {
-  content: '\f0c8';
-  font-family: 'carbon-icons';
-}
-.i-carbon-circle-outline::before {
-  content: '\f1d4';
-  font-family: 'carbon-icons';
-}
-</style> 

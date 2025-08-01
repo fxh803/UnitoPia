@@ -45,7 +45,7 @@ const selectModeType = (type: 'marker' | 'container') => {
       title="Marker Mode"
       @click="selectModeType('marker')"
     >
-      <span class="i-carbon-pen" />
+      <span class="i-carbon:data-categorical" />
     </button>
     <button
       class="rounded flex h-10 w-10 items-center justify-center"
@@ -57,18 +57,8 @@ const selectModeType = (type: 'marker' | 'container') => {
       title="Container Mode"
       @click="selectModeType('container')"
     >
-      <span class="i-carbon-view" />
+      <span class="i-carbon:area-custom" />
     </button>
   </div>
 </template>
-
-<style scoped>
-.i-carbon-pen::before {
-  content: '\f1c6';
-  font-family: 'carbon-icons';
-}
-.i-carbon-view::before {
-  content: '\f1b3';
-  font-family: 'carbon-icons';
-}
-</style> 
+ 
