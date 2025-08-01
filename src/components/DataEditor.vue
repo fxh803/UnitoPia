@@ -10,6 +10,22 @@ const tableColumns = ref<string[]>([])
 const isDragOver = ref(false)
 const isLoading = ref(false)
 
+// 为了兼容VXE表格，重命名变量
+const csvData = computed(() => tableData.value)
+const csvHeaders = computed(() => tableColumns.value)
+
+// 处理滚动事件
+const handleScrolling = () => {
+  // 可以在这里添加滚动处理逻辑
+  console.log('表格滚动中...')
+}
+
+// 单元格类名处理
+const cellClassName = ({ row, column }: any) => {
+  // 可以根据需要返回自定义的CSS类名
+  return ''
+}
+
 // 处理文件上传
 const handleFileUpload = async (file: File) => {
   if (!file.name.toLowerCase().endsWith('.csv')) {
@@ -113,7 +129,7 @@ const handleFileSelect = (e: Event) => {
 </script>
 
 <template>
-  <aside class="border-r border-gray-200 bg-gray-50 h-full w-full flex flex-col">
+  <aside class="border-r border-gray-200 bg-gray-50 h-full w-full flex flex-col relative">
     <div class="h-1/2 border-b border-gray-200 relative">
       <!-- 上传区域 - 只在没有数据时显示 -->
       <div v-if="tableData.length === 0 && !isLoading" class="h-full w-full p-5">
@@ -131,10 +147,29 @@ const handleFileSelect = (e: Event) => {
       </div>
 
       <!-- 数据表格区域 - 只在有数据时显示 -->
-      <div v-else-if="tableData.length > 0" class="h-full w-full">
-          <el-table :data="tableData" border stripe class="w-full" height="100%">
-            <el-table-column v-for="column in tableColumns" :key="column" :prop="column" :label="column" width="10" />
-          </el-table>
+      <div v-else-if="tableData.length > 0" class="h-full w-full overflow-hidden" style="min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; contain: layout size;">
+        <vxe-table 
+          :data="csvData" 
+          :scroll-y="{ enabled: true }" 
+          :scroll-x="{ enabled: true }"
+          height="100%"  
+          @scroll="handleScrolling()"
+          :row-config="{ isHover: true }" 
+          :cell-config="{ height: 30 }" 
+          show-header-overflow 
+          show-overflow
+          size="small" 
+          border 
+          :cell-class-name="cellClassName"
+          :auto-resize="true" >
+          <vxe-column 
+            v-for="(item, index) in csvHeaders" 
+            :key="index" 
+            :field="item" 
+            :title="item" 
+            row-resize  
+            min-width="80" />
+        </vxe-table>
       </div>
     </div>
     <div class="h-1/2"></div>
@@ -145,24 +180,6 @@ const handleFileSelect = (e: Event) => {
 </template>
 
 <style scoped>
-/* 确保 Element Plus 样式正确加载 */
-:deep(.el-table) {
-  font-size: 12px;
-}
-
-:deep(.el-table th) {
-  background-color: #f5f5f5;
-  font-weight: 600;
-}
-
-:deep(.el-table__header) {
-  width: 100% !important;
-}
-
-:deep(.el-table__body) {
-  width: 100% !important;
-}
-
 /* Carbon 图标样式 */
 .i-carbon\:add-alt::before {
   content: '\f0c9';

@@ -17,7 +17,9 @@
     "element-plus": "^2.10.4",
     "fabric": "^6.7.0",
     "vue": "catalog:frontend",
-    "vue-router": "catalog:frontend"
+    "vue-router": "catalog:frontend",
+    "vxe-pc-ui": "4.8.3",
+    "vxe-table": "4.15.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:dev",

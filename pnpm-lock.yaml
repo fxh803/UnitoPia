@@ -104,6 +104,12 @@ importers:
       vue-router:
         specifier: catalog:frontend
         version: 4.5.1(vue@3.5.16(typescript@5.8.3))
+      vxe-pc-ui:
+        specifier: 4.8.3
+        version: 4.8.3(vue@3.5.16(typescript@5.8.3))
+      vxe-table:
+        specifier: 4.15.0
+        version: 4.15.0(vue@3.5.16(typescript@5.8.3))
     devDependencies:
       '@antfu/eslint-config':
         specifier: catalog:dev
@@ -1463,6 +1469,11 @@ packages:
   '@vueuse/shared@9.13.0':
     resolution: {integrity: sha512-UrnhU+Cnufu4S6JLCPZnkWh0WwZGUp72ktOF2DFptMlOs3TOdVv8xJN53zhHGARmVOsz5KqOls09+J1NR6sBKw==}
 
+  '@vxe-ui/core@4.2.8':
+    resolution: {integrity: sha512-foSytfJOfwIhw5G9sz6Swtdnlwa+FJNkewWkS3XLwXsCOd4mE4BAT7Zfh8PwoKP6EnvCIt96K9ic/IQAC7HksQ==}
+    peerDependencies:
+      vue: ^3.2.0
+
   abab@2.0.6:
     resolution: {integrity: sha512-j2afSsaIENvHZN2B8GOpF566vZ5WVk5opAiMTvWgaQT8DkbOqsTfvNAvHoRGU2zzP8cPoqys+xHTRDWW8L+/BA==}
     deprecated: Use your platform's native atob() and btoa() methods instead
@@ -1816,6 +1827,9 @@ packages:
 
   devlop@1.1.0:
     resolution: {integrity: sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==}
+
+  dom-zindex@1.0.6:
+    resolution: {integrity: sha512-FKWIhiU96bi3xpP9ewRMgANsoVmMUBnMnmpCT6dPMZOunVYJQmJhSRruoI0XSPoHeIif3kyEuiHbFrOJwEJaEA==}
 
   domexception@4.0.0:
     resolution: {integrity: sha512-A2is4PLG+eeSfoTMA95/s4pvAoSo2mKtiM5jlHkAVewmiO8ISFTFKZjH7UAM1Atli/OT/7JHOrJRJiMKUZKYBw==}
@@ -3516,6 +3530,12 @@ packages:
       typescript:
         optional: true
 
+  vxe-pc-ui@4.8.3:
+    resolution: {integrity: sha512-aVEWWGpPCPSlZIohQEiPl5XmrUcW3t8NdP3hXsBpkVFniz0lH3DDpPmq3OxXvuFEatGs1z6rsxWtc+Qyb5gRQQ==}
+
+  vxe-table@4.15.0:
+    resolution: {integrity: sha512-K7vi+OBA9Kb7MQXF95erKV0wtQrCmT35SjGjkcSCo/ToKAxrc4IrSb/7sPoJXDbElTrZphkIjgeXs/NSKm4/ng==}
+
   w3c-xmlserializer@4.0.0:
     resolution: {integrity: sha512-d+BFHzbiCx6zGfz0HyQ6Rg69w9k19nviJspaj4yNscGjrHu94sVP+aRm75yEbCh+r2/yR+7q6hux9LVtbuTGBw==}
     engines: {node: '>=14'}
@@ -3592,6 +3612,9 @@ packages:
         optional: true
       utf-8-validate:
         optional: true
+
+  xe-utils@3.7.8:
+    resolution: {integrity: sha512-V/k6B/ASYir6yLYhp62DnM17po9u1N9mou/rn4if5WoFCsAO49JpCiVpkDpwCv4zxGfWmhWgzmz4FytWF+pDVw==}
 
   xml-name-validator@4.0.0:
     resolution: {integrity: sha512-ICP2e+jsHvAj2E2lIHxa5tjXRlKDJo4IdvPvCXbXQGdzSfmSpNVyIKMvoZHjDY9DP0zV17iI85o90vRFXNccRw==}
@@ -4999,6 +5022,12 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
+  '@vxe-ui/core@4.2.8(vue@3.5.16(typescript@5.8.3))':
+    dependencies:
+      dom-zindex: 1.0.6
+      vue: 3.5.16(typescript@5.8.3)
+      xe-utils: 3.7.8
+
   abab@2.0.6:
     optional: true
 
@@ -5331,6 +5360,8 @@ snapshots:
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
+
+  dom-zindex@1.0.6: {}
 
   domexception@4.0.0:
     dependencies:
@@ -7512,6 +7543,18 @@ snapshots:
     optionalDependencies:
       typescript: 5.8.3
 
+  vxe-pc-ui@4.8.3(vue@3.5.16(typescript@5.8.3)):
+    dependencies:
+      '@vxe-ui/core': 4.2.8(vue@3.5.16(typescript@5.8.3))
+    transitivePeerDependencies:
+      - vue
+
+  vxe-table@4.15.0(vue@3.5.16(typescript@5.8.3)):
+    dependencies:
+      vxe-pc-ui: 4.8.3(vue@3.5.16(typescript@5.8.3))
+    transitivePeerDependencies:
+      - vue
+
   w3c-xmlserializer@4.0.0:
     dependencies:
       xml-name-validator: 4.0.0
@@ -7582,6 +7625,8 @@ snapshots:
   wrappy@1.0.2: {}
 
   ws@8.18.0: {}
+
+  xe-utils@3.7.8: {}
 
   xml-name-validator@4.0.0: {}
 
