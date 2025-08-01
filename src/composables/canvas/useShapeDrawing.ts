@@ -2,10 +2,10 @@ import { ref } from 'vue'
 import type { Ref } from 'vue'
 import type { Canvas } from 'fabric'
 import { Rect, Ellipse } from 'fabric'
-import { useCanvasStore } from '~/stores/canvas'
+import { useColorPickerStore } from '~/stores/colorpicker'
 
 export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | null>, isContainerMode: Ref<boolean>) {
-  const canvasStore = useCanvasStore()
+  const colorPickerStore = useColorPickerStore()
   const isDrawingShape = ref(false)
   const shapeStart = ref<{ x: number, y: number } | null>(null)
   const previewShape = ref<any>(null)
@@ -18,7 +18,7 @@ export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | 
     const pointer = canvasInstance.getPointer(e)
     shapeStart.value = { x: pointer.x, y: pointer.y }
     // 创建预览形状
-    const strokeColor = isContainerMode.value ? '#000' : canvasStore.selectedColor
+    const strokeColor = isContainerMode.value ? '#000' : colorPickerStore.selectedColor
     if (mode.value === 'rect') {
       previewShape.value = new Rect({
         left: pointer.x,
@@ -84,7 +84,7 @@ export function useShapeDrawing(canvas: () => Canvas | null, mode: Ref<string | 
     const pointer = canvasInstance.getPointer(e)
     const startX = shapeStart.value.x
     const startY = shapeStart.value.y
-    const strokeColor = isContainerMode.value ? '#000' : canvasStore.selectedColor
+    const strokeColor = isContainerMode.value ? '#000' : colorPickerStore.selectedColor
     let shapeObj = null
     if (mode.value === 'rect') {
       shapeObj = new Rect({

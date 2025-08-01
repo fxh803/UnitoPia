@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
-export const useCanvasStore = defineStore('canvas', () => {
+export const useColorPickerStore = defineStore('colorpicker', () => {
   // 颜色选择器状态
   const selectedColor = ref('#FFD152')
 

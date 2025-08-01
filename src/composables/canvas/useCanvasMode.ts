@@ -1,10 +1,10 @@
 import { watch } from 'vue'
 import type { Ref } from 'vue'
 import type { Canvas } from 'fabric'
-import { useCanvasStore } from '~/stores/canvas'
+import { useColorPickerStore } from '~/stores/colorpicker'
 
 export function useCanvasMode(canvas: () => Canvas | null, mode: Ref<string | null>, brushWidth: Ref<number>, isContainerMode: Ref<boolean>, getDpr: () => number, removeShapeEventListeners: () => void, addShapeEventListeners: () => void, previewShape: Ref<any>) {
-  const canvasStore = useCanvasStore()
+  const colorPickerStore = useColorPickerStore()
 
   function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') {
     const canvasInstance = canvas()
@@ -38,7 +38,7 @@ export function useCanvasMode(canvas: () => Canvas | null, mode: Ref<string | nu
       canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; });
       if (canvasInstance.freeDrawingBrush) {
         // Container模式下使用黑色，Marker模式下使用选择的颜色
-        canvasInstance.freeDrawingBrush.color = isContainerMode.value ? '#000000' : canvasStore.selectedColor;
+        canvasInstance.freeDrawingBrush.color = isContainerMode.value ? '#000000' : colorPickerStore.selectedColor;
         canvasInstance.freeDrawingBrush.width = brushWidth.value * dpr;
       }
       removeShapeEventListeners();

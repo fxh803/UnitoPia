@@ -10,7 +10,7 @@ import { useCanvasMode } from '~/composables/canvas/useCanvasMode'
 import { useShapeDrawing } from '~/composables/canvas/useShapeDrawing'
 import { useCollageSeries } from '~/composables/canvas/useCollageSeries'
 import { useObjectActions } from '~/composables/canvas/useObjectActions'
-import { useCanvasStore } from '~/stores/canvas'
+import { useColorPickerStore } from '~/stores/colorpicker'
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
@@ -19,7 +19,7 @@ const brushWidth = ref(6)
 const canvasSize = ref(400)
 let canvas: Canvas | null = null
 
-const canvasStore = useCanvasStore()
+const colorPickerStore = useColorPickerStore()
 
 function getDpr() {
   return window.devicePixelRatio || 1
@@ -109,7 +109,7 @@ const handleModeTypeChange = (type: 'marker' | 'container' | null) => {
 }
 
 // 监听颜色变化，更新画笔颜色
-watch(() => canvasStore.selectedColor, (color) => {
+watch(() => colorPickerStore.selectedColor, (color) => {
   // 更新画笔颜色（仅在Marker模式下）
   if (canvas && canvas.freeDrawingBrush && !isContainerMode.value) {
     canvas.freeDrawingBrush.color = color
