@@ -8,19 +8,30 @@ import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCanvasMode } from '~/composables/canvas/useCanvasMode'
 import { useShapeDrawing } from '~/composables/canvas/useShapeDrawing'
-import { useCollageSeries } from '~/composables/canvas/useCollageSeries'
 import { useObjectActions } from '~/composables/canvas/useObjectActions'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useBrushSizeStore } from '~/stores/brushsize'
+import { useCollageSeriesStore } from '~/stores/collageSeries'
 
 const selectedModeStore = useSelectedModeStore()
 const {selectedMode, isContainerMode} = storeToRefs(selectedModeStore)
 const {setSelectedMode} = selectedModeStore
 
 const brushSizeStore = useBrushSizeStore()
-const {brushWidth} = storeToRefs(brushSizeStore)
-const {setBrushWidth} = brushSizeStore
+const { brushWidth } = storeToRefs(brushSizeStore) 
+
+const collageSeriesStore = useCollageSeriesStore()
+const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
+const { 
+  setCanvas,
+  initializeEmptySlide, 
+  updateCurrentSlide, 
+  addNewSlide, 
+  handleCollageSeriesSelect, 
+  handleDeleteCollageSeries,
+  setupCanvasChangeListener
+} = collageSeriesStore
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
@@ -79,17 +90,6 @@ const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
 const { isDrawingShape, shapeStart, previewShape, addShapeEventListeners, removeShapeEventListeners } = useShapeDrawing(() => canvas, mode, isContainerMode)
 // 模式切换
   const { setMode } = useCanvasMode(() => canvas, mode, brushWidth, isContainerMode, getDpr, removeShapeEventListeners, addShapeEventListeners, previewShape)
-// 拼贴系列管理
-const { 
-  collageSeries, 
-  currentSlideIndex, 
-  initializeEmptySlide, 
-  updateCurrentSlide, 
-  addNewSlide, 
-  handleCollageSeriesSelect, 
-  handleDeleteCollageSeries,
-  setupCanvasChangeListener
-} = useCollageSeries(() => canvas)
 // 对象操作
 const {
   showDeleteBtn,
@@ -149,6 +149,8 @@ onMounted(async () => {
     brush.width = brushWidth.value * dpr
     canvas.freeDrawingBrush = brush
     
+    // 设置 canvas 引用
+    setCanvas(() => canvas)
     // 初始化空白幻灯片
     initializeEmptySlide()
     // 设置画布变化监听器
@@ -188,13 +190,7 @@ onBeforeUnmount(() => {
 <template>
   <section class="bg-gray-900 flex h-full min-h-0 min-w-0 w-full">
     <!-- 拼贴系列面板 - 移动到左侧 -->
-    <CollageSeriesPanel 
-      :collage-series="collageSeries" 
-      :current-slide-index="currentSlideIndex"
-      @select="handleCollageSeriesSelect" 
-      @delete="handleDeleteCollageSeries"
-      @add-new="addNewSlide"
-    />
+    <CollageSeriesPanel />
     <!-- 主画布区域 -->
     <div ref="canvasAreaRef"
       class="p-2 border-r border-[#e6e6e6] bg-[#E5E5E5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden">

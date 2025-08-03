@@ -1,25 +1,25 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, ref } from 'vue'
+import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useCollageSeriesStore } from '~/stores/collageSeries'
 
-const props = defineProps<{ 
-  collageSeries: { json: string, preview: string }[]
-  currentSlideIndex?: number
-}>()
-const emit = defineEmits(['select', 'delete', 'add-new'])
+const collageSeriesStore = useCollageSeriesStore()
+const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
+const { handleCollageSeriesSelect, handleDeleteCollageSeries, addNewSlide } = collageSeriesStore
 
 // 折叠状态
 const isCollapsed = ref(false)
 
 function handleClick(idx: number) {
-  emit('select', idx)
+  handleCollageSeriesSelect(idx)
 }
 
 function handleDelete(idx: number) {
-  emit('delete', idx)
+  handleDeleteCollageSeries(idx)
 }
 
 function handleAddNew() {
-  emit('add-new')
+  addNewSlide()
 }
 
 function toggleCollapse() {
@@ -56,18 +56,18 @@ function toggleCollapse() {
         class="w-full px-2"
       >
         <div
-          v-for="(item, idx) in props.collageSeries"
+          v-for="(item, idx) in collageSeries"
           :key="idx"
           class="relative mb-3 border rounded flex h-32 items-center justify-center group cursor-pointer"
           :class="[
-            idx === props.currentSlideIndex 
+            idx === currentSlideIndex 
               ? 'border-blue-500 bg-blue-50' 
               : 'border-[#e6e6e6] bg-[#f5f5f5]'
           ]"
           @click="handleClick(idx)"
         >
           <button
-            v-if="props.collageSeries.length > 1"
+            v-if="collageSeries.length > 1"
             class="absolute top-1 right-1 z-10 hidden group-hover:block bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-500 hover:text-white"
             @click.stop="handleDelete(idx)"
             title="Delete"
