@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-const props = defineProps<{ width: number }>()
-const emit = defineEmits<{ (e: 'update:width', value: number): void }>()
+import { storeToRefs } from 'pinia'
+import { useBrushSizeStore } from '~/stores/brushsize'
+
+const brushSizeStore = useBrushSizeStore()
+const {brushWidth} = storeToRefs(brushSizeStore) 
 
 const min = 1
 const max = 50
-const value = computed({
-  get: () => props.width,
-  set: v => emit('update:width', Number(v))
-})
+
 </script>
 
 <template>
@@ -18,10 +18,10 @@ const value = computed({
       type="range"
       :min="min"
       :max="max"
-      v-model="value"
+      v-model="brushWidth"
       class="slider"
     />
-    <span class="value">{{ value }}</span>
+    <span class="value">{{ brushWidth }}</span>
   </div>
 </template>
 

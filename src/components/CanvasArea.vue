@@ -12,15 +12,19 @@ import { useCollageSeries } from '~/composables/canvas/useCollageSeries'
 import { useObjectActions } from '~/composables/canvas/useObjectActions'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useSelectedModeStore } from '~/stores/selectedMode'
+import { useBrushSizeStore } from '~/stores/brushsize'
 
 const selectedModeStore = useSelectedModeStore()
 const {selectedMode, isContainerMode} = storeToRefs(selectedModeStore)
 const {setSelectedMode} = selectedModeStore
 
+const brushSizeStore = useBrushSizeStore()
+const {brushWidth} = storeToRefs(brushSizeStore)
+const {setBrushWidth} = brushSizeStore
+
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
 const canvasWrapperRef = ref<HTMLDivElement | null>(null)
-const brushWidth = ref(6)
 const canvasSize = ref(400)
 let canvas: Canvas | null = null
 
@@ -243,8 +247,7 @@ onBeforeUnmount(() => {
         :show="selectedMode === 'marker'"
       />
       <!-- 画笔粗细调节面板，仅在绘制/擦除模式下显示 -->
-      <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" :width="brushWidth"
-        @update:width="brushWidth = $event" />
+      <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" />
     </div>
   </section>
 </template>
