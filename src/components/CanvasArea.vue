@@ -71,11 +71,6 @@ function updateCanvasSize() {
   }
 }
 
-
-
-// const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null) 
-
-
 // 形状绘制
 const { isDrawingShape, shapeStart, previewShape, addShapeEventListeners, removeShapeEventListeners } = useShapeDrawing(() => canvas, mode, isContainerMode) 
 // 对象操作
@@ -94,7 +89,7 @@ const {
 
 watch(selectedMode, (newMode) => {
   if (newMode !== null) {
-    setMode(mode.value, isContainerMode.value, colorPickerStore.selectedColor, brushWidth.value)
+    setMode(mode.value)
   }
 })
 // 监听 mode 变化，自动清理 shape 预览和事件

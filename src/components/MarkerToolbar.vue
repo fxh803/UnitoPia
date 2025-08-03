@@ -1,26 +1,11 @@
 <script setup lang="ts">
 import { useCanvasModeStore } from '~/stores/canvasMode'
-import { useSelectedModeStore } from '~/stores/selectedMode'
-import { useColorPickerStore } from '~/stores/colorpicker'
-import { useBrushSizeStore } from '~/stores/brushsize'
 import ColorPicker from './ColorPicker.vue'
 import { storeToRefs } from 'pinia'
 
 const canvasModeStore = useCanvasModeStore()
 const {mode} = storeToRefs(canvasModeStore)
 const { setMode, clearCanvas } = canvasModeStore
-
-const selectedModeStore = useSelectedModeStore()
-const { isContainerMode } = storeToRefs(selectedModeStore)
-
-const colorPickerStore = useColorPickerStore()
-const brushSizeStore = useBrushSizeStore()
-const { brushWidth } = storeToRefs(brushSizeStore)
-
-// 包装 setMode 调用，传递必要的参数
-const handleSetMode = (newMode: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') => {
-  setMode(newMode, isContainerMode.value, colorPickerStore.selectedColor, brushWidth.value)
-}
 </script>
 
 <template>
@@ -34,7 +19,7 @@ const handleSetMode = (newMode: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') 
           : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="Draw"
-      @click="() => handleSetMode('draw')"
+      @click="() => setMode('draw')"
     >
       <span class="i-carbon-pen" />
     </button>
@@ -47,7 +32,7 @@ const handleSetMode = (newMode: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') 
           : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="Move"
-      @click="() => handleSetMode('move')"
+      @click="() => setMode('move')"
     >
       <span class="i-carbon-move" />
     </button>
@@ -60,7 +45,7 @@ const handleSetMode = (newMode: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') 
           : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="Eraser"
-      @click="() => handleSetMode('erase')"
+      @click="() => setMode('erase')"
     >
       <span class="i-carbon-erase" />
     </button>
@@ -73,7 +58,7 @@ const handleSetMode = (newMode: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') 
           : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="Rectangle"
-      @click="() => handleSetMode('rect')"
+      @click="() => setMode('rect')"
     >
       <span class="i-carbon:checkbox" />
     </button>
@@ -86,7 +71,7 @@ const handleSetMode = (newMode: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') 
           : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="Ellipse"
-      @click="() => handleSetMode('ellipse')"
+      @click="() => setMode('ellipse')"
     >
       <span class="i-carbon-circle-outline" />
     </button>

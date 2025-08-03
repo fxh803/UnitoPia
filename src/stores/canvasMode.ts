@@ -1,15 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useSelectedModeStore } from '~/stores/selectedMode'
+import { useColorPickerStore } from '~/stores/colorpicker'
+import { useBrushSizeStore } from '~/stores/brushsize'
 
 export const useCanvasModeStore = defineStore('canvasMode', () => {
   const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
   const canvasRef = ref<(() => Canvas | null) | null>(null)
 
+  // 导入其他 store
+  const selectedModeStore = useSelectedModeStore()
+  const colorPickerStore = useColorPickerStore()
+  const brushSizeStore = useBrushSizeStore()
+
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
     canvasRef.value = canvas
   }
-  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse', isContainerMode: boolean, selectedColor: string, brushWidth: number) {
+  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
     // 再次点击同模式，取消激活
@@ -37,8 +45,8 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; });
       if (canvasInstance.freeDrawingBrush) {
         // Container模式下使用黑色，Marker模式下使用选择的颜色
-        canvasInstance.freeDrawingBrush.color = isContainerMode ? '#000000' : selectedColor;
-        canvasInstance.freeDrawingBrush.width = brushWidth * dpr;
+        canvasInstance.freeDrawingBrush.color = selectedModeStore.isContainerMode ? '#000000' : colorPickerStore.selectedColor;
+        canvasInstance.freeDrawingBrush.width = brushSizeStore.brushWidth * dpr;
       }
     } else if (m === 'erase') {
       canvasInstance.isDrawingMode = true;
@@ -46,7 +54,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; });
       if (canvasInstance.freeDrawingBrush) {
         canvasInstance.freeDrawingBrush.color = '#ffffff';
-        canvasInstance.freeDrawingBrush.width = brushWidth * dpr;
+        canvasInstance.freeDrawingBrush.width = brushSizeStore.brushWidth * dpr;
       }
     } else if (m === 'move') {
       canvasInstance.isDrawingMode = false;
