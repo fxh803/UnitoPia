@@ -35,11 +35,27 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const canvasInstance = canvasRef.value?.()
         if (!canvasInstance || collageSeries.value.length === 0) return
 
+        // 临时保存所有对象的原始透明度
+        const originalOpacities = new Map()
+        canvasInstance.getObjects().forEach((obj: any) => {
+            originalOpacities.set(obj, obj.opacity)
+            obj.set('opacity', 1)
+        })
+
         const json = JSON.stringify(canvasInstance.toJSON())
         const preview = canvasInstance.toDataURL({
             format: 'png',
             multiplier: 2
         })
+
+        // 恢复所有对象的原始透明度
+        canvasInstance.getObjects().forEach((obj: any) => {
+            const originalOpacity = originalOpacities.get(obj)
+            if (originalOpacity !== undefined) {
+                obj.set('opacity', originalOpacity)
+            }
+        })
+
         collageSeries.value[currentSlideIndex.value] = { json, preview }
     }
 

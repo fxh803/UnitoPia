@@ -18,7 +18,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     canvasRef.value = canvas
   }
   function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') {
-    console.log('setmode',m)
+    console.log('setmode', m)
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
     // 再次点击同模式，取消激活
@@ -49,7 +49,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
         canvasInstance.freeDrawingBrush.color = selectedModeStore.isContainerMode ? '#000000' : colorPickerStore.selectedColor;
         canvasInstance.freeDrawingBrush.width = brushSizeStore.brushWidth * dpr;
       }
-      
+
       // 监听绘制完成事件，为绘制的路径设置dataType
       canvasInstance.on('path:created', (e) => {
         const path = e.path;
@@ -61,7 +61,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
           if (selectedModeStore.selectedMode === 'container') {
             canvasInstance.sendObjectToBack(path, true);
           }
-          
+
           // 应用当前模式的透明度规则
           selectedModeStore.handleModeSwitch(selectedModeStore.selectedMode);
         }
@@ -77,22 +77,17 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     } else if (m === 'move') {
       canvasInstance.isDrawingMode = false;
       canvasInstance.selection = true;
-      // 根据selectedMode设置对象的可交互性
-      if (selectedModeStore.selectedMode) {
-        canvasInstance.getObjects().forEach(obj => {
-          const objType = obj.get('dataType');
-          if (objType === selectedModeStore.selectedMode) {
-            obj.set('selectable', true);
-            obj.set('evented', true);
-          } else {
-            obj.set('selectable', false);
-            obj.set('evented', false);
-          }
-        });
-      } else {
-        // 如果没有选择模式，所有对象都不可以交互
-        canvasInstance.getObjects().forEach(obj => { obj.set('selectable', false); obj.set('evented', false); });
-      }
+      // 根据selectedMode设置对象的可交互性 
+      canvasInstance.getObjects().forEach(obj => {
+        const objType = obj.get('dataType');
+        if (objType === selectedModeStore.selectedMode) {
+          obj.set('selectable', true);
+          obj.set('evented', true);
+        } else {
+          obj.set('selectable', false);
+          obj.set('evented', false);
+        }
+      });
     } else if (m === 'rect' || m === 'ellipse') {
       canvasInstance.isDrawingMode = false;
       canvasInstance.selection = false;
@@ -101,7 +96,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
 
     canvasInstance.renderAll();
   }
-  
+
   function clearCanvas() {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
@@ -114,8 +109,8 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     canvasInstance.renderAll();
     // 背景色会自动保留，无需重新设置
   }
-    
-      
-    
-      return {mode, setMode, setCanvas, clearCanvas }
+
+
+
+  return { mode, setMode, setCanvas, clearCanvas }
 }) 
