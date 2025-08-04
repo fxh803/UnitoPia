@@ -7,14 +7,18 @@ const {
     deleteBtnPosition,
     showClosePathBtn,
     closePathBtnPosition,
+    showGroupBtn,
+    groupBtnPosition,
     isPathClosed,
     updateDeleteBtnPosition,
     updateClosePathBtnPosition,
+    updateGroupBtnPosition,
     hideBtns
 } = storeToRefs(objectActionsStore)
 const {
     deleteActiveObject,
-    togglePathClosed
+    togglePathClosed,
+    toggleGroup
 } = objectActionsStore
 </script>
 
@@ -41,6 +45,22 @@ const {
             <!-- 红色圆圈+叉 -->
             <circle cx="8" cy="8" r="7" stroke="white" stroke-width="2" fill="none" />
             <path d="M5 5l6 6M11 5l-6 6" stroke="white" stroke-width="2" fill="none" />
+        </svg>
+    </button>
+
+    <!-- 分组/拆分组按钮 -->
+    <button v-if="showGroupBtn" class="group-btn" :style="groupBtnPosition" @click="toggleGroup">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <!-- 分组图标：多个方框组合 -->
+            <rect x="2" y="2" width="4" height="4" stroke="white" stroke-width="1" fill="none"/>
+            <rect x="8" y="2" width="4" height="4" stroke="white" stroke-width="1" fill="none"/>
+            <rect x="2" y="8" width="4" height="4" stroke="white" stroke-width="1" fill="none"/>
+            <rect x="8" y="8" width="4" height="4" stroke="white" stroke-width="1" fill="none"/>
+            <!-- 连接线 -->
+            <line x1="6" y1="4" x2="8" y2="4" stroke="white" stroke-width="1"/>
+            <line x1="4" y1="6" x2="4" y2="8" stroke="white" stroke-width="1"/>
+            <line x1="12" y1="6" x2="12" y2="8" stroke="white" stroke-width="1"/>
+            <line x1="6" y1="10" x2="8" y2="10" stroke="white" stroke-width="1"/>
         </svg>
     </button>
 </template>
@@ -101,6 +121,32 @@ const {
 .close-path-btn:hover {
     background-color: #2563eb;
     /* blue-600 */
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.group-btn {
+    position: absolute;
+    z-index: 10;
+    background-color: #10b981;
+    /* green-500 */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, -50%);
+    transition: all 0.2s ease;
+    pointer-events: all;
+}
+
+.group-btn:hover {
+    background-color: #059669;
+    /* green-600 */
     transform: translate(-50%, -50%) scale(1.1);
 }
 </style>

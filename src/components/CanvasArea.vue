@@ -34,6 +34,7 @@ const objectActionsStore = useObjectActionsStore()
 const {
   updateDeleteBtnPosition,
   updateClosePathBtnPosition,
+  updateGroupBtnPosition,
   hideBtns
 } = objectActionsStore
 
@@ -157,6 +158,7 @@ onMounted(async () => {
   const handleSelection = () => {
     updateDeleteBtnPosition()
     updateClosePathBtnPosition()
+    updateGroupBtnPosition()
   }
   canvas.on({
     'selection:created': handleSelection,
@@ -165,10 +167,7 @@ onMounted(async () => {
     'object:moving': hideBtns,
     'object:scaling': hideBtns,
     'object:rotating': hideBtns,
-    'object:modified': () => {
-      updateDeleteBtnPosition()
-      updateClosePathBtnPosition()
-    },
+    'object:modified': handleSelection
   })
   canvas.renderAll() 
 })
