@@ -123,6 +123,12 @@ export const useShapeDrawingStore = defineStore('shapeDrawing', () => {
         // 为形状对象设置dataType属性
         shapeObj.set('dataType', selectedModeStore.selectedMode);
         canvasInstance.add(shapeObj)
+        
+        // 在container模式下，将新绘制的形状移动到最底层
+        if (selectedModeStore.selectedMode === 'container') {
+          canvasInstance.sendObjectToBack(shapeObj, true);
+        }
+        
         // 应用当前模式的透明度规则
         selectedModeStore.handleModeSwitch(selectedModeStore.selectedMode);
       }

@@ -56,6 +56,12 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
         if (path) {
           // 根据当前选择的模式设置dataType
           path.set('dataType', selectedModeStore.selectedMode);
+
+          // 在container模式下，将新绘制的路径移动到最底层
+          if (selectedModeStore.selectedMode === 'container') {
+            canvasInstance.sendObjectToBack(path, true);
+          }
+          
           // 应用当前模式的透明度规则
           selectedModeStore.handleModeSwitch(selectedModeStore.selectedMode);
         }
