@@ -5,9 +5,9 @@ import ContainerToolbar from './ContainerToolbar.vue'
 import MarkerToolbar from './MarkerToolbar.vue'
 import FirstToolbar from './FirstToolbar.vue'
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
-import { storeToRefs } from 'pinia' 
+import { storeToRefs } from 'pinia'
 import { useShapeDrawing } from '~/composables/canvas/useShapeDrawing'
-import { useObjectActions } from '~/composables/canvas/useObjectActions'
+import { useObjectActionsStore } from '~/stores/objectActions'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useBrushSizeStore } from '~/stores/brushsize'
@@ -33,6 +33,21 @@ const {
 const canvasModeStore = useCanvasModeStore()
 const { mode } = storeToRefs(canvasModeStore)
 const { setMode, clearCanvas } = canvasModeStore
+
+const objectActionsStore = useObjectActionsStore()
+const { showDeleteBtn,
+  deleteBtnPosition,
+  showClosePathBtn,
+  closePathBtnPosition,
+  isPathClosed } = storeToRefs(objectActionsStore)
+
+const {
+  updateDeleteBtnPosition,
+  deleteActiveObject,
+  updateClosePathBtnPosition,
+  togglePathClosed,
+  hideBtns
+} = objectActionsStore
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
@@ -72,20 +87,7 @@ function updateCanvasSize() {
 }
 
 // 形状绘制
-const { isDrawingShape, shapeStart, previewShape, addShapeEventListeners, removeShapeEventListeners } = useShapeDrawing(() => canvas, mode, isContainerMode) 
-// 对象操作
-const {
-  showDeleteBtn,
-  deleteBtnPosition,
-  showClosePathBtn,
-  closePathBtnPosition,
-  updateDeleteBtnPosition,
-  deleteActiveObject,
-  updateClosePathBtnPosition,
-  isPathClosed,
-  togglePathClosed,
-  hideBtns,
-} = useObjectActions(() => canvas)
+const { isDrawingShape, shapeStart, previewShape, addShapeEventListeners, removeShapeEventListeners } = useShapeDrawing(() => canvas, mode, isContainerMode)
 
 watch(selectedMode, (newMode) => {
   if (newMode !== null) {
@@ -148,6 +150,7 @@ onMounted(async () => {
     // 设置 canvas 引用
     canvasModeStore.setCanvas(() => canvas)
     collageSeriesStore.setCanvas(() => canvas)
+    objectActionsStore.setCanvas(() => canvas)
     // 初始化空白幻灯片
     initializeEmptySlide()
     // 设置画布变化监听器
