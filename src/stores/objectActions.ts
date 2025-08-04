@@ -14,6 +14,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         canvasRef.value = canvas
     }
     function updateDeleteBtnPosition() {
+        console.log('updateDeleteBtnPosition')
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
         if (!obj) {
@@ -52,6 +53,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     }
 
     function updateClosePathBtnPosition() {
+        console.log('updateClosePathBtnPosition')
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
         currentPathObj.value = obj
