@@ -79,12 +79,12 @@ const calculateButtonPosition = (angle: number) => {
 }
 
 // 计算各个按钮的位置
-const deleteBtnPos = computed(() => calculateButtonPosition(30)) // 12点钟位置
-const closePathBtnPos = computed(() => calculateButtonPosition(90)) // 2点钟位置
-const groupBtnPos = computed(() => calculateButtonPosition(150)) // 4点钟位置
-const layerUpBtnPos = computed(() => calculateButtonPosition(210)) // 6点钟位置
-const layerDownBtnPos = computed(() => calculateButtonPosition(-30)) // 8点钟位置
-const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位置
+const deleteBtnPos = computed(() => calculateButtonPosition(30)) 
+const closePathBtnPos = computed(() => calculateButtonPosition(90))  
+const groupBtnPos = computed(() => calculateButtonPosition(-30)) 
+const layerDownBtnPos = computed(() => calculateButtonPosition(150))   
+const layerUpBtnPos = computed(() => calculateButtonPosition(210))  
+const colorBtnPos = computed(() => calculateButtonPosition(-90))  
 </script>
 
 <template>
@@ -178,8 +178,7 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位�
 
 <style scoped>
 .more-btn {
-    position: absolute;
-    z-index: 10;
+    position: absolute; 
     background-color: #6b7280;
     color: white;
     border: none;
@@ -204,8 +203,7 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位�
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
-    z-index: 1000;
+    height: 100vh; 
 }
 
 .wheel-container {
@@ -217,9 +215,10 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位�
     transform: translate(-50%, -50%);
     align-items: center;
     justify-content: center;
-    animation: wheel-appear 0.3s ease-out;
+    animation: wheel-appear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     overflow: hidden;
     background: transparent;
+    z-index: 1000;
 }
 
 .wheel-segments {
@@ -288,13 +287,13 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位�
     justify-content: center;
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    transition: all 0.2s ease;
-    z-index: 1;
+    transition: all 0.2s ease; 
+    z-index: 1000;
 }
 
 .wheel-center-more-btn:hover {
     background-color: #4b5563;
-    transform: translate(-50%, -50%) scale(1.1);
+    transform: translate(-50%, -50%) scale(1.1); 
 }
 
 .wheel-content {
@@ -303,8 +302,7 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位�
     height: 100%;
     display: flex;
     align-items: center;
-    justify-content: center;
-    z-index: 3;
+    justify-content: center; 
     background: transparent;
 }
 
@@ -330,16 +328,16 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位�
 
 /* 删除按钮 */
 .delete-wheel-btn {
-    background-color: #f87171;
+    background-color: #ef4444;
 }
 
 .delete-wheel-btn:hover {
-    background-color: #ef4444;
+    background-color: #dc2626;
 }
 
 /* 封闭路径按钮 */
 .close-path-wheel-btn {
-    background-color: #60a5fa;
+    background-color: #3b82f6;
 }
 
 .close-path-wheel-btn:hover {
@@ -348,12 +346,11 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位�
 
 /* 分组按钮 */
 .group-wheel-btn {
-    background-color: #ffffff;
-    color: #0d99ff;
+    background-color: #10b981; 
 }
 
 .group-wheel-btn:hover {
-    background-color: #f3f4f6;
+    background-color: #059669;
 }
 
 /* 层级上移按钮 */
@@ -367,16 +364,32 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90)) // 10点钟位�
 
 /* 层级下移按钮 */
 .layer-down-wheel-btn {
-    background-color: #ec4899;
+    background-color: #f59e0b;
 }
 
 .layer-down-wheel-btn:hover {
-    background-color: #db2777;
+    background-color: #d97706;
 }
 
 /* 取色器按钮 */
 .color-wheel-btn {
     background-color: transparent;
     padding: 0;
+}
+
+/* 转盘出现动画 */
+@keyframes wheel-appear {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
 }
 </style>
