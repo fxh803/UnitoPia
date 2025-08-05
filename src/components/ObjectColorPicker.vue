@@ -47,7 +47,7 @@ const handleColorChange = (event: Event) => {
 <template>
   <div v-if="showColorBtn&&!isContainerMode" class="flex justify-center absolute" :style="colorBtnPosition">
     <button
-      class="w-30px h-30px rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors translate-x--1/2 translate-y--1/2"
+      class="w-30px h-30px rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors"
       :style="{ backgroundColor: getCurrentObjectColor() }"
       title="Color Picker"
       @click="openColorPicker"
