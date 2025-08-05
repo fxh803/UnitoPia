@@ -18,7 +18,11 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     const groupBtnPosition = ref({ top: '0px', left: '0px' })
     const showColorBtn = ref(false)
     const colorBtnPosition = ref({ top: '0px', left: '0px' })
-    const currentPathObj = ref<any>(null)
+    const showLayerUpBtn = ref(false)
+    const layerUpBtnPosition = ref({ top: '0px', left: '0px' })
+    const showLayerDownBtn = ref(false)
+    const layerDownBtnPosition = ref({ top: '0px', left: '0px' })
+    const currentPathObj = ref<any>(null) //如果是需要响应式，则需要使用currentPathObj.value，如果只是画布操作，直接canvas.activeObject()
     // 设置 canvas 引用
     function setCanvas(canvas: () => Canvas | null) {
         canvasRef.value = canvas
@@ -264,11 +268,131 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         return '#000000'
     }
 
+    function updateLayerUpBtnPosition() {
+        const canvasInstance = canvasRef.value?.()
+        if (!currentPathObj.value) {
+            showLayerUpBtn.value = false
+            return
+        }
+
+        // 获取画布的变换信息
+        const zoom = canvasInstance.getZoom()
+        const vpt = canvasInstance.viewportTransform
+
+        // 计算选择框的左上角位置
+        const tr = currentPathObj.value.aCoords.tr
+        const btnOffsetX = -120  // 放在颜色按钮左侧
+        const btnOffsetY = 20
+
+        // 应用画布变换
+        const x = (tr.x * zoom) + (vpt[4] || 0)
+        const y = (tr.y * zoom) + (vpt[5] || 0)
+
+        layerUpBtnPosition.value = {
+            top: `${y - btnOffsetY}px`,
+            left: `${x + btnOffsetX}px`,
+        }
+        showLayerUpBtn.value = true
+    }
+
+    function updateLayerDownBtnPosition() {
+        const canvasInstance = canvasRef.value?.()
+        if (!currentPathObj.value) {
+            showLayerDownBtn.value = false
+            return
+        }
+
+        // 获取画布的变换信息
+        const zoom = canvasInstance.getZoom()
+        const vpt = canvasInstance.viewportTransform
+
+        // 计算选择框的左上角位置
+        const tr = currentPathObj.value.aCoords.tr
+        const btnOffsetX = -150  // 放在层级上移按钮左侧
+        const btnOffsetY = 20
+
+        // 应用画布变换
+        const x = (tr.x * zoom) + (vpt[4] || 0)
+        const y = (tr.y * zoom) + (vpt[5] || 0)
+
+        layerDownBtnPosition.value = {
+            top: `${y - btnOffsetY}px`,
+            left: `${x + btnOffsetX}px`,
+        }
+        showLayerDownBtn.value = true
+    }
+
+    function bringForward() {
+        const canvasInstance = canvasRef.value?.()
+        const activeObject = canvasInstance?.getActiveObject()
+        if (!activeObject || !canvasInstance) return
+
+        if (isMultipleSelection.value) {
+            // 多选对象：将所有对象移到前面
+            const objects = activeObject.getObjects()
+            objects.forEach((obj: any) => {
+                canvasInstance.bringObjectForward(obj)
+            })
+        } else if (isGroupMode.value) {
+            // Group对象：将组移到前面
+            canvasInstance.bringObjectForward(activeObject)
+        } else {
+            // 单个对象
+            canvasInstance.bringObjectForward(activeObject)
+        }
+
+        canvasInstance.requestRenderAll()
+        // 触发object:modified事件
+        canvasInstance.fire('object:modified', { target: activeObject })
+    }
+
+    function sendBackwards() {
+        const canvasInstance = canvasRef.value?.()
+        const activeObject = canvasInstance?.getActiveObject()
+        if (!activeObject || !canvasInstance) return
+
+        // 获取所有对象
+        const allObjects = canvasInstance.getObjects()
+        
+        // 检查是否有container对象
+        const hasContainer = allObjects.some(obj => obj.get('dataType') === 'container')
+        console.log(hasContainer)
+        if (hasContainer) {
+            // 如果有container对象，检查当前对象是否已经是倒数第二层
+            const currentIndex = allObjects.indexOf(activeObject)
+            if (currentIndex <= 1) {
+                // 如果已经是倒数第二层或更靠前，就不再移动
+                return
+            }
+        }
+        // 如果没有container对象，可以移动到最底层
+
+        if (isMultipleSelection.value) {
+            // 多选对象：将所有对象移到后面
+            const objects = activeObject.getObjects()
+            objects.forEach((obj: any) => {
+                canvasInstance.sendObjectBackwards(obj)
+            })
+        } else if (isGroupMode.value) {
+            // Group对象：将组移到后面
+            canvasInstance.sendObjectBackwards(activeObject)
+        } else {
+            // 单个对象
+            canvasInstance.sendObjectBackwards(activeObject)
+        }
+
+        canvasInstance.requestRenderAll()
+        // 触发object:modified事件
+        canvasInstance.fire('object:modified', { target: activeObject })
+    }
+
     function hideBtns() {
         showDeleteBtn.value = false
         showClosePathBtn.value = false
         showGroupBtn.value = false
         showColorBtn.value = false
+        showLayerUpBtn.value = false
+        showLayerDownBtn.value = false
         // currentPathObj.value = null
     }
 
@@ -281,18 +405,27 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         groupBtnPosition,
         showColorBtn,
         colorBtnPosition,
+        showLayerUpBtn,
+        layerUpBtnPosition,
+        showLayerDownBtn,
+        layerDownBtnPosition,
         isGroupMode,
         isMultipleSelection,
+        isPathClosed,
         updateDeleteBtnPosition,
         deleteActiveObject,
         updateClosePathBtnPosition,
         updateGroupBtnPosition,
         updateColorBtnPosition,
-        isPathClosed,
+        updateLayerUpBtnPosition,
+        updateLayerDownBtnPosition,
+        
         togglePathClosed,
         toggleGroup,
         applyColor,
         getCurrentObjectColor,
+        bringForward,
+        sendBackwards,
         hideBtns,
         setCanvas,
         setCurrentPathObj

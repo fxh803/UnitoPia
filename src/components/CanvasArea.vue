@@ -37,7 +37,9 @@ const {
   updateGroupBtnPosition,
   updateColorBtnPosition,
   hideBtns,
-  setCurrentPathObj
+  setCurrentPathObj,
+  updateLayerUpBtnPosition,
+  updateLayerDownBtnPosition
 } = objectActionsStore
 
 const shapeDrawingStore = useShapeDrawingStore()
@@ -163,7 +165,8 @@ onMounted(async () => {
     updateClosePathBtnPosition()
     updateGroupBtnPosition()
     updateColorBtnPosition()
-
+    updateLayerUpBtnPosition()
+    updateLayerDownBtnPosition()
   }
   canvas.on({
     'selection:created': handleSelection,

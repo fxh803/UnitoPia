@@ -2,8 +2,12 @@
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { storeToRefs } from 'pinia'
 import { watch } from 'vue'
-
+import { useSelectedModeStore } from '~/stores/selectedMode'
 const objectActionsStore = useObjectActionsStore()
+const selectedModeStore = useSelectedModeStore()
+const {
+    isContainerMode
+} = storeToRefs(selectedModeStore)
 const {
     showDeleteBtn,
     deleteBtnPosition,
@@ -11,13 +15,19 @@ const {
     closePathBtnPosition,
     showGroupBtn,
     groupBtnPosition,
+    showLayerUpBtn,
+    layerUpBtnPosition,
+    showLayerDownBtn,
+    layerDownBtnPosition,
     isPathClosed,
     isGroupMode
 } = storeToRefs(objectActionsStore)
 const {
     deleteActiveObject,
     togglePathClosed,
-    toggleGroup 
+    toggleGroup,
+    bringForward,
+    sendBackwards
 } = objectActionsStore 
 </script>
 
@@ -52,6 +62,22 @@ const {
         <!-- Group图标 -->
         <div v-if="!isGroupMode" class="i-carbon:group-objects"></div> 
         <div v-else class="i-carbon:ungroup-objects"></div> 
+    </button>
+
+    <!-- 层级上移按钮 -->
+    <button v-if="showLayerUpBtn&&!isContainerMode" class="layer-up-btn" :style="layerUpBtnPosition" @click="bringForward">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <!-- 向上箭头图标 -->
+            <path d="M8 2L2 8h3v6h6V8h3L8 2z"/>
+        </svg>
+    </button>
+
+    <!-- 层级下移按钮 -->
+    <button v-if="showLayerDownBtn&&!isContainerMode" class="layer-down-btn" :style="layerDownBtnPosition" @click="sendBackwards">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <!-- 向下箭头图标 -->
+            <path d="M8 14L2 8h3V2h6v6h3L8 14z"/>
+        </svg>
     </button>
 
     <!-- 应用颜色按钮 -->
@@ -160,6 +186,58 @@ const {
 .color-btn:hover {
     background-color: #d97706;
     /* amber-600 */
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.layer-up-btn {
+    position: absolute;
+    z-index: 10;
+    background-color: #8b5cf6;
+    /* violet-500 */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, -50%);
+    transition: all 0.2s ease;
+    pointer-events: all;
+}
+
+.layer-up-btn:hover {
+    background-color: #7c3aed;
+    /* violet-600 */
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.layer-down-btn {
+    position: absolute;
+    z-index: 10;
+    background-color: #ec4899;
+    /* pink-500 */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, -50%);
+    transition: all 0.2s ease;
+    pointer-events: all;
+}
+
+.layer-down-btn:hover {
+    background-color: #db2777;
+    /* pink-600 */
     transform: translate(-50%, -50%) scale(1.1);
 }
 </style>
