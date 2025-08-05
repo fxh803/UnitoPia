@@ -3,16 +3,19 @@ import { ref, watch, computed } from 'vue'
 import { useObjectColorPickerStore } from '~/stores/objectColorPicker'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { storeToRefs } from 'pinia'
-
+import { useSelectedModeStore } from '~/stores/selectedMode'
 const objectColorPickerStore = useObjectColorPickerStore()
 const colorPickerRef = ref<HTMLInputElement>()
 const objectActionsStore = useObjectActionsStore()
+const selectedModeStore = useSelectedModeStore()
 const {objectColor} = storeToRefs(objectColorPickerStore)
 const {
     showColorBtn,
     colorBtnPosition,
 } = storeToRefs(objectActionsStore)
-
+const {
+    isContainerMode
+} = storeToRefs(selectedModeStore)
 const {
     applyColor,
     getCurrentObjectColor
@@ -42,7 +45,7 @@ const handleColorChange = (event: Event) => {
 </script>
 
 <template>
-  <div v-if="showColorBtn" class="flex justify-center absolute" :style="colorBtnPosition">
+  <div v-if="showColorBtn&&!isContainerMode" class="flex justify-center absolute" :style="colorBtnPosition">
     <button
       class="w-30px h-30px rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors translate-x--1/2 translate-y--1/2"
       :style="{ backgroundColor: getCurrentObjectColor() }"

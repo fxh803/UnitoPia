@@ -7,7 +7,7 @@ import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useObjectColorPickerStore } from '~/stores/objectColorPicker'
 const selectedModeStore = useSelectedModeStore()
 const objectColorPickerStore = useObjectColorPickerStore()
-const {objectColor} = storeToRefs(objectColorPickerStore)
+const { objectColor } = storeToRefs(objectColorPickerStore)
 export const useObjectActionsStore = defineStore('objectActions', () => {
     const canvasRef = ref<(() => Canvas | null) | null>(null)
     const showDeleteBtn = ref(false)
@@ -41,7 +41,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const obj = canvasInstance?.getActiveObject()
         currentPathObj.value = obj
     }
-    function updateDeleteBtnPosition() { 
+    function updateDeleteBtnPosition() {
         const canvasInstance = canvasRef.value?.()
         if (!currentPathObj.value) {
             showDeleteBtn.value = false
@@ -67,7 +67,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         }
         showDeleteBtn.value = true
     }
-    function updateClosePathBtnPosition() { 
+    function updateClosePathBtnPosition() {
         const canvasInstance = canvasRef.value?.()
         if (!currentPathObj.value) {
             showClosePathBtn.value = false
@@ -96,7 +96,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         }
         showClosePathBtn.value = true
     }
-    function updateGroupBtnPosition() {     
+    function updateGroupBtnPosition() {
         const canvasInstance = canvasRef.value?.()
         if (!currentPathObj.value) {
             showGroupBtn.value = false
@@ -127,9 +127,39 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         }
         showGroupBtn.value = true
     }
+    function updateColorBtnPosition() {
+        const canvasInstance = canvasRef.value?.()
+        if (!currentPathObj.value) {
+            showColorBtn.value = false
+            return
+        }
+        if (isGroupMode.value || isMultipleSelection.value) {
+            showColorBtn.value = false
+            return
+        }
+
+        // 获取画布的变换信息
+        const zoom = canvasInstance.getZoom()
+        const vpt = canvasInstance.viewportTransform
+
+        // 计算选择框的左上角位置
+        const tr = currentPathObj.value.aCoords.tr
+        const btnOffsetX = -60  // 放在其他按钮右侧
+        const btnOffsetY = 20
+
+        // 应用画布变换
+        const x = (tr.x * zoom) + (vpt[4] || 0)
+        const y = (tr.y * zoom) + (vpt[5] || 0)
+
+        colorBtnPosition.value = {
+            top: `${y - btnOffsetY}px`,
+            left: `${x + btnOffsetX}px`,
+        }
+        showColorBtn.value = true
+    }
     function deleteActiveObject() {
         const canvasInstance = canvasRef.value?.()
-        const obj = currentPathObj.value
+        const obj = canvasInstance?.getActiveObject()
         if (isMultipleSelection.value) {
             const objects = obj.getObjects()
             canvasInstance.remove(...objects)
@@ -154,7 +184,6 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         // 触发object:modified事件，让slide能够检测到变化
         canvasInstance?.fire('object:modified', { target: currentPathObj.value })
     }
-
     function toggleGroup() {
         const canvasInstance = canvasRef.value?.()
         const activeObject = canvasInstance?.getActiveObject()
@@ -191,46 +220,16 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
                 const group = new Group(objects, {
                     dataType: selectedModeStore.selectedMode
                 })
-
                 // 将组添加到画布
                 canvasInstance.add(group)
+                if (selectedModeStore.selectedMode === 'container') {
+                    canvasInstance.sendObjectToBack(group);
+                }
                 canvasInstance.setActiveObject(group)
                 canvasInstance.requestRenderAll()
             }
         }
     }
-
-    function updateColorBtnPosition() {
-        const canvasInstance = canvasRef.value?.()
-        if (!currentPathObj.value) {
-            showColorBtn.value = false
-            return
-        }
-        if (isGroupMode.value || isMultipleSelection.value) {
-            showColorBtn.value = false
-            return
-        }
-
-        // 获取画布的变换信息
-        const zoom = canvasInstance.getZoom()
-        const vpt = canvasInstance.viewportTransform
-
-        // 计算选择框的左上角位置
-        const tr = currentPathObj.value.aCoords.tr
-        const btnOffsetX = -60  // 放在其他按钮右侧
-        const btnOffsetY = 20
-
-        // 应用画布变换
-        const x = (tr.x * zoom) + (vpt[4] || 0)
-        const y = (tr.y * zoom) + (vpt[5] || 0)
-
-        colorBtnPosition.value = {
-            top: `${y - btnOffsetY}px`,
-            left: `${x + btnOffsetX}px`,
-        }
-        showColorBtn.value = true
-    }
-
     function applyColor() {
         console.log('applyColor')
         const canvasInstance = canvasRef.value?.()
@@ -239,34 +238,11 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         if (!activeObject || !canvasInstance) return
 
         const selectedColor = objectColor.value
-        console.log(selectedColor)
-        if (isMultipleSelection.value) {
-            // 多选对象：应用到所有选中的对象
-            const objects = activeObject.getObjects()
-            objects.forEach((obj: any) => {
-                obj.set('stroke', selectedColor)
-                if (obj.fill && obj.fill !== 'transparent' && obj.fill !== 'rgba(0,0,0,0)') {
-                    obj.set('fill', selectedColor)
-                }
-            })
-        } else if (isGroupMode.value) {
-            // Group对象：应用到组内所有对象
-            const objects = activeObject.getObjects()
-            objects.forEach((obj: any) => {
-                obj.set('stroke', selectedColor)
-                if (obj.fill && obj.fill !== 'transparent' && obj.fill !== 'rgba(0,0,0,0)') {
-                    obj.set('fill', selectedColor)
-                }
 
-            })
-        } else { 
-            activeObject.set('stroke', selectedColor)
-            if (activeObject.fill && activeObject.fill !== 'transparent' && activeObject.fill !== 'rgba(0,0,0,0)') {
-                activeObject.set('fill', selectedColor)
-            }
-
+        activeObject.set('stroke', selectedColor)
+        if (activeObject.fill && activeObject.fill !== 'transparent' && activeObject.fill !== 'rgba(0,0,0,0)') {
+            activeObject.set('fill', selectedColor)
         }
-
         canvasInstance.requestRenderAll()
         // 触发object:modified事件
         canvasInstance.fire('object:modified', { target: activeObject })
@@ -283,7 +259,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         } else if (activeObject.fill && activeObject.fill !== 'transparent' && activeObject.fill !== 'rgba(0,0,0,0)') {
             return activeObject.fill
         }
-        
+
         // 默认颜色
         return '#000000'
     }
