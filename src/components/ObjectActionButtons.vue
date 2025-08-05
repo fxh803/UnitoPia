@@ -11,16 +11,13 @@ const {
     closePathBtnPosition,
     showGroupBtn,
     groupBtnPosition,
-    showColorBtn,
-    colorBtnPosition,
     isPathClosed,
     isGroupMode
 } = storeToRefs(objectActionsStore)
 const {
     deleteActiveObject,
     togglePathClosed,
-    toggleGroup,
-    applyColor
+    toggleGroup 
 } = objectActionsStore 
 </script>
 
@@ -58,14 +55,7 @@ const {
     </button>
 
     <!-- 应用颜色按钮 -->
-    <button v-if="showColorBtn" class="color-btn" :style="colorBtnPosition" @click="applyColor">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <!-- 颜色填充图标 -->
-            <circle cx="8" cy="8" r="6" fill="currentColor"/>
-            <circle cx="8" cy="8" r="4" fill="white"/>
-            <circle cx="8" cy="8" r="2" fill="currentColor"/>
-        </svg>
-    </button>
+    <ObjectColorPicker />
 </template>
 
 <style scoped>

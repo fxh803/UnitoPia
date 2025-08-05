@@ -2,10 +2,12 @@ import { defineStore } from 'pinia'
 import type { Canvas } from 'fabric'
 import { Group, ActiveSelection } from 'fabric'
 import { ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useSelectedModeStore } from '~/stores/selectedMode'
-import { useColorPickerStore } from '~/stores/colorpicker'
+import { useObjectColorPickerStore } from '~/stores/objectColorPicker'
 const selectedModeStore = useSelectedModeStore()
-const colorPickerStore = useColorPickerStore()
+const objectColorPickerStore = useObjectColorPickerStore()
+const {objectColor} = storeToRefs(objectColorPickerStore)
 export const useObjectActionsStore = defineStore('objectActions', () => {
     const canvasRef = ref<(() => Canvas | null) | null>(null)
     const showDeleteBtn = ref(false)
@@ -34,11 +36,14 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const obj = currentPathObj.value
         return !!(obj && obj.type === 'activeselection')
     })
-    function updateDeleteBtnPosition() {
+    function setCurrentPathObj() {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
         currentPathObj.value = obj
-        if (!obj) {
+    }
+    function updateDeleteBtnPosition() { 
+        const canvasInstance = canvasRef.value?.()
+        if (!currentPathObj.value) {
             showDeleteBtn.value = false
             return
         }
@@ -48,7 +53,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const vpt = canvasInstance.viewportTransform
 
         // 计算对象在画布容器中的实际位置
-        const tr = obj.aCoords.tr
+        const tr = currentPathObj.value.aCoords.tr
         const btnOffsetX = 20
         const btnOffsetY = 20
 
@@ -62,11 +67,9 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         }
         showDeleteBtn.value = true
     }
-    function updateClosePathBtnPosition() {
+    function updateClosePathBtnPosition() { 
         const canvasInstance = canvasRef.value?.()
-        const obj = canvasInstance?.getActiveObject()
-        currentPathObj.value = obj
-        if (!obj) {
+        if (!currentPathObj.value) {
             showClosePathBtn.value = false
             return
         }
@@ -79,7 +82,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const vpt = canvasInstance.viewportTransform
 
         // 计算对象在画布容器中的实际位置
-        const tr = obj.aCoords.tr
+        const tr = currentPathObj.value.aCoords.tr
         const btnOffsetX = -20
         const btnOffsetY = 20
 
@@ -93,11 +96,9 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         }
         showClosePathBtn.value = true
     }
-    function updateGroupBtnPosition() {
+    function updateGroupBtnPosition() {     
         const canvasInstance = canvasRef.value?.()
-        const activeObject = canvasInstance?.getActiveObject()
-        currentPathObj.value = activeObject
-        if (!activeObject) {
+        if (!currentPathObj.value) {
             showGroupBtn.value = false
             return
         }
@@ -112,7 +113,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const vpt = canvasInstance.viewportTransform
 
         // 计算选择框的左上角位置
-        const tr = activeObject.aCoords.tr
+        const tr = currentPathObj.value.aCoords.tr
         const btnOffsetX = -20
         const btnOffsetY = 20
 
@@ -128,7 +129,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     }
     function deleteActiveObject() {
         const canvasInstance = canvasRef.value?.()
-        const obj = canvasInstance?.getActiveObject()
+        const obj = currentPathObj.value
         if (isMultipleSelection.value) {
             const objects = obj.getObjects()
             canvasInstance.remove(...objects)
@@ -156,7 +157,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
 
     function toggleGroup() {
         const canvasInstance = canvasRef.value?.()
-        const activeObject = canvasInstance?.getActiveObject()
+        const activeObject = currentPathObj.value
         if (!activeObject || !canvasInstance) return
 
         // 检查是否为组对象（拆分组）
@@ -201,8 +202,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
 
     function updateColorBtnPosition() {
         const canvasInstance = canvasRef.value?.()
-        const activeObject = canvasInstance?.getActiveObject()
-        if (!activeObject) {
+        if (!currentPathObj.value) {
             showColorBtn.value = false
             return
         }
@@ -212,8 +212,8 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const vpt = canvasInstance.viewportTransform
 
         // 计算选择框的左上角位置
-        const tr = activeObject.aCoords.tr
-        const btnOffsetX = 60  // 放在其他按钮右侧
+        const tr = currentPathObj.value.aCoords.tr
+        const btnOffsetX = -60  // 放在其他按钮右侧
         const btnOffsetY = 20
 
         // 应用画布变换
@@ -228,12 +228,14 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     }
 
     function applyColor() {
+        console.log('applyColor')
         const canvasInstance = canvasRef.value?.()
-        const activeObject = canvasInstance?.getActiveObject()
+        const activeObject = currentPathObj.value
+        console.log(activeObject)
         if (!activeObject || !canvasInstance) return
 
-        const selectedColor = colorPickerStore.selectedColor
-
+        const selectedColor = objectColor.value
+        console.log(selectedColor)
         if (isMultipleSelection.value) {
             // 多选对象：应用到所有选中的对象
             const objects = activeObject.getObjects()
@@ -271,7 +273,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         showClosePathBtn.value = false
         showGroupBtn.value = false
         showColorBtn.value = false
-        currentPathObj.value = null
+        // currentPathObj.value = null
     }
 
     return {
@@ -295,6 +297,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         toggleGroup,
         applyColor,
         hideBtns,
-        setCanvas
+        setCanvas,
+        setCurrentPathObj
     }
 }) 

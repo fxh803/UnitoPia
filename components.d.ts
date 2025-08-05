@@ -21,6 +21,7 @@ declare module 'vue' {
     Header: typeof import('./src/components/Header.vue')['default']
     MarkerToolbar: typeof import('./src/components/MarkerToolbar.vue')['default']
     ObjectActionButtons: typeof import('./src/components/ObjectActionButtons.vue')['default']
+    ObjectColorPicker: typeof import('./src/components/ObjectColorPicker.vue')['default']
     ResizableContainer: typeof import('./src/components/ResizableContainer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
