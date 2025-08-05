@@ -11,13 +11,16 @@ const {
     closePathBtnPosition,
     showGroupBtn,
     groupBtnPosition,
+    showColorBtn,
+    colorBtnPosition,
     isPathClosed,
     isGroupMode
 } = storeToRefs(objectActionsStore)
 const {
     deleteActiveObject,
     togglePathClosed,
-    toggleGroup
+    toggleGroup,
+    applyColor
 } = objectActionsStore 
 </script>
 
@@ -52,6 +55,16 @@ const {
         <!-- Group图标 -->
         <div v-if="!isGroupMode" class="i-carbon:group-objects"></div> 
         <div v-else class="i-carbon:ungroup-objects"></div> 
+    </button>
+
+    <!-- 应用颜色按钮 -->
+    <button v-if="showColorBtn" class="color-btn" :style="colorBtnPosition" @click="applyColor">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <!-- 颜色填充图标 -->
+            <circle cx="8" cy="8" r="6" fill="currentColor"/>
+            <circle cx="8" cy="8" r="4" fill="white"/>
+            <circle cx="8" cy="8" r="2" fill="currentColor"/>
+        </svg>
     </button>
 </template>
 
@@ -131,6 +144,32 @@ const {
 .group-btn:hover {
     /* background-color: #e0e0e0; */
     /* green-600 */
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.color-btn {
+    position: absolute;
+    z-index: 10;
+    background-color: #f59e0b;
+    /* amber-500 */
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    transform: translate(-50%, -50%);
+    transition: all 0.2s ease;
+    pointer-events: all;
+}
+
+.color-btn:hover {
+    background-color: #d97706;
+    /* amber-600 */
     transform: translate(-50%, -50%) scale(1.1);
 }
 </style>

@@ -1,9 +1,11 @@
-import { defineStore } from 'pinia' 
+import { defineStore } from 'pinia'
 import type { Canvas } from 'fabric'
 import { Group, ActiveSelection } from 'fabric'
 import { ref, computed } from 'vue'
 import { useSelectedModeStore } from '~/stores/selectedMode'
+import { useColorPickerStore } from '~/stores/colorpicker'
 const selectedModeStore = useSelectedModeStore()
+const colorPickerStore = useColorPickerStore()
 export const useObjectActionsStore = defineStore('objectActions', () => {
     const canvasRef = ref<(() => Canvas | null) | null>(null)
     const showDeleteBtn = ref(false)
@@ -12,6 +14,8 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     const closePathBtnPosition = ref({ top: '0px', left: '0px' })
     const showGroupBtn = ref(false)
     const groupBtnPosition = ref({ top: '0px', left: '0px' })
+    const showColorBtn = ref(false)
+    const colorBtnPosition = ref({ top: '0px', left: '0px' })
     const currentPathObj = ref<any>(null)
     // 设置 canvas 引用
     function setCanvas(canvas: () => Canvas | null) {
@@ -65,8 +69,8 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         if (!obj) {
             showClosePathBtn.value = false
             return
-        } 
-        if(isGroupMode.value || isMultipleSelection.value){
+        }
+        if (isGroupMode.value || isMultipleSelection.value) {
             showClosePathBtn.value = false
             return
         }
@@ -96,7 +100,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         if (!activeObject) {
             showGroupBtn.value = false
             return
-        } 
+        }
 
         if (!isGroupMode.value && !isMultipleSelection.value) {
             showGroupBtn.value = false
@@ -125,12 +129,12 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     function deleteActiveObject() {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
-        if (isMultipleSelection.value){
+        if (isMultipleSelection.value) {
             const objects = obj.getObjects()
             canvasInstance.remove(...objects)
             canvasInstance.discardActiveObject()
-            canvasInstance.renderAll() 
-        }else if (obj && canvasInstance) {
+            canvasInstance.renderAll()
+        } else if (obj && canvasInstance) {
             canvasInstance.remove(obj)
             canvasInstance.discardActiveObject()
             canvasInstance.renderAll()
@@ -155,50 +159,118 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const activeObject = canvasInstance?.getActiveObject()
         if (!activeObject || !canvasInstance) return
 
-                // 检查是否为组对象（拆分组）
+        // 检查是否为组对象（拆分组）
         if (isGroupMode.value) {
             // 使用removeAll()方法获取组中的所有对象并移除它们
-            const objects = activeObject.removeAll() 
+            const objects = activeObject.removeAll()
             // 将对象重新添加到画布
             canvasInstance.add(...objects)
-            
+
             // 从画布中移除组对象
             canvasInstance.remove(activeObject)
-            
+
             // 创建ActiveSelection，保持多选状态
             const activeSelection = new ActiveSelection(objects, {
                 canvas: canvasInstance
             })
-            
+
             // 设置为活动对象
             canvasInstance.setActiveObject(activeSelection)
-            canvasInstance.requestRenderAll() 
-        }else {
+            canvasInstance.requestRenderAll()
+        } else {
             // 分组：检查是否为多选对象
             if (isMultipleSelection.value) {
                 // 获取所有选中的对象
-                const objects = activeObject.getObjects() 
-                
+                const objects = activeObject.getObjects()
+
                 // 从画布中移除原始对象
                 canvasInstance.remove(...objects)
-                
+
                 // 创建新的组，使用原始对象
                 const group = new Group(objects, {
                     dataType: selectedModeStore.selectedMode
                 })
-                
+
                 // 将组添加到画布
                 canvasInstance.add(group)
                 canvasInstance.setActiveObject(group)
-                canvasInstance.requestRenderAll() 
+                canvasInstance.requestRenderAll()
             }
         }
+    }
+
+    function updateColorBtnPosition() {
+        const canvasInstance = canvasRef.value?.()
+        const activeObject = canvasInstance?.getActiveObject()
+        if (!activeObject) {
+            showColorBtn.value = false
+            return
+        }
+
+        // 获取画布的变换信息
+        const zoom = canvasInstance.getZoom()
+        const vpt = canvasInstance.viewportTransform
+
+        // 计算选择框的左上角位置
+        const tr = activeObject.aCoords.tr
+        const btnOffsetX = 60  // 放在其他按钮右侧
+        const btnOffsetY = 20
+
+        // 应用画布变换
+        const x = (tr.x * zoom) + (vpt[4] || 0)
+        const y = (tr.y * zoom) + (vpt[5] || 0)
+
+        colorBtnPosition.value = {
+            top: `${y - btnOffsetY}px`,
+            left: `${x + btnOffsetX}px`,
+        }
+        showColorBtn.value = true
+    }
+
+    function applyColor() {
+        const canvasInstance = canvasRef.value?.()
+        const activeObject = canvasInstance?.getActiveObject()
+        if (!activeObject || !canvasInstance) return
+
+        const selectedColor = colorPickerStore.selectedColor
+
+        if (isMultipleSelection.value) {
+            // 多选对象：应用到所有选中的对象
+            const objects = activeObject.getObjects()
+            objects.forEach((obj: any) => {
+                obj.set('stroke', selectedColor)
+                if (obj.fill && obj.fill !== 'transparent' && obj.fill !== 'rgba(0,0,0,0)') {
+                    obj.set('fill', selectedColor)
+                }
+            })
+        } else if (isGroupMode.value) {
+            // Group对象：应用到组内所有对象
+            const objects = activeObject.getObjects()
+            objects.forEach((obj: any) => {
+                obj.set('stroke', selectedColor)
+                if (obj.fill && obj.fill !== 'transparent' && obj.fill !== 'rgba(0,0,0,0)') {
+                    obj.set('fill', selectedColor)
+                }
+
+            })
+        } else { 
+            activeObject.set('stroke', selectedColor)
+            if (activeObject.fill && activeObject.fill !== 'transparent' && activeObject.fill !== 'rgba(0,0,0,0)') {
+                activeObject.set('fill', selectedColor)
+            }
+
+        }
+
+        canvasInstance.requestRenderAll()
+        // 触发object:modified事件
+        canvasInstance.fire('object:modified', { target: activeObject })
     }
 
     function hideBtns() {
         showDeleteBtn.value = false
         showClosePathBtn.value = false
         showGroupBtn.value = false
+        showColorBtn.value = false
         currentPathObj.value = null
     }
 
@@ -208,16 +280,20 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         showClosePathBtn,
         closePathBtnPosition,
         showGroupBtn,
-        groupBtnPosition, 
+        groupBtnPosition,
+        showColorBtn,
+        colorBtnPosition,
         isGroupMode,
         isMultipleSelection,
         updateDeleteBtnPosition,
         deleteActiveObject,
         updateClosePathBtnPosition,
         updateGroupBtnPosition,
+        updateColorBtnPosition,
         isPathClosed,
         togglePathClosed,
         toggleGroup,
+        applyColor,
         hideBtns,
         setCanvas
     }

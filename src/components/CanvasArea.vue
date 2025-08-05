@@ -35,6 +35,7 @@ const {
   updateDeleteBtnPosition,
   updateClosePathBtnPosition,
   updateGroupBtnPosition,
+  updateColorBtnPosition,
   hideBtns
 } = objectActionsStore
 
@@ -159,6 +160,7 @@ onMounted(async () => {
     updateDeleteBtnPosition()
     updateClosePathBtnPosition()
     updateGroupBtnPosition()
+    updateColorBtnPosition()
   }
   canvas.on({
     'selection:created': handleSelection,
