@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import Table from './Table.vue'
+import Overview from './Overview.vue'
 
 
 // 切换状态
@@ -48,14 +49,8 @@ const switchTab = (tab: 'table' | 'overview') => {
       </div>
 
       <!-- Overview 模式 -->
-      <div v-else-if="activeTab === 'overview'" class="h-full p-6">
-        <div class="flex items-center justify-center h-full">
-          <div class="text-center text-gray-500">
-            <div class="text-6xl mb-4">📊</div>
-            <h3 class="text-lg font-medium mb-2">Overview 模式</h3>
-            <p class="text-sm">这里将显示数据概览和统计信息</p>
-          </div>
-        </div>
+      <div v-else-if="activeTab === 'overview'" class="h-full">
+        <Overview />
       </div>
     </div>
   </aside>

@@ -9,8 +9,11 @@ import { useBrushSizeStore } from '~/stores/brushsize'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useShapeDrawingStore } from '~/stores/shapeDrawing'
+import { useOverviewStore } from '~/stores/overview'
 const selectedModeStore = useSelectedModeStore()
 const {selectedMode, isContainerMode} = storeToRefs(selectedModeStore) 
+
+const overviewStore = useOverviewStore()
 
 const brushSizeStore = useBrushSizeStore()
 const { brushWidth } = storeToRefs(brushSizeStore) 
@@ -146,6 +149,7 @@ onMounted(async () => {
     objectActionsStore.setCanvas(() => canvas)
     shapeDrawingStore.setCanvas(() => canvas)
     selectedModeStore.setCanvas(() => canvas)
+    overviewStore.setCanvas(() => canvas)
     // 初始化空白幻灯片
     initializeEmptySlide()
     // 设置画布变化监听器
