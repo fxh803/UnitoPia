@@ -10,8 +10,7 @@ const objectActionsStore = useObjectActionsStore()
 const selectedModeStore = useSelectedModeStore()
 const {objectColor} = storeToRefs(objectColorPickerStore)
 const {
-    showColorBtn,
-    colorBtnPosition,
+    showColorBtn, 
 } = storeToRefs(objectActionsStore)
 const {
     isContainerMode
@@ -45,7 +44,7 @@ const handleColorChange = (event: Event) => {
 </script>
 
 <template>
-  <div v-if="showColorBtn&&!isContainerMode" class="flex justify-center absolute" :style="colorBtnPosition">
+  <div v-if="showColorBtn&&!isContainerMode" class="flex justify-center absolute"  >
     <button
       class="w-40px h-40px rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors"
       :style="{ backgroundColor: getCurrentObjectColor() }"

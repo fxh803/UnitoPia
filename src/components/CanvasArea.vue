@@ -32,14 +32,10 @@ const { setMode, clearCanvas } = canvasModeStore
 
 const objectActionsStore = useObjectActionsStore()
 const {
-  updateDeleteBtnPosition,
-  updateClosePathBtnPosition,
-  updateGroupBtnPosition,
-  updateColorBtnPosition,
+  updateActionBtnPosition, 
+  updateActionBtnVisble,
   hideBtns,
-  setCurrentPathObj,
-  updateLayerUpBtnPosition,
-  updateLayerDownBtnPosition
+  setCurrentPathObj, 
 } = objectActionsStore
 
 const shapeDrawingStore = useShapeDrawingStore()
@@ -161,12 +157,8 @@ onMounted(async () => {
   // 事件监听
   const handleSelection = () => {
     setCurrentPathObj()
-    updateDeleteBtnPosition()
-    updateClosePathBtnPosition()
-    updateGroupBtnPosition()
-    updateColorBtnPosition()
-    updateLayerUpBtnPosition()
-    updateLayerDownBtnPosition()
+    updateActionBtnPosition()
+    updateActionBtnVisble()
   }
   canvas.on({
     'selection:created': handleSelection,

@@ -12,16 +12,12 @@ const {
     isContainerMode
 } = storeToRefs(selectedModeStore)
 const {
-    showDeleteBtn,
-    deleteBtnPosition,
-    showClosePathBtn,
-    closePathBtnPosition,
-    showGroupBtn,
-    groupBtnPosition,
-    showLayerUpBtn,
-    layerUpBtnPosition,
+    showDeleteBtn, 
+    showClosePathBtn, 
+    showGroupBtn, 
+    showLayerUpBtn, 
     showLayerDownBtn,
-    layerDownBtnPosition,
+    actionBtnPosition,
     isPathClosed,
     isGroupMode
 } = storeToRefs(objectActionsStore)
@@ -90,7 +86,7 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90))
 <template>
     <!-- 更多按钮 -->
     <button v-if="showDeleteBtn || showClosePathBtn || showGroupBtn || showLayerUpBtn || showLayerDownBtn"
-        ref="moreBtnRef" class="more-btn" :style="deleteBtnPosition" @click="toggleWheel">
+        ref="moreBtnRef" class="more-btn" :style="actionBtnPosition" @click="toggleWheel">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
             <path
                 d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z" />
@@ -203,7 +199,8 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90))
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh; 
+    height: 100vh;
+    z-index: 9999;
 }
 
 .wheel-container {
@@ -218,7 +215,7 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90))
     animation: wheel-appear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     overflow: hidden;
     background: transparent;
-    z-index: 1000;
+    z-index: 10000;
 }
 
 .wheel-segments {
@@ -233,15 +230,12 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90))
     width: 100px;
     height: 100px;
     border: 1px solid #eaeaea;
-    display: flex;
-    justify-content: flex-end;
     position: absolute;
     left: 50%;
     top: 50%;
     transform-origin: bottom right;
     transform: translate(-100%, -100%) rotate(45deg) skew(15deg, 15deg);
     background: rgba(250, 250, 250, 0.8);
-    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     cursor: pointer;
 }
 
