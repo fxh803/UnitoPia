@@ -1,5 +1,4 @@
-<script setup lang="ts">
-import { defineProps, ref, defineEmits, watch } from 'vue'
+<script setup lang="ts"> 
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { storeToRefs } from 'pinia'
 const selectedModeStore = useSelectedModeStore()

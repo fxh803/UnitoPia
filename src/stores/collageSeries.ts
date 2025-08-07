@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Canvas } from 'fabric'
+import { useOverviewStore } from '~/stores/overview'
 
 export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 拼贴系列状态
@@ -8,6 +9,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     const currentSlideIndex = ref(0)
     const stopListen = ref(false) // 添加标志
     const canvasRef = ref<(() => Canvas | null) | null>(null)
+    const overviewStore = useOverviewStore()
 
     // 设置 canvas 引用
     function setCanvas(canvas: () => Canvas | null) {
@@ -87,6 +89,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         collageSeries.value.push({ json, preview })
         currentSlideIndex.value = collageSeries.value.length - 1
         stopListen.value = false
+        overviewStore.updateMarkerObjects()
     }
 
     // 选择幻灯片
@@ -112,6 +115,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         }else{
             stopListen.value = false
         }
+        overviewStore.updateMarkerObjects()
     }
 
     // 删除幻灯片
@@ -126,6 +130,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             currentSlideIndex.value -= 1
         }
         collageSeries.value.splice(idx, 1)
+        overviewStore.updateMarkerObjects()
     }
 
     // 监听画布变化，自动更新当前幻灯片
@@ -142,6 +147,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     return {
         collageSeries,
         currentSlideIndex,
+        stopListen,
         setCanvas,
         initializeEmptySlide,
         updateCurrentSlide,

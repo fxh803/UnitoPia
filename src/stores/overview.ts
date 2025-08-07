@@ -62,8 +62,8 @@ export const useOverviewStore = defineStore('overview', () => {
         visualEncoding: 'size' as const,
         dataField: '',
         dataRange: {
-          start: 1,
-          end: 10
+          start: -1,
+          end: -1
         }
       }
     })
@@ -162,9 +162,10 @@ export const useOverviewStore = defineStore('overview', () => {
     const canvas = canvasRef.value?.()
     if (canvas) {
       canvas.on('object:added', updateMarkerObjects)
-      canvas.on('path:created', updateMarkerObjects)
+      canvas.on('path:created', updateMarkerObjects) 
+      canvas.on('object:modified', updateMarkerObjects)
       canvas.on('object:removed', updateMarkerObjects)
-      canvas.on('path:modified', updateMarkerObjects)
+      canvas.on('object:updated', updateMarkerObjects)
     }
   }
 

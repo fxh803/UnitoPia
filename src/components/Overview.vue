@@ -10,11 +10,6 @@ const tableStore = useTableStore()
 const selectedModeStore = useSelectedModeStore()
 const overviewStore = useOverviewStore()
 
-// 监听画布变化
-watch(() => canvasModeStore.mode, () => {
-  overviewStore.updateMarkerObjects()
-})
-
 // 组件挂载时初始化
 onMounted(() => {
   // 延迟初始化，确保画布已经准备好
@@ -73,37 +68,51 @@ onMounted(() => {
               </div>
             </div>
 
-            <!-- Data Binding Selector -->
-            <div class="flex flex-col space-y-2">
-              <span class="text-sm font-medium text-gray-700">Data Binding:</span>
-              <div class="flex flex-col space-y-2">
-                                 <!-- Data Field Dropdown -->
+                         <!-- Data Binding Selector -->
+             <div class="flex flex-col space-y-2">
+               <span class="text-sm font-medium text-gray-700">Data Binding:</span>
+               <div v-if="tableStore.tableColumns && tableStore.tableColumns.length > 0" class="flex flex-col space-y-2">
+                                  <!-- Data Field Dropdown -->
                  <div class="flex justify-center">
                    <select v-model="marker.dataField"
                      @change="overviewStore.handleDataFieldChange(marker.id, marker.dataField)"
-                     class="px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-xs">
-                     <option value="">Select Data Field</option>
+                     :class="[
+                       'px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-xs',
+                       marker.dataField === '' ? 'text-gray-400' : 'text-gray-900'
+                     ]">
+                     <option value="" disabled>Select Data Field</option>
                      <option v-for="column in tableStore.tableColumns" :key="column" :value="column">
                        {{ column }}
                      </option>
                    </select>
                  </div>
-
-                <!-- Data Range Input -->
-                <div class="flex items-center space-x-2  justify-center">
-                  <span class="text-sm text-gray-600">Data Range:</span>
-                  <input type="number" v-model.number="marker.dataRange.start"
-                    @change="overviewStore.handleDataRangeChange(marker.id, marker.dataRange.start, marker.dataRange.end)"
-                    class="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="1" placeholder="Start" />
-                  <span class="text-sm text-gray-500">-</span>
-                  <input type="number" v-model.number="marker.dataRange.end"
-                    @change="overviewStore.handleDataRangeChange(marker.id, marker.dataRange.start, marker.dataRange.end)"
-                    class="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="1" placeholder="End" />
-                </div>
-              </div>
-            </div>
+                                  <!-- Data Range Input -->
+                 <div class="flex items-center space-x-2  justify-center">
+                   <span class="text-sm text-gray-600">Data Range:</span>
+                   <input type="number" :value="marker.dataRange.start === -1 ? '' : marker.dataRange.start"
+                     @input="(e) => {
+                       const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
+                       overviewStore.handleDataRangeChange(marker.id, value, marker.dataRange.end);
+                     }"
+                     class="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     min="1" placeholder="Start" />
+                   <span class="text-sm text-gray-500">-</span>
+                   <input type="number" :value="marker.dataRange.end === -1 ? '' : marker.dataRange.end"
+                     @input="(e) => {
+                       const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
+                       overviewStore.handleDataRangeChange(marker.id, marker.dataRange.start, value);
+                     }"
+                     class="w-20 px-2 py-1 border border-gray-300 rounded text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                     min="1" placeholder="End" />
+                 </div>
+               </div>
+               <div v-else class="flex justify-center">
+                 <div class="text-center text-gray-400 text-sm">
+                   <p>No data available</p>
+                   <p class="text-xs">Please load data in the Table tab first</p>
+                 </div>
+               </div>
+             </div>
           </div>
         </div>
       </div>
