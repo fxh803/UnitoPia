@@ -5,11 +5,24 @@ import { useOverviewStore } from '~/stores/overview'
 
 export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 拼贴系列状态
-    const collageSeries = ref<{ json: string, preview: string, dataTypeArray: any[] }[]>([])
+    const collageSeries = ref<{ 
+        slideId: string, 
+        json: string, 
+        preview: string, 
+        dataTypeArray: any[], 
+        markerIdArray: any[] 
+    }[]>([])
     const currentSlideIndex = ref(0)
     const stopListen = ref(false) // 添加标志
     const canvasRef = ref<(() => Canvas | null) | null>(null)
     const overviewStore = useOverviewStore()
+
+    // 生成唯一的 slide ID
+    function generateSlideId(): string {
+        const timestamp = Date.now()
+        const randomId = Math.random().toString(36).substr(2, 9)
+        return `slide-${timestamp}-${randomId}`
+    }
 
     // 设置 canvas 引用
     function setCanvas(canvas: () => Canvas | null) {
@@ -26,7 +39,14 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             format: 'png',
             multiplier: 2
         })
-        collageSeries.value = [{ json, preview, dataTypeArray: [] }]
+        const slideId = generateSlideId()
+        collageSeries.value = [{ 
+            slideId, 
+            json, 
+            preview, 
+            dataTypeArray: [], 
+            markerIdArray: [] 
+        }]
         currentSlideIndex.value = 0
     }
 
@@ -57,10 +77,22 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 obj.set('opacity', originalOpacity)
             }
         })
-        //遍历jsonObj，将他们的dataType做成一个数组
-        const dataTypeArray = canvasInstance.getObjects().map((obj: any) => obj.get('dataType'))
+        
+        // 保存所有对象的 dataType 和 markerId
+        const objects = canvasInstance.getObjects()
+        const dataTypeArray = objects.map((obj: any) => obj.get('dataType'))
+        const markerIdArray = objects.map((obj: any) => obj.get('markerId'))
+        
         console.log("debug:", dataTypeArray)
-        collageSeries.value[currentSlideIndex.value] = { json, preview, dataTypeArray }
+        console.log("markerIds:", markerIdArray)
+        
+        collageSeries.value[currentSlideIndex.value] = { 
+            slideId: collageSeries.value[currentSlideIndex.value].slideId,
+            json, 
+            preview, 
+            dataTypeArray,
+            markerIdArray 
+        }
     }
 
     // 清空画布
@@ -88,7 +120,14 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             format: 'png',
             multiplier: 2
         })
-        collageSeries.value.push({ json, preview, dataTypeArray: [] })
+        const slideId = generateSlideId()
+        collageSeries.value.push({ 
+            slideId, 
+            json, 
+            preview, 
+            dataTypeArray: [], 
+            markerIdArray: [] 
+        })
         currentSlideIndex.value = collageSeries.value.length - 1
         stopListen.value = false
         overviewStore.updateMarkerObjects()
@@ -103,6 +142,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const json = collageSeries.value[idx].json
         const jsonObj = typeof json === 'string' ? JSON.parse(json) : json
         const dataTypeArray = collageSeries.value[idx].dataTypeArray
+        const markerIdArray = collageSeries.value[idx].markerIdArray || []
 
         // 清空当前画布
         clearCanvas()
@@ -111,7 +151,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 setTimeout(() => {
                     canvasInstance.renderAll()
                     // 恢复自定义属性
-                    restoreCustomProperties(canvasInstance, dataTypeArray)
+                    restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray)
                     stopListen.value = false
                     overviewStore.updateMarkerObjects()
                 }, 200)
@@ -127,6 +167,13 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     function handleDeleteCollageSeries(idx: number) {
         if (collageSeries.value.length <= 1) return // 至少保留一个幻灯片
 
+        // 获取要删除的幻灯片的 slideId
+        const slideToDelete = collageSeries.value[idx]
+        const slideIdToDelete = slideToDelete.slideId
+
+        // 清理该幻灯片相关的数据绑定设置
+        cleanupSlideSettings(slideIdToDelete)
+
         // 如果删除的是当前幻灯片 
         if (idx === currentSlideIndex.value) {
             currentSlideIndex.value = Math.max(0, idx - 1)
@@ -138,15 +185,51 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         overviewStore.updateMarkerObjects()
     }
 
+    // 清理幻灯片相关的数据绑定设置
+    function cleanupSlideSettings(slideId: string) {
+        const dataBindingSettings = overviewStore.dataBindingSettings
+        
+        // 确保 dataBindingSettings 存在
+        if (!dataBindingSettings || !dataBindingSettings.value) {
+            console.log(`dataBindingSettings 不存在，跳过清理`)
+            return
+        }
+        
+        // 删除所有以该 slideId 开头的设置
+        const keysToDelete: string[] = []
+        dataBindingSettings.value.forEach((value, key) => {
+            if (key.startsWith(`${slideId}-`)) {
+                keysToDelete.push(key)
+            }
+        })
+        
+        keysToDelete.forEach(key => {
+            dataBindingSettings.value.delete(key)
+        })
+        
+        console.log(`清理幻灯片 ${slideId} 的相关设置，删除了 ${keysToDelete.length} 个设置项`)
+    }
+
     // 恢复自定义属性
-    function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any) {
+    function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any, markerIdArray: any[] = []) {
         const objects = canvasInstance.getObjects()
         // 遍历画布对象和JSON对象，恢复自定义属性
         objects.forEach((obj, index) => {
             if (dataTypeArray[index]) {
                 obj.set('dataType', dataTypeArray[index])
             }
+            if (markerIdArray[index]) {
+                obj.set('markerId', markerIdArray[index])
+            }
         })
+    }
+
+    // 获取当前幻灯片的 slideId
+    function getCurrentSlideId(): string {
+        if (collageSeries.value.length === 0 || currentSlideIndex.value >= collageSeries.value.length) {
+            return ''
+        }
+        return collageSeries.value[currentSlideIndex.value].slideId
     }
 
 
@@ -160,6 +243,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         updateCurrentSlide,
         addNewSlide,
         handleCollageSeriesSelect,
-        handleDeleteCollageSeries
+        handleDeleteCollageSeries,
+        getCurrentSlideId
     }
 }) 

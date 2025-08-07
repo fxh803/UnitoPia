@@ -30,7 +30,9 @@ export const useOverviewStore = defineStore('overview', () => {
 
   // 响应式数据
   const markerObjects = ref<MarkerObject[]>([])
-
+  
+  // 保存数据绑定设置的映射 - 按 slide 和 marker ID 保存
+  const dataBindingSettings = ref<Map<string, { dataField: string, dataRange: { start: number, end: number }, visualEncoding: 'size' | 'width' | 'height' }>>(new Map())
 
   // 获取所有 marker 对象
   const getMarkerObjects = async () => { 
@@ -50,20 +52,32 @@ export const useOverviewStore = defineStore('overview', () => {
     console.log('找到 marker 对象数量:', markerObjects.length)
     
     // 并行处理所有缩略图生成
-    const markerDataPromises = markerObjects.map(async (obj, index) => {
+    const markerDataPromises = markerObjects.map(async (obj) => {
       // 生成缩略图 
       const thumbnail = await generateThumbnail(obj) 
       
+      // 获取对象的 markerId
+      const markerId = obj.get('markerId')
+      // 获取当前 slide ID
+      const currentSlideId = collageSeriesStore.getCurrentSlideId()
+      const settingsKey = `${currentSlideId}-${markerId}`
+      
+      // 获取保存的设置，如果没有则使用默认值
+      const savedSettings = dataBindingSettings.value.get(settingsKey) || {
+        dataField: '',
+        dataRange: { start: -1, end: -1 },
+        visualEncoding: 'size' as const
+      }
+      
+      console.log(`Slide ${currentSlideId}, Marker ${markerId}:`, savedSettings)
+      
       return {
-        id: `marker-${index}`,
+        id: markerId,
         object: obj,
         thumbnail,
-        visualEncoding: 'size' as const,
-        dataField: '',
-        dataRange: {
-          start: -1,
-          end: -1
-        }
+        visualEncoding: savedSettings.visualEncoding,
+        dataField: savedSettings.dataField,
+        dataRange: savedSettings.dataRange
       }
     })
     
@@ -142,6 +156,20 @@ export const useOverviewStore = defineStore('overview', () => {
     const marker = markerObjects.value.find(m => m.id === markerId)
     if (marker) {
       marker.visualEncoding = encoding
+      
+      // 保存到持久化存储
+      const currentSlideId = collageSeriesStore.getCurrentSlideId()
+      const settingsKey = `${currentSlideId}-${markerId}`
+      const existingSettings = dataBindingSettings.value.get(settingsKey) || {
+        dataField: marker.dataField,
+        dataRange: marker.dataRange,
+        visualEncoding: encoding
+      }
+      dataBindingSettings.value.set(settingsKey, {
+        ...existingSettings,
+        visualEncoding: encoding
+      })
+      console.log(`保存设置 - Slide ${currentSlideId}, Marker ${markerId}:`, { visualEncoding: encoding })
     }
   }
 
@@ -150,6 +178,20 @@ export const useOverviewStore = defineStore('overview', () => {
     const marker = markerObjects.value.find(m => m.id === markerId)
     if (marker) {
       marker.dataField = field
+      
+      // 保存到持久化存储
+      const currentSlideId = collageSeriesStore.getCurrentSlideId()
+      const settingsKey = `${currentSlideId}-${markerId}`
+      const existingSettings = dataBindingSettings.value.get(settingsKey) || {
+        dataField: field,
+        dataRange: marker.dataRange,
+        visualEncoding: marker.visualEncoding
+      }
+      dataBindingSettings.value.set(settingsKey, {
+        ...existingSettings,
+        dataField: field
+      })
+      console.log(`保存设置 - Slide ${currentSlideId}, Marker ${markerId}:`, { dataField: field })
     }
   }
 
@@ -158,6 +200,20 @@ export const useOverviewStore = defineStore('overview', () => {
     const marker = markerObjects.value.find(m => m.id === markerId)
     if (marker) {
       marker.dataRange = { start, end }
+      
+      // 保存到持久化存储
+      const currentSlideId = collageSeriesStore.getCurrentSlideId()
+      const settingsKey = `${currentSlideId}-${markerId}`
+      const existingSettings = dataBindingSettings.value.get(settingsKey) || {
+        dataField: marker.dataField,
+        dataRange: { start, end },
+        visualEncoding: marker.visualEncoding
+      }
+      dataBindingSettings.value.set(settingsKey, {
+        ...existingSettings,
+        dataRange: { start, end }
+      })
+      console.log(`保存设置 - Slide ${currentSlideId}, Marker ${markerId}:`, { dataRange: { start, end } })
     }
   }
  
@@ -171,6 +227,7 @@ export const useOverviewStore = defineStore('overview', () => {
   return {
     // 状态
     markerObjects,
+    dataBindingSettings,
     // 计算属性
     markerCount,
     hasMarkers,
@@ -179,7 +236,7 @@ export const useOverviewStore = defineStore('overview', () => {
     updateMarkerObjects,
     handleVisualEncodingChange,
     handleDataFieldChange,
-    handleDataRangeChange,   
+    handleDataRangeChange, 
     setCanvas
   }
 }) 

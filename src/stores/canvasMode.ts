@@ -103,6 +103,15 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       // 根据当前选择的模式设置dataType
       path.set('dataType', selectedModeStore.selectedMode);
 
+      // 如果是 marker 模式，生成唯一的 markerId
+      if (selectedModeStore.selectedMode === 'marker') {
+        const timestamp = Date.now()
+        const randomId = Math.random().toString(36).substr(2, 9)
+        const markerId = `marker-${timestamp}-${randomId}`
+        path.set('markerId', markerId)
+        console.log('为 marker 对象设置唯一 ID:', markerId)
+      }
+
       // 在container模式下，将新绘制的路径移动到最底层
       if (selectedModeStore.selectedMode === 'container') {
         canvasInstance.sendObjectToBack(path, true);
