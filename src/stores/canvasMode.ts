@@ -3,21 +3,24 @@ import { ref } from 'vue'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useBrushSizeStore } from '~/stores/brushsize'
+import { useBezierDrawingStore } from '~/stores/bezierDrawing'
 
 export const useCanvasModeStore = defineStore('canvasMode', () => {
-  const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
+  const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | null>(null)
   const canvasRef = ref<(() => Canvas | null) | null>(null)
 
   // 导入其他 store
   const selectedModeStore = useSelectedModeStore()
   const colorPickerStore = useColorPickerStore()
   const brushSizeStore = useBrushSizeStore()
+  const bezierDrawingStore = useBezierDrawingStore()
 
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
-    canvasRef.value = canvas
+    canvasRef.value = canvas 
   }
-  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse') { 
+  
+  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier') { 
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
     // 再次点击同模式，取消激活
@@ -74,10 +77,20 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       canvasInstance.isDrawingMode = false;
       canvasInstance.selection = false;
       canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; });
-    }
-
+    } else if (m === 'bezier') {
+      canvasInstance.isDrawingMode = true;
+      canvasInstance.selection = false;
+      canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; });
+      if (canvasInstance.freeDrawingBrush) {
+        // 贝塞尔模式使用半透明蓝色
+        canvasInstance.freeDrawingBrush.color = 'rgba(0, 123, 255, 0.1)';
+        canvasInstance.freeDrawingBrush.width = brushSizeStore.brushWidth * dpr;
+      }
+    }  
     canvasInstance.renderAll();
   }
+
+
 
   function clearCanvas() {
     const canvasInstance = canvasRef.value?.()
@@ -91,6 +104,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     canvasInstance.renderAll();
     // 背景色会自动保留，无需重新设置
   }
+  
   function setDrawedObjectDataType(e) {
     // 监听绘制完成事件，为绘制的路径设置dataType
     const canvasInstance = canvasRef.value?.()
@@ -98,6 +112,15 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     // object:added 事件中，对象在 e.target 中
     const path = e.target; 
     if (path) {
+      // 如果是贝塞尔模式，创建多段贝塞尔曲线
+      if (mode.value === 'bezier') {
+        // 检查是否正在创建贝塞尔曲线，防止递归调用
+        if (!bezierDrawingStore.isCreatingBezier) {
+          bezierDrawingStore.createBezierFromPath(path)
+        }
+        return
+      }
+
       // 根据当前选择的模式设置dataType
       path.set('dataType', selectedModeStore.selectedMode);
 
@@ -119,7 +142,11 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     }
   }
 
-
-
-  return { mode, setMode, setCanvas, clearCanvas, setDrawedObjectDataType }
+  return { 
+    mode, 
+    setMode, 
+    setCanvas, 
+    clearCanvas, 
+    setDrawedObjectDataType
+  }
 }) 

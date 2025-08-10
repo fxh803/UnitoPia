@@ -10,6 +10,7 @@ import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useShapeDrawingStore } from '~/stores/shapeDrawing'
 import { useOverviewStore } from '~/stores/overview'
+import { useBezierDrawingStore } from '~/stores/bezierDrawing'
 const selectedModeStore = useSelectedModeStore()
 const {selectedMode, isContainerMode} = storeToRefs(selectedModeStore) 
 
@@ -46,6 +47,11 @@ const {
   addShapeEventListeners,
   removeShapeEventListeners
 } = shapeDrawingStore
+
+const bezierDrawingStore = useBezierDrawingStore()
+const {
+  setCanvas
+} = bezierDrawingStore
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
@@ -147,10 +153,6 @@ watch(mode, () => {
   if (!canvas) return
   if (mode.value !== 'rect' && mode.value !== 'ellipse') {
     removeShapeEventListeners();
-    if (previewShape.value) {
-      canvas.remove(previewShape.value)
-      previewShape.value = null
-    }
   }
   else {
     addShapeEventListeners();
@@ -202,6 +204,7 @@ onMounted(async () => {
     shapeDrawingStore.setCanvas(() => canvas)
     selectedModeStore.setCanvas(() => canvas)
     overviewStore.setCanvas(() => canvas)
+    bezierDrawingStore.setCanvas(() => canvas)
     // 初始化空白幻灯片
     initializeEmptySlide()
     addCanvasEventListeners()
@@ -237,6 +240,8 @@ onBeforeUnmount(() => {
       <ContainerToolbar v-if="selectedMode === 'container'" />
       <!-- Marker工具栏：仅在marker模式下显示 -->
       <MarkerToolbar v-if="selectedMode === 'marker'" />
+      <!-- Emitter工具栏：仅在emitter模式下显示 -->
+      <EmitterToolbar v-if="selectedMode === 'emitter'" />
       <!-- 画笔粗细调节面板，仅在绘制/擦除模式下显示 -->
       <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" />
     </div>
