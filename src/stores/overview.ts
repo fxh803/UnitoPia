@@ -118,6 +118,7 @@ export const useOverviewStore = defineStore('overview', () => {
       clonedObj.set('scaleY', scale)
       clonedObj.set('originX', 'center')
       clonedObj.set('originY', 'center')
+      clonedObj.set('opacity', 1) // 确保透明度还原为1
       // 添加到临时画布
       tempFabricCanvas.add(clonedObj)
       tempFabricCanvas.renderAll()

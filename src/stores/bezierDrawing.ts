@@ -112,11 +112,15 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
       const bezierGroup = new fabric.Group(bezierPaths, {
         dataType: 'emitter',
         selectable: false,
-        evented: false
+        evented: false,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockRotation: true
       })
-
+      
       // 将group添加到画布
       canvasInstance.add(bezierGroup)
+      canvasInstance.bringObjectToFront(bezierGroup, true);
       canvasInstance.renderAll()
 
       // 启动虚线动画
@@ -132,25 +136,40 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
     }
 
     let offset = 0
-    const animate = () => {
+    let lastTime = performance.now()
+    const targetFPS = 60 // 目标帧率
+    const frameInterval = 1000 / targetFPS // 每帧的时间间隔（毫秒）
+    const pixelsPerSecond = 30 // 每秒移动的像素数
+
+    const animate = (currentTime: number) => {
       const canvasInstance = canvasRef.value?.()
       if (!canvasInstance) return
 
-      // 只对emitter类型的对象应用动画
-      canvasInstance.getObjects().forEach(obj => {
-        if (obj.dataType === 'emitter') {
-          obj.getObjects().forEach((groupObj: any) => {
-            if (groupObj.type === 'path') {
-              groupObj.set('strokeDashOffset', offset)
-            }
-          })
-        }
-      })
+      // 计算时间差
+      const deltaTime = currentTime - lastTime
+      
+      // 控制帧率，确保动画速度一致
+      if (deltaTime >= frameInterval) {
+        // 计算这一帧应该移动的距离
+        const pixelsPerFrame = (pixelsPerSecond * deltaTime) / 1000
+        
+        // 更新偏移量
+        offset -= pixelsPerFrame
+        
+        // 只对emitter类型的对象应用动画
+        canvasInstance.getObjects().forEach(obj => {
+          if (obj.dataType === 'emitter') {
+            obj.getObjects().forEach((groupObj: any) => {
+              if (groupObj.type === 'path') {
+                groupObj.set('strokeDashOffset', offset)
+              }
+            })
+          }
+        })
 
-      canvasInstance.renderAll()
-
-      // 更新偏移量，实现移动效果
-      offset -= 0.5 // 负值使虚线向左移动，正值向右移动
+        canvasInstance.renderAll()
+        lastTime = currentTime
+      }
 
       // 继续动画循环
       animationId.value = requestAnimationFrame(animate)

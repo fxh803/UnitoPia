@@ -63,6 +63,13 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         if (!isGroupMode.value && !isMultipleSelection.value) {
             showGroupBtn.value = false
         }
+        if(selectedModeStore.selectedMode === 'emitter') { 
+            showClosePathBtn.value = false
+            showGroupBtn.value = false
+            showColorBtn.value = false
+            showLayerUpBtn.value = false
+            showLayerDownBtn.value = false
+        }
     }
     function updateActionBtnPosition() {
         const canvasInstance = canvasRef.value?.()
