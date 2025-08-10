@@ -68,8 +68,13 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       canvasInstance.getObjects().forEach(obj => {
         const objType = obj.get('dataType');
         if (objType === selectedModeStore.selectedMode) {
-          obj.set('selectable', true);
-          obj.set('evented', true);
+          if (obj.get('forceType') === 'fieldForce') { 
+            obj.set('selectable', false);
+            obj.set('evented', false);
+          } else {
+            obj.set('selectable', true);
+            obj.set('evented', true);
+          }
         } else {
           obj.set('selectable', false);
           obj.set('evented', false);

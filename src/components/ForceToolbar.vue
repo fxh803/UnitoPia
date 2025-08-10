@@ -7,7 +7,17 @@ const canvasModeStore = useCanvasModeStore()
 const forceDrawingStore = useForceDrawingStore()
 const { mode } = storeToRefs(canvasModeStore)
 const { setMode } = canvasModeStore
-const { clearAllForcePoints } = forceDrawingStore
+const { forceType } = storeToRefs(forceDrawingStore)
+const { clearAllForcePoints, addFieldForce } = forceDrawingStore
+
+// 异步处理场力添加
+const handleAddFieldForce = async () => {
+  try {
+    await addFieldForce()
+  } catch (error) {
+    console.error('Failed to add field force:', error)
+  }
+}
 </script>
 
 <template>
@@ -15,7 +25,6 @@ const { clearAllForcePoints } = forceDrawingStore
     <button
       class="rounded flex h-10 w-10 items-center justify-center"
       :class="[
-        'rounded flex h-10 w-10 items-center justify-center',
         mode === 'force'
           ? 'bg-[#0d99ff] text-white'
           : 'bg-white text-black hover:bg-[#f5f5f5]'
@@ -27,9 +36,21 @@ const { clearAllForcePoints } = forceDrawingStore
     </button>
     
     <button
+      class="rounded flex h-10 w-10 items-center justify-center hover:bg-[#f5f5f5]"
+      :class="[
+        forceType === 'fieldForce'
+          ? 'bg-[#e5e5e5] text-black'
+          : 'bg-white text-black '
+      ]"
+      title="Add Field Force"
+      @click="handleAddFieldForce"
+    >
+    <div class="i-carbon:switch-layer-2"></div>
+    </button>
+    
+    <button
       class="rounded flex h-10 w-10 items-center justify-center"
       :class="[
-        'rounded flex h-10 w-10 items-center justify-center',
         mode === 'move'
           ? 'bg-[#0d99ff] text-white'
           : 'bg-white text-black hover:bg-[#f5f5f5]'
