@@ -41,15 +41,13 @@ export const useOverviewStore = defineStore('overview', () => {
       return []
     }
 
-    const objects = canvas.getObjects()
-    console.log('画布对象总数:', objects.length)
+    const objects = canvas.getObjects() 
     
     const markerObjects = objects.filter(obj => {
       const dataType = obj.get('dataType') 
       return dataType === 'marker'
     })
-    
-    console.log('找到 marker 对象数量:', markerObjects.length)
+     
     
     // 并行处理所有缩略图生成
     const markerDataPromises = markerObjects.map(async (obj) => {
@@ -68,8 +66,7 @@ export const useOverviewStore = defineStore('overview', () => {
         dataRange: { start: -1, end: -1 },
         visualEncoding: 'size' as const
       }
-      
-      console.log(`Slide ${currentSlideId}, Marker ${markerId}:`, savedSettings)
+       
       
       return {
         id: markerId,
@@ -142,10 +139,8 @@ export const useOverviewStore = defineStore('overview', () => {
   }
 
   // 更新 marker 对象列表
-  const updateMarkerObjects = async () => {
-    console.log('updateMarkerObjects')
-    if(stopListen.value){
-      console.log('stopListen')
+  const updateMarkerObjects = async () => { 
+    if(stopListen.value){ 
       return
     }
     markerObjects.value = await getMarkerObjects()

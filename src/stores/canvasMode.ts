@@ -94,11 +94,9 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
   function setDrawedObjectDataType(e) {
     // 监听绘制完成事件，为绘制的路径设置dataType
     const canvasInstance = canvasRef.value?.()
-    if (!canvasInstance) return
-    console.log('触发')
+    if (!canvasInstance) return 
     // object:added 事件中，对象在 e.target 中
-    const path = e.target;
-    console.log('path',path,selectedModeStore.selectedMode)
+    const path = e.target; 
     if (path) {
       // 根据当前选择的模式设置dataType
       path.set('dataType', selectedModeStore.selectedMode);
@@ -108,8 +106,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
         const timestamp = Date.now()
         const randomId = Math.random().toString(36).substr(2, 9)
         const markerId = `marker-${timestamp}-${randomId}`
-        path.set('markerId', markerId)
-        console.log('为 marker 对象设置唯一 ID:', markerId)
+        path.set('markerId', markerId) 
       }
 
       // 在container模式下，将新绘制的路径移动到最底层

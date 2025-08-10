@@ -160,11 +160,9 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
             }
         }
     }
-    function applyColor() {
-        console.log('applyColor')
+    function applyColor() { 
         const canvasInstance = canvasRef.value?.()
-        const activeObject = currentPathObj.value
-        console.log(activeObject)
+        const activeObject = currentPathObj.value 
         if (!activeObject || !canvasInstance) return
 
         const selectedColor = objectColor.value
@@ -227,8 +225,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const allObjects = canvasInstance.getObjects()
 
         // 检查是否有container对象
-        const hasContainer = allObjects.some(obj => obj.get('dataType') === 'container')
-        console.log(hasContainer)
+        const hasContainer = allObjects.some(obj => obj.get('dataType') === 'container') 
         if (hasContainer) {
             // 如果有container对象，检查当前对象是否已经是倒数第二层
             const currentIndex = allObjects.indexOf(activeObject)

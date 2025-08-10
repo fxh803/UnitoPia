@@ -1,8 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Canvas } from 'fabric'
-import { useOverviewStore } from '~/stores/overview'
-import { ElStep } from 'element-plus'
+import { useOverviewStore } from '~/stores/overview' 
 
 export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 拼贴系列状态
@@ -16,7 +15,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     const currentSlideIndex = ref(0)
     const stopListen = ref(false) // 添加标志
     const canvasRef = ref<(() => Canvas | null) | null>(null)
-    const overviewStore = useOverviewStore()
+    const overviewStore = useOverviewStore() 
 
     // 生成唯一的 slide ID
     function generateSlideId(): string {
@@ -82,10 +81,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         // 保存所有对象的 dataType 和 markerId
         const objects = canvasInstance.getObjects()
         const dataTypeArray = objects.map((obj: any) => obj.get('dataType'))
-        const markerIdArray = objects.map((obj: any) => obj.get('markerId'))
-        
-        console.log("debug:", dataTypeArray)
-        console.log("markerIds:", markerIdArray)
+        const markerIdArray = objects.map((obj: any) => obj.get('markerId')) 
         
         collageSeries.value[currentSlideIndex.value] = { 
             slideId: collageSeries.value[currentSlideIndex.value].slideId,
@@ -170,10 +166,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         // 获取要删除的幻灯片的 slideId
         const slideToDelete = collageSeries.value[idx]
-        const slideIdToDelete = slideToDelete.slideId
-
-        // 清理该幻灯片相关的数据绑定设置
-        cleanupSlideSettings(slideIdToDelete)
+        const slideIdToDelete = slideToDelete.slideId 
 
         // 如果删除的是当前幻灯片 
         if (idx === currentSlideIndex.value) {
@@ -192,31 +185,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         collageSeries.value.splice(idx, 1)
         overviewStore.updateMarkerObjects()
     }
-
-    // 清理幻灯片相关的数据绑定设置
-    function cleanupSlideSettings(slideId: string) {
-        const dataBindingSettings = overviewStore.dataBindingSettings
-        
-        // 确保 dataBindingSettings 存在
-        if (!dataBindingSettings || !dataBindingSettings.value) {
-            console.log(`dataBindingSettings 不存在，跳过清理`)
-            return
-        }
-        
-        // 删除所有以该 slideId 开头的设置
-        const keysToDelete: string[] = []
-        dataBindingSettings.value.forEach((value, key) => {
-            if (key.startsWith(`${slideId}-`)) {
-                keysToDelete.push(key)
-            }
-        })
-        
-        keysToDelete.forEach(key => {
-            dataBindingSettings.value.delete(key)
-        })
-        
-        console.log(`清理幻灯片 ${slideId} 的相关设置，删除了 ${keysToDelete.length} 个设置项`)
-    }
+ 
 
     // 恢复自定义属性
     function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any, markerIdArray: any[] = []) {
