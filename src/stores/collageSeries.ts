@@ -1,21 +1,23 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Canvas } from 'fabric'
-import { useOverviewStore } from '~/stores/overview' 
+import { useOverviewStore } from '~/stores/overview'
+import { C } from 'vitest/dist/chunks/reporters.d.DL9pg5DB.js'
 
 export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 拼贴系列状态
-    const collageSeries = ref<{ 
-        slideId: string, 
-        json: string, 
-        preview: string, 
-        dataTypeArray: any[], 
-        markerIdArray: any[] 
+    const collageSeries = ref<{
+        slideId: string,
+        json: string,
+        preview: string,
+        dataTypeArray: any[],
+        markerIdArray: any[],
+        forceTypeArray: any[]
     }[]>([])
     const currentSlideIndex = ref(0)
     const stopListen = ref(false) // 添加标志
     const canvasRef = ref<(() => Canvas | null) | null>(null)
-    const overviewStore = useOverviewStore() 
+    const overviewStore = useOverviewStore()
 
     // 生成唯一的 slide ID
     function generateSlideId(): string {
@@ -40,12 +42,13 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             multiplier: 2
         })
         const slideId = generateSlideId()
-        collageSeries.value = [{ 
-            slideId, 
-            json, 
-            preview, 
-            dataTypeArray: [], 
-            markerIdArray: [] 
+        collageSeries.value = [{
+            slideId,
+            json,
+            preview,
+            dataTypeArray: [],
+            markerIdArray: [],
+            forceTypeArray: []
         }]
         currentSlideIndex.value = 0
     }
@@ -77,18 +80,19 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 obj.set('opacity', originalOpacity)
             }
         })
-        
+
         // 保存所有对象的 dataType 和 markerId
         const objects = canvasInstance.getObjects()
         const dataTypeArray = objects.map((obj: any) => obj.get('dataType'))
-        const markerIdArray = objects.map((obj: any) => obj.get('markerId')) 
-        
-        collageSeries.value[currentSlideIndex.value] = { 
+        const markerIdArray = objects.map((obj: any) => obj.get('markerId'))
+        const forceTypeArray = objects.map((obj: any) => obj.get('forceType'))
+        collageSeries.value[currentSlideIndex.value] = {
             slideId: collageSeries.value[currentSlideIndex.value].slideId,
-            json, 
-            preview, 
+            json,
+            preview,
             dataTypeArray,
-            markerIdArray 
+            markerIdArray,
+            forceTypeArray
         }
     }
 
@@ -118,12 +122,13 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             multiplier: 2
         })
         const slideId = generateSlideId()
-        collageSeries.value.push({ 
-            slideId, 
-            json, 
-            preview, 
-            dataTypeArray: [], 
-            markerIdArray: [] 
+        collageSeries.value.push({
+            slideId,
+            json,
+            preview,
+            dataTypeArray: [],
+            markerIdArray: [],
+            forceTypeArray: []
         })
         currentSlideIndex.value = collageSeries.value.length - 1
         stopListen.value = false
@@ -140,15 +145,16 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const jsonObj = typeof json === 'string' ? JSON.parse(json) : json
         const dataTypeArray = collageSeries.value[idx].dataTypeArray
         const markerIdArray = collageSeries.value[idx].markerIdArray || []
-
+        const forceTypeArray = collageSeries.value[idx].forceTypeArray || []
         // 清空当前画布
         clearCanvas()
         if (jsonObj.objects.length > 0) {
             canvasInstance.loadFromJSON(json, () => {
                 setTimeout(() => {
                     canvasInstance.renderAll()
-                    // 恢复自定义属性
-                    restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray)
+                    // 恢复自定义属性 
+                    console.log(dataTypeArray, markerIdArray, forceTypeArray)
+                    restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray)
                     stopListen.value = false
                     overviewStore.updateMarkerObjects()
                 }, 200)
@@ -166,7 +172,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         // 获取要删除的幻灯片的 slideId
         const slideToDelete = collageSeries.value[idx]
-        const slideIdToDelete = slideToDelete.slideId 
+        const slideIdToDelete = slideToDelete.slideId
 
         // 如果删除的是当前幻灯片 
         if (idx === currentSlideIndex.value) {
@@ -174,29 +180,49 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 currentSlideIndex.value = Math.max(0, idx - 1)
                 handleCollageSeriesSelect(Math.max(0, idx - 1))
             }
-            else{
+            else {
                 handleCollageSeriesSelect(idx + 1)
                 currentSlideIndex.value = 0
             }
-           
+
         } else if (idx < currentSlideIndex.value) {
             currentSlideIndex.value -= 1
         }
         collageSeries.value.splice(idx, 1)
         overviewStore.updateMarkerObjects()
     }
- 
+
 
     // 恢复自定义属性
-    function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any, markerIdArray: any[] = []) {
+    function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any, markerIdArray: any[] = [], forceTypeArray: any[] = []) {
         const objects = canvasInstance.getObjects()
         // 遍历画布对象和JSON对象，恢复自定义属性
         objects.forEach((obj, index) => {
             if (dataTypeArray[index]) {
                 obj.set('dataType', dataTypeArray[index])
+                if(dataTypeArray[index] === 'emitter'){
+                    obj.lockScalingX = true
+                    obj.lockScalingY = true 
+                    obj.lockRotation = true 
+                }
             }
             if (markerIdArray[index]) {
                 obj.set('markerId', markerIdArray[index])
+            }
+            if (forceTypeArray[index]) {
+                obj.set('forceType', forceTypeArray[index])
+                // 恢复力对象的锁定属性
+                if (forceTypeArray[index] === 'fieldForce' ) {
+                    obj.lockScalingX = true
+                    obj.lockScalingY = true 
+                    obj.lockMovementX = true
+                    obj.lockMovementY = true 
+                }
+                else if (forceTypeArray[index] === 'pointForce') {
+                    obj.lockScalingX = true
+                    obj.lockScalingY = true
+                    obj.lockRotation = true 
+                }
             }
         })
     }
