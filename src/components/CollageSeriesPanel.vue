@@ -70,15 +70,6 @@ function toggleCollapse() {
           ]"
           @click="handleClick(idx)"
         >
-          <!-- 复制按钮 -->
-          <button
-            class="absolute top-1 left-1 z-10 hidden group-hover:block bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-blue-500 hover:text-white transition-colors"
-            @click.stop="handleDuplicate(idx)"
-            title="Duplicate"
-          >
-            <div class="i-carbon:copy text-xs"></div>
-          </button>
-          
           <!-- 删除按钮 -->
           <button
             v-if="collageSeries.length > 1"
@@ -86,6 +77,16 @@ function toggleCollapse() {
             @click.stop="handleDelete(idx)"
             title="Delete"
           >×</button>
+          
+                      <!-- 复制按钮 -->
+            <button
+              class="absolute top-1 z-10 hidden group-hover:block bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-blue-500 hover:text-white transition-colors"
+              :class="collageSeries.length > 1 ? 'right-8' : 'right-1'"
+              @click.stop="handleDuplicate(idx)"
+              title="Duplicate"
+            >
+              <div class="i-carbon:copy text-xs transform translate-x-4px"></div>
+            </button>
           
           <img :src="item.preview" class="max-h-full max-w-full object-contain">
         </div>
