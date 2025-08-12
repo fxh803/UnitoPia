@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Canvas } from 'fabric'
 import { useOverviewStore } from '~/stores/overview'
-import { C } from 'vitest/dist/chunks/reporters.d.DL9pg5DB.js'
 
 export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 拼贴系列状态
@@ -292,6 +291,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         handleCollageSeriesSelect,
         handleDuplicateSlide,
         handleDeleteCollageSeries,
-        getCurrentSlideId
+        getCurrentSlideId,
+        restoreCustomProperties
     }
 }) 
