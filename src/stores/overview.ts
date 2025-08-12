@@ -7,7 +7,7 @@ import { useCollageSeriesStore } from '~/stores/collageSeries'
 export const useOverviewStore = defineStore('overview', () => {
   const tableStore = useTableStore()
   const collageSeriesStore = useCollageSeriesStore()
-  const {stopListen} = storeToRefs(collageSeriesStore)
+  const { stopListen } = storeToRefs(collageSeriesStore)
   const canvasRef = ref<(() => Canvas | null) | null>(null)
 
   // 设置 canvas 引用
@@ -30,44 +30,44 @@ export const useOverviewStore = defineStore('overview', () => {
 
   // 响应式数据
   const markerObjects = ref<MarkerObject[]>([])
-  
+
   // 保存数据绑定设置的映射 - 按 slide 和 marker ID 保存
   const dataBindingSettings = ref<Map<string, { dataField: string, dataRange: { start: number, end: number }, visualEncoding: 'size' | 'width' | 'height' }>>(new Map())
 
   // 获取所有 marker 对象
-  const getMarkerObjects = async () => { 
+  const getMarkerObjects = async () => {
     const canvas = canvasRef.value?.()
-    if (!canvas) { 
+    if (!canvas) {
       return []
     }
 
-    const objects = canvas.getObjects() 
-    
+    const objects = canvas.getObjects()
+
     const markerObjects = objects.filter(obj => {
-      const dataType = obj.get('dataType') 
+      const dataType = obj.get('dataType')
       return dataType === 'marker'
     })
-     
-    
+
+
     // 并行处理所有缩略图生成
     const markerDataPromises = markerObjects.map(async (obj) => {
       // 生成缩略图 
-      const thumbnail = await generateThumbnail(obj) 
-      
+      const thumbnail = await generateThumbnail(obj)
+
       // 获取对象的 markerId
       const markerId = obj.get('markerId')
       // 获取当前 slide ID
       const currentSlideId = collageSeriesStore.getCurrentSlideId()
       const settingsKey = `${currentSlideId}-${markerId}`
-      
+
       // 获取保存的设置，如果没有则使用默认值
       const savedSettings = dataBindingSettings.value.get(settingsKey) || {
         dataField: '',
         dataRange: { start: -1, end: -1 },
         visualEncoding: 'size' as const
       }
-       
-      
+
+
       return {
         id: markerId,
         object: obj,
@@ -77,7 +77,7 @@ export const useOverviewStore = defineStore('overview', () => {
         dataRange: savedSettings.dataRange
       }
     })
-    
+
     return Promise.all(markerDataPromises)
   }
 
@@ -140,8 +140,8 @@ export const useOverviewStore = defineStore('overview', () => {
   }
 
   // 更新 marker 对象列表
-  const updateMarkerObjects = async () => { 
-    if(stopListen.value){ 
+  const updateMarkerObjects = async () => {
+    if (stopListen.value) {
       return
     }
     markerObjects.value = await getMarkerObjects()
@@ -152,7 +152,7 @@ export const useOverviewStore = defineStore('overview', () => {
     const marker = markerObjects.value.find(m => m.id === markerId)
     if (marker) {
       marker.visualEncoding = encoding
-      
+
       // 保存到持久化存储
       const currentSlideId = collageSeriesStore.getCurrentSlideId()
       const settingsKey = `${currentSlideId}-${markerId}`
@@ -174,7 +174,7 @@ export const useOverviewStore = defineStore('overview', () => {
     const marker = markerObjects.value.find(m => m.id === markerId)
     if (marker) {
       marker.dataField = field
-      
+
       // 保存到持久化存储
       const currentSlideId = collageSeriesStore.getCurrentSlideId()
       const settingsKey = `${currentSlideId}-${markerId}`
@@ -196,7 +196,7 @@ export const useOverviewStore = defineStore('overview', () => {
     const marker = markerObjects.value.find(m => m.id === markerId)
     if (marker) {
       marker.dataRange = { start, end }
-      
+
       // 保存到持久化存储
       const currentSlideId = collageSeriesStore.getCurrentSlideId()
       const settingsKey = `${currentSlideId}-${markerId}`
@@ -212,7 +212,27 @@ export const useOverviewStore = defineStore('overview', () => {
       console.log(`保存设置 - Slide ${currentSlideId}, Marker ${markerId}:`, { dataRange: { start, end } })
     }
   }
- 
+
+  // 复制数据绑定设置
+  const copyDataBindingSettings = (originalSlideId: string, newSlideId: string) => {
+    console.log('开始复制数据绑定设置:', { originalSlideId, newSlideId })
+
+    // 遍历所有数据绑定设置，找到属于原幻灯片的设置
+    dataBindingSettings.value.forEach((settings, key) => {
+      console.log('检查键:', key)
+
+      if (key.startsWith(`${originalSlideId}-`)) {
+        // 提取完整的 markerId（可能包含多个连字符）
+        const markerIdPart = key.substring(originalSlideId.length + 1) // +1 是为了去掉连字符
+        const newKey = `${newSlideId}-${markerIdPart}`
+        console.log(newKey)
+        // 复制设置
+        dataBindingSettings.value.set(newKey, { ...settings })
+        console.log(`复制数据绑定设置: ${key} -> ${newKey}`)
+      }
+    })
+  }
+
 
 
 
@@ -232,7 +252,8 @@ export const useOverviewStore = defineStore('overview', () => {
     updateMarkerObjects,
     handleVisualEncodingChange,
     handleDataFieldChange,
-    handleDataRangeChange, 
+    handleDataRangeChange,
+    copyDataBindingSettings,
     setCanvas
   }
 }) 

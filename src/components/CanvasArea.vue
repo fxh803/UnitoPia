@@ -73,7 +73,7 @@ function resizeCanvasForDPR() {
   canvasEl.value.height = size * dpr
   canvas.setWidth(size)
   canvas.setHeight(size)
-  canvas.setZoom(dpr)
+  // canvas.setZoom(dpr)
   canvas.renderAll()
 }
 

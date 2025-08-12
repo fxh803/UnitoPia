@@ -5,7 +5,7 @@ import { useCollageSeriesStore } from '~/stores/collageSeries'
 
 const collageSeriesStore = useCollageSeriesStore()
 const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
-const { handleCollageSeriesSelect, handleDeleteCollageSeries, addNewSlide } = collageSeriesStore
+const { handleCollageSeriesSelect, handleDeleteCollageSeries, addNewSlide, handleDuplicateSlide } = collageSeriesStore
 
 // 折叠状态
 const isCollapsed = ref(false)
@@ -16,6 +16,10 @@ function handleClick(idx: number) {
 
 function handleDelete(idx: number) {
   handleDeleteCollageSeries(idx)
+}
+
+function handleDuplicate(idx: number) {
+  handleDuplicateSlide(idx)
 }
 
 function handleAddNew() {
@@ -66,12 +70,23 @@ function toggleCollapse() {
           ]"
           @click="handleClick(idx)"
         >
+          <!-- 复制按钮 -->
+          <button
+            class="absolute top-1 left-1 z-10 hidden group-hover:block bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-blue-500 hover:text-white transition-colors"
+            @click.stop="handleDuplicate(idx)"
+            title="Duplicate"
+          >
+            <div class="i-carbon:copy text-xs"></div>
+          </button>
+          
+          <!-- 删除按钮 -->
           <button
             v-if="collageSeries.length > 1"
-            class="absolute top-1 right-1 z-10 hidden group-hover:block bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-500 hover:text-white"
+            class="absolute top-1 right-1 z-10 hidden group-hover:block bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-red-500 hover:text-white transition-colors"
             @click.stop="handleDelete(idx)"
             title="Delete"
           >×</button>
+          
           <img :src="item.preview" class="max-h-full max-w-full object-contain">
         </div>
         

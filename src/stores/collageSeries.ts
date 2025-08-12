@@ -166,6 +166,48 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
     }
 
+    // 复制幻灯片
+    function handleDuplicateSlide(idx: number) {
+        if (idx < 0 || idx >= collageSeries.value.length) return
+
+        const canvasInstance = canvasRef.value?.()
+        if (!canvasInstance) return
+
+        stopListen.value = true
+
+        // 获取要复制的幻灯片
+        const originalSlide = collageSeries.value[idx]
+        
+        // 创建新的 slideId
+        const newSlideId = generateSlideId()
+        
+        // 复制幻灯片数据
+        const duplicatedSlide = {
+            slideId: newSlideId,
+            json: originalSlide.json,
+            preview: originalSlide.preview,
+            dataTypeArray: [...originalSlide.dataTypeArray],
+            markerIdArray: [...originalSlide.markerIdArray],
+            forceTypeArray: [...originalSlide.forceTypeArray]
+        }
+
+        // 在复制目标后面插入新幻灯片
+        collageSeries.value.splice(idx + 1, 0, duplicatedSlide)
+
+        // 复制数据绑定设置
+        overviewStore.copyDataBindingSettings(originalSlide.slideId, newSlideId)
+
+        // 如果复制的幻灯片在当前幻灯片之前或等于当前幻灯片，需要调整当前索引
+        if (idx <= currentSlideIndex.value) {
+            currentSlideIndex.value += 1
+        }
+
+        stopListen.value = false
+        overviewStore.updateMarkerObjects()
+
+        console.log(`Slide ${idx} duplicated successfully`)
+    }
+
     // 删除幻灯片
     function handleDeleteCollageSeries(idx: number) {
         if (collageSeries.value.length <= 1) return // 至少保留一个幻灯片
@@ -191,6 +233,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         collageSeries.value.splice(idx, 1)
         overviewStore.updateMarkerObjects()
     }
+
+
 
 
     // 恢复自定义属性
@@ -246,6 +290,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         updateCurrentSlide,
         addNewSlide,
         handleCollageSeriesSelect,
+        handleDuplicateSlide,
         handleDeleteCollageSeries,
         getCurrentSlideId
     }
