@@ -1,20 +1,51 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
-
+import { useOverviewStore } from '~/stores/overview'
+import { useCollageSeriesStore } from '~/stores/collageSeries'
+const collageSeriesStore = useCollageSeriesStore()
+const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
+const overviewStore = useOverviewStore()
+const { dataBindingSettings } = storeToRefs(overviewStore)
 const tableStore = useTableStore()
-
 const isDragOver = ref(false)
-
+const isScrolling = ref(false)
+const cellClasses = ref<Record<number, Record<number, string>>>({})
 // 处理滚动事件
 const handleScrolling = () => {
   // 可以在这里添加滚动处理逻辑
-  console.log('表格滚动中...')
+  if(isScrolling.value){
+    return
+  }
+  isScrolling.value = true
+  setTimeout(() => {
+    isScrolling.value = false
+  }, 1000)
 }
 
 // 单元格类名处理
-const cellClassName = ({ row, column }: any) => {
-  // 可以根据需要返回自定义的CSS类名
+const cellClassName = ({ rowIndex, column, columnIndex }: any) => {
+     if (isScrolling.value) {
+     return cellClasses.value[rowIndex]?.[columnIndex] || ''
+   } else {
+    const slideId = collageSeries.value[currentSlideIndex.value].slideId
+    const markerData = Array.from(dataBindingSettings.value.entries())
+      .filter(([key, value]) => key.startsWith(slideId))
+      .map(([key, value]) => value)
+    console.log(slideId, markerData)
+         for (const data of markerData) {
+       if (data.dataField === column.property && data.dataRange.start <= rowIndex + 1 && data.dataRange.end >= rowIndex + 1) {
+         // 确保 rowIndex 存在
+         if (!cellClasses.value[rowIndex]) {
+           cellClasses.value[rowIndex] = {}
+         }
+         cellClasses.value[rowIndex][columnIndex] = `highlight-cell`
+         return `highlight-cell`
+       }
+     }
+  }
+
   return ''
 }
 
@@ -58,8 +89,7 @@ const handleFileSelect = (e: Event) => {
         :class="{
           'border-blue-500 bg-blue-50': isDragOver,
           'hover:border-gray-400': !isDragOver
-        }" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop"
-        @click="$refs.fileInput.click()">
+        }" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop" @click="$refs.fileInput.click()">
         <input ref="fileInput" type="file" class="hidden" accept=".csv" @change="handleFileSelect" />
         <span class="i-carbon-add-alt text-4xl text-gray-400"></span>
       </div>
@@ -70,8 +100,8 @@ const handleFileSelect = (e: Event) => {
     <div v-else-if="tableStore.tableData.length > 0" class="h-full w-full overflow-hidden"
       style="min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; contain: layout size;">
       <vxe-table :data="tableStore.tableData" :scroll-y="{ enabled: true }" :scroll-x="{ enabled: true }" height="100%"
-        @scroll="handleScrolling()" :row-config="{ isHover: true }" :cell-config="{ height: 30 }"
-        show-header-overflow show-overflow size="small" border :cell-class-name="cellClassName" :auto-resize="true">
+        @scroll="handleScrolling()" :cell-config="{ height: 30 }" show-header-overflow show-overflow size="small" border
+        :cell-class-name="cellClassName" :auto-resize="true">
         <vxe-column v-for="(item, index) in tableStore.tableColumns" :key="index" :field="item" :title="item" row-resize
           min-width="80" />
       </vxe-table>
@@ -79,10 +109,9 @@ const handleFileSelect = (e: Event) => {
   </div>
 </template>
 
-<style scoped>
-/* Carbon 图标样式 */
-.i-carbon\:add-alt::before {
-  content: '\f0c9';
-  font-family: 'carbon-icons';
+<style>
+.highlight-cell {
+  background-color: rgba(166, 206, 227, 0.5);
+  font-weight: bold;
 }
 </style>
