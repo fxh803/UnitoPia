@@ -83,6 +83,13 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
 
+    // 检查是否已存在 emitter，如果存在则先清除
+    const existingEmitter = canvasInstance.getObjects().find(obj => obj.dataType === 'emitter')
+    if (existingEmitter) {
+      canvasInstance.remove(existingEmitter)
+      canvasInstance.renderAll()
+    }
+
     const bezierPaths: fabric.Path[] = []
 
     // 每4个点创建一段贝塞尔曲线
