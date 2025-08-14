@@ -9,8 +9,7 @@
     "typecheck": "vue-tsc",
     "preview": "vite preview",
     "test": "vitest",
-    "up": "taze major -I",
-    "postinstall": "npx simple-git-hooks"
+    "up": "taze major -I"
   },
   "dependencies": {
     "@vueuse/core": "catalog:frontend",
@@ -52,11 +51,5 @@
   "resolutions": {
     "unplugin": "catalog:build",
     "vite": "catalog:build"
-  },
-  "simple-git-hooks": {
-    "pre-commit": "pnpm lint-staged"
-  },
-  "lint-staged": {
-    "*": "eslint --fix"
   }
 }
