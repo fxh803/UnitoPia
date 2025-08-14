@@ -57,7 +57,7 @@ export async function collectAllSlidesData(): Promise<ProcessedData> {
       processDataBinding(result, i)
       resultList.push(result)
     }
-    console.log('数据收集完成:', resultList)
+    console.log('数据收集完成')
     return resultList
 
   } catch (error) {
@@ -69,8 +69,7 @@ export async function collectAllSlidesData(): Promise<ProcessedData> {
 // 处理 marker 对象
 function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: number) {
   //解析对应索引的幻灯片
-  const canvasObjects = tempCanvas.getObjects()
-  console.log(canvasObjects)
+  const canvasObjects = tempCanvas.getObjects() 
   for (const obj of canvasObjects) {
     if (obj.get('dataType') === 'marker') {
       const thumbnail = obj.toDataURL({
@@ -157,16 +156,16 @@ function processForce(tempCanvas: Canvas, result: ProcessedData, slideIndex: num
     if (obj.get('dataType') === 'force') {
       const forceType = obj.get('forceType')
       if (forceType === 'pointForce') {
-        const coordinates = [{
+        const coordinates = {
           x: obj.left || 0,
           y: obj.top || 0
-        }]
+        }
         result.forces.push({
           type: 'pointForce',
           coordinates
         })
       } else if (forceType === 'fieldForce') {
-        const rotation = obj.get('rotation') || 0
+        const rotation = obj.angle || 0
         result.forces.push({
           type: 'fieldForce',
           rotation
@@ -192,8 +191,7 @@ function processDataBinding(result: ProcessedData, slideIndex: number) {
       }
     })
   const tableStore = useTableStore()
-  const tableData = tableStore.tableData
-  console.log(tableData)
+  const tableData = tableStore.tableData 
   const dataBindingList: Array<{ data: Array<any>, markerId: string, visualEncoding: any }> = [] 
 
   markerData.forEach(marker => {
@@ -215,13 +213,19 @@ function processDataBinding(result: ProcessedData, slideIndex: number) {
 export async function sendDataToServer(): Promise<boolean> {
   try {
     const data = await collectAllSlidesData()
+    const time = new Date().getTime()
+    const sendData = {
+      "data":data,
+      "id":time
+    }  
+    console.log(sendData)
     // 这里实现向后端发送数据的逻辑
     const response = await fetch('http://localhost:5000/api/process-data', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data)
+      body: JSON.stringify(sendData)
     })
 
     if (response.ok) {
