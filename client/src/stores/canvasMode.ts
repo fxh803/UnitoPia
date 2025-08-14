@@ -153,6 +153,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     setMode,
     setCanvas,
     clearCanvas,
-    setDrawedObjectDataType
+    setDrawedObjectDataType,
+    canvasRef
   }
 }) 
