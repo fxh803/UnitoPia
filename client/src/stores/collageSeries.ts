@@ -284,6 +284,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         collageSeries,
         currentSlideIndex,
         stopListen,
+        canvasRef,
         setCanvas,
         initializeEmptySlide,
         updateCurrentSlide,

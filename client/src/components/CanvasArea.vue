@@ -215,15 +215,10 @@ onMounted(async () => {
     // 初始化空白幻灯片
     initializeEmptySlide()
     addCanvasEventListeners()
-  }
-  window.addEventListener('resize', updateCanvasSize)
+  } 
  
 })
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', updateCanvasSize)
-  removeShapeEventListeners()
-})
+ 
 
 </script>
 

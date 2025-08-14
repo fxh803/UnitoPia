@@ -40,10 +40,16 @@ export async function collectAllSlidesData(): Promise<ProcessedData> {
         dataBinding: []
       }
       const slide = collageSeriesStore.collageSeries[i]
+      const canvas = collageSeriesStore.canvasRef?.()
       //新建临时画布
+      // 画布大小与原fabric画布一致
+      const originalWidth = canvas.width 
+      const originalHeight = canvas.height 
+      console.log(originalWidth, originalHeight) 
+      
       const tempCanvas = new Canvas(document.createElement('canvas'), {
-        width: 600,
-        height: 600
+        width: originalWidth,
+        height: originalHeight
       })
       //加载幻灯片数据
       await tempCanvas.loadFromJSON(slide.json)
@@ -86,7 +92,13 @@ function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: nu
 
 // 处理整个画布（隐藏除 container 元素以外的对象）
 function processContainer(tempCanvas: Canvas, result: ProcessedData, slideIndex: number) {
+  
   const canvasObjects = tempCanvas.getObjects()
+  const containerObjs = canvasObjects.filter(obj => obj.get('dataType') === 'container')
+  if (containerObjs.length === 0) {
+    result.container = ''
+    return
+  }
   for (const obj of canvasObjects) {
     if (obj.get('dataType') != 'container') {
       obj.set('visible', false)
@@ -213,10 +225,16 @@ function processDataBinding(result: ProcessedData, slideIndex: number) {
 export async function sendDataToServer(): Promise<boolean> {
   try {
     const data = await collectAllSlidesData()
-    const time = new Date().getTime()
+    const time = Math.floor(Date.now() / 1000)
+    const collageSeriesStore = useCollageSeriesStore()
+    const canvas = collageSeriesStore.canvasRef?.()
+    const originalWidth = canvas.width 
+    const originalHeight = canvas.height 
     const sendData = {
       "data":data,
-      "id":time
+      "id":time,
+      "canvasWidth":originalWidth,
+      "canvasHeight":originalHeight
     }  
     console.log(sendData)
     // 这里实现向后端发送数据的逻辑
