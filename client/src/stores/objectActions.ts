@@ -41,6 +41,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
         currentPathObj.value = obj
+        console.log('activateobj',obj.get('type'))
     }
     function updateActionBtnVisble() {
         const canvasInstance = canvasRef.value?.()
@@ -83,8 +84,12 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
             }
         }
         const activeObject = canvasInstance?.getActiveObject() 
-        if(activeObject && activeObject.get('dataType') === 'container' && activeObject.get('type') === 'image') {
+        if(activeObject && activeObject.get('uploadType')) {
             showClosePathBtn.value = false 
+            showGroupBtn.value = false
+            showColorBtn.value = false
+            showLayerUpBtn.value = false
+            showLayerDownBtn.value = false
         }
     }
     function updateActionBtnPosition() {

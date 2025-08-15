@@ -1,11 +1,180 @@
 <script setup lang="ts">
 import { useCanvasModeStore } from '~/stores/canvasMode'
 import ColorPicker from './ColorPicker.vue'
-import { storeToRefs } from 'pinia'
-
+import { storeToRefs } from 'pinia' 
+import * as fabric from 'fabric'
 const canvasModeStore = useCanvasModeStore()
 const {mode} = storeToRefs(canvasModeStore)
 const { setMode, clearCanvas } = canvasModeStore
+
+// 文件上传相关
+const fileInputRef = ref<HTMLInputElement>()
+
+const handleFileUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const files = target.files
+  
+  if (files && files.length > 0) {
+    // 批量处理多个文件
+    Array.from(files).forEach((file) => {
+      if (file.type === 'image/png') {
+        // 处理PNG文件
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const result = e.target?.result as string
+          console.log('PNG文件已上传:', file.name)
+          
+          // 将图片添加到画布作为marker对象
+          addImageToCanvas(result, file.name)
+        }
+        reader.readAsDataURL(file)
+      } else if (file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')) {
+        // 处理SVG文件
+        const reader = new FileReader()
+        reader.onload = async (e) => {
+          const svgString = e.target?.result as string
+          console.log('SVG文件已上传:', file.name)
+          
+          // 将SVG添加到画布作为marker对象
+          await addSVGToCanvas(svgString, file.name)
+        }
+        reader.readAsText(file)
+      } else {
+        console.warn('跳过不支持的文件类型:', file.name)
+      }
+    })
+  }
+  
+  // 清空文件输入框，允许重复选择同一文件
+  if (fileInputRef.value) {
+    fileInputRef.value.value = ''
+  }
+}
+
+const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
+  console.log('开始添加图片到画布:', fileName)
+  
+  // 获取canvas实例
+  const canvasInstance = canvasModeStore.canvasRef?.()
+  if (!canvasInstance) {
+    console.error('Canvas实例未找到')
+    return
+  }
+  
+  console.log('Canvas实例获取成功:', canvasInstance)
+
+  // 使用fabric.js的Promise方式加载图片
+  fabric.FabricImage.fromURL(imageDataUrl).then((fabricImg) => {
+    console.log('Fabric Image创建成功:', fabricImg)
+    
+    // 设置图片属性
+    fabricImg.set({
+      left: canvasInstance.width / 2,
+      top: canvasInstance.height / 2,
+      originX: 'center',
+      originY: 'center',
+      selectable: false,
+      evented: false,
+      dataType: 'marker', 
+      uploadType:'marker_png'
+    })
+    
+    // 计算合适的缩放比例
+    const canvasWidth = canvasInstance.width || 400
+    const canvasHeight = canvasInstance.height || 400
+    const maxWidth = canvasWidth * 0.3
+    const maxHeight = canvasHeight * 0.3
+    
+    const scaleX = maxWidth / fabricImg.width
+    const scaleY = maxHeight / fabricImg.height
+    const scale = Math.min(scaleX, scaleY, 1)
+    
+    fabricImg.set({
+      scaleX: scale,
+      scaleY: scale
+    })
+    //设置markerId
+    const timestamp = Date.now()
+    const randomId = Math.random().toString(36).substr(2, 9)
+    const markerId = `marker-${timestamp}-${randomId}`
+    fabricImg.set('markerId', markerId) 
+
+    // 将图片添加到画布
+    canvasInstance.add(fabricImg) 
+    // 重新渲染画布
+    canvasInstance.renderAll() 
+    
+  }).catch((error) => {
+    console.error('图片加载失败:', error)
+  })
+}
+
+const addSVGToCanvas = async (svgString: string, fileName: string) => {
+  console.log('开始添加SVG到画布:', fileName)
+  
+  try {
+    // 获取canvas实例
+    const canvasInstance = canvasModeStore.canvasRef?.()
+    if (!canvasInstance) {
+      console.error('Canvas实例未找到')
+      return
+    }
+    
+    console.log('Canvas实例获取成功:', canvasInstance)
+
+    // 使用 Fabric.js 加载 SVG
+    const loadedSVG = await fabric.loadSVGFromString(svgString)
+    const svgObject = fabric.util.groupSVGElements(loadedSVG.objects)
+    
+    // 设置SVG对象属性
+    svgObject.set({
+      left: canvasInstance.width / 2,
+      top: canvasInstance.height / 2,
+      originX: 'center',
+      originY: 'center',
+      selectable: false,
+      evented: false,
+      dataType: 'marker',
+      uploadType:'marker_svg'
+    })
+    
+    // 计算合适的缩放比例
+    const canvasWidth = canvasInstance.width || 400
+    const canvasHeight = canvasInstance.height || 400
+    const maxWidth = canvasWidth * 0.3
+    const maxHeight = canvasHeight * 0.3
+    
+    const scaleX = maxWidth / svgObject.width
+    const scaleY = maxHeight / svgObject.height
+    const scale = Math.min(scaleX, scaleY, 1)
+    
+    svgObject.set({
+      scaleX: scale,
+      scaleY: scale
+    })
+
+    //设置markerId
+    const timestamp = Date.now()
+    const randomId = Math.random().toString(36).substr(2, 9)
+    const markerId = `marker-${timestamp}-${randomId}`
+    svgObject.set('markerId', markerId) 
+
+    // 将SVG对象添加到画布
+    canvasInstance.add(svgObject) 
+    
+    // 重新渲染画布
+    canvasInstance.renderAll()
+    
+    console.log('SVG已成功添加到画布作为marker对象:', fileName)
+    
+  } catch (error) {
+    console.error('SVG加载失败:', error)
+  }
+}
+
+const triggerFileUpload = () => {
+  fileInputRef.value?.click()
+}
 </script>
 
 <template>
@@ -75,6 +244,26 @@ const { setMode, clearCanvas } = canvasModeStore
     >
       <span class="i-carbon-circle-outline" />
     </button>
+    
+    <!-- PNG上传按钮 -->
+    <button
+      class="rounded flex h-10 w-10 items-center justify-center bg-white text-black hover:bg-[#f5f5f5]"
+      title="upload marker"
+      @click="triggerFileUpload"
+    >
+    <div class="i-carbon:upload"></div>
+    </button>
+    
+    <!-- 隐藏的文件输入框 -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept=".png,.svg,image/png,image/svg+xml"
+      multiple
+      class="hidden"
+      @change="handleFileUpload"
+    />
+    
     <button
       class="text-white rounded bg-red-600 flex h-10 w-10 items-center justify-center hover:bg-red-700"
       title="Clear Canvas"

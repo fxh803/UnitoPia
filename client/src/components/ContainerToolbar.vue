@@ -63,7 +63,7 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
       selectable: false,
       evented: false,
       dataType: 'container',
-      name: fileName,
+      uploadType:'container_png'
     })
     
     // 计算合适的缩放比例
@@ -176,7 +176,7 @@ const triggerFileUpload = () => {
     <!-- PNG上传按钮 -->
     <button
       class="rounded flex h-10 w-10 items-center justify-center bg-white text-black hover:bg-[#f5f5f5]"
-      title="上传PNG图片"
+      title="upload container"
       @click="triggerFileUpload"
     >
     <div class="i-carbon:upload"></div>

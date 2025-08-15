@@ -11,7 +11,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         preview: string,
         dataTypeArray: any[],
         markerIdArray: any[],
-        forceTypeArray: any[]
+        forceTypeArray: any[],
+        uploadTypeArray: any[]
     }[]>([])
     const currentSlideIndex = ref(0)
     const stopListen = ref(false) // 添加标志
@@ -47,7 +48,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             preview,
             dataTypeArray: [],
             markerIdArray: [],
-            forceTypeArray: []
+            forceTypeArray: [],
+            uploadTypeArray: []
         }]
         currentSlideIndex.value = 0
     }
@@ -85,13 +87,15 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const dataTypeArray = objects.map((obj: any) => obj.get('dataType'))
         const markerIdArray = objects.map((obj: any) => obj.get('markerId'))
         const forceTypeArray = objects.map((obj: any) => obj.get('forceType'))
+        const uploadTypeArray = objects.map((obj: any) => obj.get('uploadType'))
         collageSeries.value[currentSlideIndex.value] = {
             slideId: collageSeries.value[currentSlideIndex.value].slideId,
             json,
             preview,
             dataTypeArray,
             markerIdArray,
-            forceTypeArray
+            forceTypeArray,
+            uploadTypeArray,
         }
     }
 
@@ -127,7 +131,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             preview,
             dataTypeArray: [],
             markerIdArray: [],
-            forceTypeArray: []
+            forceTypeArray: [],
+            uploadTypeArray: []
         })
         currentSlideIndex.value = collageSeries.value.length - 1
         stopListen.value = false
@@ -145,6 +150,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const dataTypeArray = collageSeries.value[idx].dataTypeArray
         const markerIdArray = collageSeries.value[idx].markerIdArray || []
         const forceTypeArray = collageSeries.value[idx].forceTypeArray || []
+        const uploadTypeArray = collageSeries.value[idx].uploadTypeArray || []
         // 清空当前画布
         clearCanvas()
         if (jsonObj.objects.length > 0) {
@@ -152,8 +158,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 setTimeout(() => {
                     canvasInstance.renderAll()
                     // 恢复自定义属性 
-                    console.log(dataTypeArray, markerIdArray, forceTypeArray)
-                    restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray)
+                    console.log(dataTypeArray, markerIdArray, forceTypeArray, uploadTypeArray)
+                    restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, uploadTypeArray)
                     stopListen.value = false
                     overviewStore.updateMarkerObjects()
                 }, 200)
@@ -187,7 +193,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             preview: originalSlide.preview,
             dataTypeArray: [...originalSlide.dataTypeArray],
             markerIdArray: [...originalSlide.markerIdArray],
-            forceTypeArray: [...originalSlide.forceTypeArray]
+            forceTypeArray: [...originalSlide.forceTypeArray],
+            uploadTypeArray: [...originalSlide.uploadTypeArray]
         }
 
         // 在复制目标后面插入新幻灯片
@@ -237,7 +244,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
 
     // 恢复自定义属性
-    function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any, markerIdArray: any[] = [], forceTypeArray: any[] = []) {
+    function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any, markerIdArray: any[] = [], forceTypeArray: any[] = [], uploadTypeArray: any[] = []) {
         const objects = canvasInstance.getObjects()
         // 遍历画布对象和JSON对象，恢复自定义属性
         objects.forEach((obj, index) => {
@@ -266,6 +273,9 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     obj.lockScalingY = true
                     obj.lockRotation = true 
                 }
+            }
+            if (uploadTypeArray[index]) {
+                obj.set('uploadType', uploadTypeArray[index])
             }
         })
     }
