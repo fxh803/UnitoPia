@@ -3,6 +3,7 @@ import { useOverviewStore } from '~/stores/overview'
 import { Canvas } from 'fabric'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
+import { useCollageStore } from '~/stores/collage'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -20,6 +21,7 @@ interface ProcessedData {
     data: Array<any>
     markerId: string
     visualEncoding: any
+    dataField: string
   }>
 }
 
@@ -103,7 +105,7 @@ function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: nu
 
 // 处理整个画布（隐藏除 container 元素以外的对象）
 function processContainer(tempCanvas: Canvas, result: ProcessedData, slideIndex: number) {
-  
+
   const canvasObjects = tempCanvas.getObjects()
   const containerObjs = canvasObjects.filter(obj => obj.get('dataType') === 'container')
   if (containerObjs.length === 0) {
@@ -227,16 +229,39 @@ function processDataBinding(result: ProcessedData, slideIndex: number) {
     dataBindingList.push({
       data: temp,
       markerId: marker.markerId,
-      visualEncoding: marker.visualEncoding
+      visualEncoding: marker.visualEncoding,
+      dataField: marker.dataField
     })
   })
   result.dataBinding = dataBindingList
 }
 // 发送数据到后端的函数
+// 轮询处理状态的函数
+async function startProgressTimer() {
+  const collageStore = useCollageStore()
+  const { collageId } = storeToRefs(collageStore)
+  try {
+    const response = await fetch('http://localhost:5000/fetchProgressApi?id=' + collageId.value)
+    console.log(response)
+    if (response.ok) {
+      // 解析 JSON 响应
+      const result = await response.json()
+      console.log('处理状态:', result)
+    } else {
+      console.error('获取处理状态失败:', response.statusText)
+    }
+  } catch (error) {
+    console.error('轮询处理状态时出错:', error)
+  }
+}
+
 export async function sendDataToServer(): Promise<boolean> {
+  const collageStore = useCollageStore()
+  const { collageId, progressTimer } = storeToRefs(collageStore)
   try {
     const data = await collectAllSlidesData()
     const time = Math.floor(Date.now() / 1000)
+    collageId.value = time.toString()
     const collageSeriesStore = useCollageSeriesStore()
     const canvas = collageSeriesStore.canvasRef?.()
     const originalWidth = canvas.width
@@ -248,20 +273,23 @@ export async function sendDataToServer(): Promise<boolean> {
       "canvasHeight": originalHeight
     }
     console.log(sendData)
+    progressTimer.value = setInterval(() => {
+      startProgressTimer()
+    }, 2000)
     // 这里实现向后端发送数据的逻辑
-    const response = await fetch('http://localhost:5000/api/process-data', {
+    const response = await fetch('http://localhost:5000/processDataApi', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(sendData)
     })
+    console.log(response)
 
     if (response.ok) {
-      console.log('数据发送成功')
+      clearInterval(progressTimer.value)
       return true
     } else {
-      console.error('数据发送失败:', response.statusText)
       return false
     }
   } catch (error) {

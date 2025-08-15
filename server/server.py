@@ -9,7 +9,8 @@ from unitopia import Unitopia
 app = Flask(__name__, template_folder='',static_folder="")
 CORS(app)  # 启用跨域支持
 unitopia = Unitopia() 
-@app.route('/api/process-data', methods=['POST'])
+progress_data = {}
+@app.route('/processDataApi', methods=['POST'])
 def process_data():  
     
     # 获取请求数据
@@ -69,9 +70,11 @@ def process_data():
             
             visualEncoding = None
             data = None
+            attribute = None
             for binding in collage_data.get("dataBinding", []):
                 if binding.get("markerId") == marker_id:
                     visualEncoding = binding.get("visualEncoding")
+                    attribute = binding.get("dataField")
                     data = binding.get("data")
                     break
             
@@ -80,6 +83,7 @@ def process_data():
                 json_data["collage"][i]["marker_config"][j]["visual_encoding"].append({})
             
             json_data["collage"][i]["marker_config"][j]["visual_encoding"][0]["channel"] = visualEncoding
+            json_data["collage"][i]["marker_config"][j]["visual_encoding"][0]["attribute"] = attribute
             json_data["collage"][i]["marker_config"][j]["data"] = data
 
         
@@ -117,14 +121,25 @@ def process_data():
         json.dump(json_data, f, indent=4)
  
     
-    unitopia.start_collage(f'./workdir/{str(id)}_{i}/collage.json',id = str(id))
+    unitopia.start_collage(f'./workdir/{str(id)}_{i}/collage.json',id = str(id),callback=collage_callback)
     # 返回处理结果
     return jsonify({
         "success": True,
         "message": "数据接收成功"
     }), 200
 
- 
+def collage_callback(result):
+    print(result)
+    progress_data[result['id']] = result
+
+@app.route('/fetchProgressApi', methods=['GET'])
+def fetch_progress_api():
+     # 从请求参数中获取ID
+    id = request.args.get('id')#str 
+    # 获取进度
+    res = progress_data.get(id,{}) 
+    return res
+
 if __name__ == '__main__': 
     
     app.run(host='0.0.0.0', port=5000, debug=True)
