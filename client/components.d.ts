@@ -28,6 +28,7 @@ declare module 'vue' {
     ResizableContainer: typeof import('./src/components/ResizableContainer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    RunningStatusIndicator: typeof import('./src/components/RunningStatusIndicator.vue')['default']
     Table: typeof import('./src/components/Table.vue')['default']
     ToastPanel: typeof import('./src/components/ToastPanel.vue')['default']
   }

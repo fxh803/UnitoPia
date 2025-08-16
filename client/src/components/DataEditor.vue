@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useCollageStore } from '~/stores/collage'
 import Table from './Table.vue'
 import Overview from './Overview.vue'
 
+
+// 拼贴处理状态store
+const collageStore = useCollageStore()
+const { collaging } = storeToRefs(collageStore)
 
 // 切换状态
 const activeTab = ref<'table' | 'overview'>('table')
@@ -15,6 +21,13 @@ const switchTab = (tab: 'table' | 'overview') => {
 
 <template>
   <aside class="border-r border-gray-200 bg-gray-50 h-full w-full flex flex-col relative">
+    <!-- 拼贴处理状态遮罩 -->
+    <div 
+      v-if="collaging"
+      class="absolute inset-0 bg-gray-300 bg-opacity-50 z-30 flex items-center justify-center"
+    >
+    </div>
+    
     <!-- 切换栏 -->
     <div class="flex-shrink-0 bg-white border-b border-gray-200 px-4 py-2">
       <div class="flex justify-center space-x-6">

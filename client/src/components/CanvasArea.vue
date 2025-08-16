@@ -32,7 +32,7 @@ const {
 
 const canvasModeStore = useCanvasModeStore()
 const { mode } = storeToRefs(canvasModeStore)
-const { setMode, clearCanvas, setDrawedObjectDataType } = canvasModeStore
+const { setMode, setDrawedObjectDataType } = canvasModeStore
 
 const objectActionsStore = useObjectActionsStore()
 const {

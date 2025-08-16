@@ -1,8 +1,12 @@
 <script setup lang="ts"> 
 import { useSelectedModeStore } from '~/stores/selectedMode'
+import { useCollageStore } from '~/stores/collage'
 import { storeToRefs } from 'pinia'
+
 const selectedModeStore = useSelectedModeStore()
+const collageStore = useCollageStore()
 const {selectedMode} = storeToRefs(selectedModeStore)
+const {collaging} = storeToRefs(collageStore)
 const {setSelectedMode} = selectedModeStore
 </script>
 
@@ -14,10 +18,12 @@ const {setSelectedMode} = selectedModeStore
       :class="[
         selectedMode === 'marker'
           ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          : 'bg-white text-black hover:bg-[#f5f5f5]',
+        collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
       title="Marker Mode"
       @click="setSelectedMode('marker')"
+      :disabled="collaging"
     >
       <span class="i-carbon:data-categorical" />
     </button>
@@ -26,10 +32,12 @@ const {setSelectedMode} = selectedModeStore
       :class="[
         selectedMode === 'container'
           ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          : 'bg-white text-black hover:bg-[#f5f5f5]',
+        collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
       title="Container Mode"
       @click="setSelectedMode('container')"
+      :disabled="collaging"
     >
       <span class="i-carbon:area-custom" />
     </button>
@@ -38,10 +46,12 @@ const {setSelectedMode} = selectedModeStore
       :class="[
         selectedMode === 'emitter'
           ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          : 'bg-white text-black hover:bg-[#f5f5f5]',
+        collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
       title="Emitter Mode"
       @click="setSelectedMode('emitter')"
+      :disabled="collaging"
     >
     <div class="i-carbon:anchor"></div>
     </button>
@@ -50,10 +60,12 @@ const {setSelectedMode} = selectedModeStore
       :class="[
         selectedMode === 'force'
           ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          : 'bg-white text-black hover:bg-[#f5f5f5]',
+        collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
       title="Force Mode"
       @click="setSelectedMode('force')"
+      :disabled="collaging"
     >
       <span class="i-carbon:radio-button" />
     </button>

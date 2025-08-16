@@ -4,6 +4,7 @@ import { Canvas } from 'fabric'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
 import { useCollageStore } from '~/stores/collage'
+import { useSelectedModeStore } from '~/stores/selectedMode'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -79,7 +80,8 @@ function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: nu
   const canvasObjects = tempCanvas.getObjects()
   for (const obj of canvasObjects) {
     if (obj.get('dataType') === 'marker') {
-      console.log(obj.get('uploadType'))
+      obj.set('visible', true)
+      obj.set('opacity', 1)
       if (obj.get('uploadType') === 'marker_svg') {
         // 导出 SVG 格式的 marker
         const svgString = obj.toSVG()
@@ -257,8 +259,13 @@ async function startProgressTimer() {
 
 export async function sendDataToServer(): Promise<boolean> {
   const collageStore = useCollageStore()
-  const { collageId, progressTimer } = storeToRefs(collageStore)
+  const { collageId, progressTimer, collaging } = storeToRefs(collageStore)
+  const selectedModeStore = useSelectedModeStore()
   try {
+    // 设置系统为拼贴处理状态
+    collageStore.startCollaging()
+    selectedModeStore.setSelectedMode(null)
+
     const data = await collectAllSlidesData()
     const time = Math.floor(Date.now() / 1000)
     collageId.value = time.toString()
@@ -288,12 +295,20 @@ export async function sendDataToServer(): Promise<boolean> {
 
     if (response.ok) {
       clearInterval(progressTimer.value)
+      // 停止拼贴处理状态
+      collageStore.stopCollaging()
       return true
     } else {
+      clearInterval(progressTimer.value)
+      // 出错时也要停止拼贴处理状态
+      collageStore.stopCollaging()
       return false
     }
   } catch (error) {
     console.error('发送数据时出错:', error)
+    // 出错时也要停止拼贴处理状态
+    collageStore.stopCollaging()
+    clearInterval(progressTimer.value)
     return false
   }
 }

@@ -6,10 +6,24 @@ import { FabricImage } from 'fabric'
 
 const canvasModeStore = useCanvasModeStore() 
 const { mode } = storeToRefs(canvasModeStore)
-const { setMode, clearCanvas } = canvasModeStore
+const { setMode } = canvasModeStore
 
 const selectedModeStore = useSelectedModeStore() 
 
+const clearCanvas = () => { 
+    const canvasInstance = canvasModeStore.canvasRef?.()
+    if (!canvasInstance) return
+    // 复制一份对象数组，避免遍历时出错
+    const objects = canvasInstance.getObjects().concat();
+    objects.forEach(obj => {
+      if (obj.get('dataType') === 'container') {
+        canvasInstance.remove(obj);
+      } 
+    });
+    canvasInstance.discardActiveObject();
+    canvasInstance.renderAll();
+    // 背景色会自动保留，无需重新设置 
+}
 // 文件上传相关
 const fileInputRef = ref<HTMLInputElement>()
 

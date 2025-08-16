@@ -96,20 +96,6 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     canvasInstance.renderAll();
   }
 
-
-
-  function clearCanvas() {
-    const canvasInstance = canvasRef.value?.()
-    if (!canvasInstance) return
-    // 复制一份对象数组，避免遍历时出错
-    const objects = canvasInstance.getObjects().concat();
-    objects.forEach(obj => {
-      canvasInstance.remove(obj);
-    });
-    canvasInstance.discardActiveObject();
-    canvasInstance.renderAll();
-    // 背景色会自动保留，无需重新设置
-  }
   
   function setDrawedObjectDataType(e) {
     // 监听绘制完成事件，为绘制的路径设置dataType
@@ -152,7 +138,6 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     mode,
     setMode,
     setCanvas,
-    clearCanvas,
     setDrawedObjectDataType,
     canvasRef
   }

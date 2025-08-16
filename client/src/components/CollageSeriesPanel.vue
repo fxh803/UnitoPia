@@ -2,9 +2,12 @@
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
+import { useCollageStore } from '~/stores/collage'
 
 const collageSeriesStore = useCollageSeriesStore()
+const collageStore = useCollageStore()
 const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
+const { collaging } = storeToRefs(collageStore)
 const { handleCollageSeriesSelect, handleDeleteCollageSeries, addNewSlide, handleDuplicateSlide } = collageSeriesStore
 
 // 折叠状态
@@ -38,6 +41,12 @@ function toggleCollapse() {
       class="py-4 bg-white flex flex-col h-full items-center overflow-y-auto transition-all duration-300 shadow-right border-r border-gray-200 overflow-x-hidden relative"
       :class="isCollapsed ? 'w-13' : 'w-60'"
     >
+      <!-- 拼贴处理状态遮罩 -->
+      <div 
+        v-if="collaging"
+        class="absolute inset-0 bg-gray-300 bg-opacity-50 z-30 flex items-center justify-center"
+      >
+      </div>
       <!-- 收起按钮 - 放在右上角 -->
       <button
         @click="toggleCollapse"
