@@ -84,6 +84,9 @@ function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: nu
       obj.set('opacity', 1)
       if (obj.get('uploadType') === 'marker_svg') {
         // 导出 SVG 格式的 marker
+        //导出前将marker移到画布的左上角
+        obj.set('left', obj.width / 2)
+        obj.set('top', obj.height / 2)
         const svgString = obj.toSVG()
         result.markers.push({
           thumbnail: svgString,

@@ -5,6 +5,8 @@ import os
 from datetime import datetime
 import math
 import base64
+import re
+import cairosvg
 from unitopia import Unitopia 
 app = Flask(__name__, template_folder='',static_folder="")
 CORS(app)  # 启用跨域支持
@@ -34,8 +36,14 @@ def process_data():
                 "emitter_config": {},
                 "force_config": {}
             })
+
+        ##########################   marker ########################
+        marker_type = 'svg'
+        for marker_data in collage_data["markers"]:
+            if marker_data['thumbnail'].startswith('data:image/png;base64,'):
+                marker_type = 'png'
+                break
         
-        # 处理标记点数据
         for j, marker_data in enumerate(collage_data["markers"]):
             # 确保 marker_config 列表长度足够
             while len(json_data["collage"][i]["marker_config"]) <= j:
@@ -45,29 +53,50 @@ def process_data():
                     "data": []
                 })
             
-            ##########################   marker ########################
             marker_id = marker_data["markerId"]
-            marker_type = 'png' if marker_data['thumbnail'].startswith('data:image/png;base64,') else 'svg'
-            if marker_type == 'png':
+
+            if marker_data['thumbnail'].startswith('data:image/png;base64,'):
                 marker_base64 = marker_data['thumbnail'].split(',')[1]
                 marker_path = f"./workdir/{str(id)}_{i}/markers/"+str(marker_id)+".png"
                 with open(marker_path, "wb") as f_marker:
                     f_marker.write(base64.b64decode(marker_base64))
                 json_data["collage"][i]["marker_config"][j]["marker"] = [marker_path]
-            elif marker_type == 'svg':
+            else:
                 marker_string = marker_data['thumbnail']
                 # 确保 marker_string 是完整的SVG格式
                 if not marker_string.startswith('<svg'):
+                    #获取marker_string的最外围的<g>的transform="matrix(xx xx xx xx xx xx)"的最后两个数
+                    # 先找到最外围的<g>标签
+                    g_match = re.search(r'<g[^>]*transform="matrix\(([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\)"[^>]*>', marker_string)
+                    # 设置默认值
+                    scale_x = 100.0
+                    scale_y = 100.0
+                    if g_match:
+                        # 最后两个数是偏移量
+                        scale_x = float(g_match.group(5))
+                        scale_y = float(g_match.group(6))  
+                    
+                    svg_width = scale_x*2
+                    svg_height = scale_y*2
                     # 添加SVG头部和尾部
-                    svg_header = '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 150 150" width="150" height="150">\n'
+                    svg_header = '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 '+str(svg_width)+' '+str(svg_height)+'" width="'+str(svg_width)+'" height="'+str(svg_height)+'">\n'
                     svg_footer = '\n</svg>'
                     marker_string = svg_header + marker_string + svg_footer
                 
-                marker_path = f"./workdir/{str(id)}_{i}/markers/"+str(marker_id)+".svg"
-                with open(marker_path, "w", encoding="utf-8") as f_marker:
-                    f_marker.write(marker_string)
-                json_data["collage"][i]["marker_config"][j]["marker"] = [marker_path]
-            
+                if marker_type == 'png':
+                    # 将SVG转换为PNG
+                    png_path = f"./workdir/{str(id)}_{i}/markers/"+str(marker_id)+".png"
+                    # 使用cairosvg将SVG转换为PNG
+                    cairosvg.svg2png(bytestring=marker_string.encode('utf-8'), write_to=png_path)
+                    json_data["collage"][i]["marker_config"][j]["marker"] = [png_path]
+                     
+                else:
+                    # 保存为SVG
+                    marker_path = f"./workdir/{str(id)}_{i}/markers/"+str(marker_id)+".svg"
+                    with open(marker_path, "w", encoding="utf-8") as f_marker:
+                        f_marker.write(marker_string)
+                    json_data["collage"][i]["marker_config"][j]["marker"] = [marker_path]
+
             visualEncoding = None
             data = None
             attribute = None
