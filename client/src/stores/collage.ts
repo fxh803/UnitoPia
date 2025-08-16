@@ -6,7 +6,8 @@ export const useCollageStore = defineStore('collage', () => {
     const progressTimer = ref(null)
     const collaging = ref(false)
     const progress = ref(null)
-    const result = ref([])
+    const result_data = ref([])
+    const collage_data = ref(null)
     // 开始拼贴处理
     const startCollaging = () => {
         collaging.value = true
@@ -15,6 +16,10 @@ export const useCollageStore = defineStore('collage', () => {
     // 停止拼贴处理
     const stopCollaging = () => {
         collaging.value = false
+    }
+
+    const createMarker = (marker: any) => {
+        markers.value.push(marker)
     }
     
     return {

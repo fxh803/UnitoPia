@@ -252,7 +252,7 @@ async function startProgressTimer() {
       // 解析 JSON 响应
       const result = await response.json()
       collageStore.progress = result.progress
-      collageStore.result.push(result.result)
+      collageStore.result_data.push(result.result)
       console.log('处理状态:', result)
     } else {
       console.error('获取处理状态失败:', response.statusText)
@@ -272,6 +272,7 @@ export async function sendDataToServer(): Promise<boolean> {
     selectedModeStore.setSelectedMode(null)
 
     const data = await collectAllSlidesData()
+    collageStore.collage_data = data
     const time = Math.floor(Date.now() / 1000)
     collageId.value = time.toString()
     const collageSeriesStore = useCollageSeriesStore()
