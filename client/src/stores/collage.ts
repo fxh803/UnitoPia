@@ -5,7 +5,8 @@ export const useCollageStore = defineStore('collage', () => {
     const collageId = ref('')
     const progressTimer = ref(null)
     const collaging = ref(false)
-    
+    const progress = ref(null)
+    const result = ref([])
     // 开始拼贴处理
     const startCollaging = () => {
         collaging.value = true
@@ -20,6 +21,8 @@ export const useCollageStore = defineStore('collage', () => {
         collageId,
         progressTimer,
         collaging,
+        progress,
+        result,
         startCollaging,
         stopCollaging
     }

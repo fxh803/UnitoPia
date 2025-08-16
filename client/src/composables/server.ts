@@ -248,6 +248,8 @@ async function startProgressTimer() {
     if (response.ok) {
       // 解析 JSON 响应
       const result = await response.json()
+      collageStore.progress = result.progress
+      collageStore.result.push(result.result)
       console.log('处理状态:', result)
     } else {
       console.error('获取处理状态失败:', response.statusText)
