@@ -12,6 +12,9 @@ import { useShapeDrawingStore } from '~/stores/shapeDrawing'
 import { useOverviewStore } from '~/stores/overview'
 import { useBezierDrawingStore } from '~/stores/bezierDrawing'
 import { useForceDrawingStore } from '~/stores/forceDrawing' 
+import { useAnimationStore } from '~/stores/animation'
+const animationStore = useAnimationStore()
+const {collaging,result_data} = storeToRefs(animationStore)
 const selectedModeStore = useSelectedModeStore()
 const {selectedMode, isContainerMode} = storeToRefs(selectedModeStore) 
 
@@ -136,6 +139,13 @@ function removeCanvasEventListeners(){
   canvas.off('object:added')
   canvas.off('object:removed')
 }
+watch(collaging, (newVal) => {
+  if (newVal) {
+    removeCanvasEventListeners()
+  } else {
+    addCanvasEventListeners()
+  }
+})
 watch (stopListen, (newVal) => {
   if (!newVal) {
     addCanvasEventListeners()
@@ -235,9 +245,10 @@ onMounted(async () => {
     <div ref="canvasAreaRef"
       class="p-2 border-r border-[#e6e6e6] bg-[#E5E5E5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden">
       <!-- 新增canvas-wrapper，包裹canvas和button -->
-      <div ref="canvasWrapperRef" style="position: relative;">
+      <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
         <!-- 画布本体 -->
         <canvas ref="canvasEl" class="border border-[#e6e6e6] rounded-2xl" />
+        <paperCanvas v-if="collaging || result_data.length > 0" />
         <!-- 对象操作按钮 -->
         <ObjectActionButtons />
       </div>

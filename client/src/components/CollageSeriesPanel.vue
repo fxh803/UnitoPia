@@ -2,12 +2,12 @@
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
-import { useCollageStore } from '~/stores/collage'
+import { useAnimationStore } from '~/stores/animation'
 
 const collageSeriesStore = useCollageSeriesStore()
-const collageStore = useCollageStore()
+const animationStore = useAnimationStore()
 const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
-const { collaging } = storeToRefs(collageStore)
+const { collaging } = storeToRefs(animationStore)
 const { handleCollageSeriesSelect, handleDeleteCollageSeries, addNewSlide, handleDuplicateSlide } = collageSeriesStore
 
 // 折叠状态

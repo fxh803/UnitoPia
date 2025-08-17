@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useCollageStore } from '~/stores/collage'
+import { useAnimationStore } from '~/stores/animation'
 import Table from './Table.vue'
 import Overview from './Overview.vue'
 
 
 // 拼贴处理状态store
-const collageStore = useCollageStore()
-const { collaging } = storeToRefs(collageStore)
+const animationStore = useAnimationStore()
+const { collaging } = storeToRefs(animationStore)
 
 // 切换状态
 const activeTab = ref<'table' | 'overview'>('table')

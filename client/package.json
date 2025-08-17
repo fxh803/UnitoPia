@@ -15,6 +15,7 @@
     "@vueuse/core": "catalog:frontend",
     "element-plus": "^2.10.4",
     "fabric": "^6.7.0",
+    "paper": "^0.12.18",
     "pinia": "^3.0.3",
     "vue": "catalog:frontend",
     "vue-router": "catalog:frontend",

@@ -1,12 +1,12 @@
 <script setup lang="ts"> 
 import { useSelectedModeStore } from '~/stores/selectedMode'
-import { useCollageStore } from '~/stores/collage'
+import { useAnimationStore } from '~/stores/animation'
 import { storeToRefs } from 'pinia'
 
 const selectedModeStore = useSelectedModeStore()
-const collageStore = useCollageStore()
+const animationStore = useAnimationStore()
 const {selectedMode} = storeToRefs(selectedModeStore)
-const {collaging} = storeToRefs(collageStore)
+const {collaging} = storeToRefs(animationStore)
 const {setSelectedMode} = selectedModeStore
 </script>
 

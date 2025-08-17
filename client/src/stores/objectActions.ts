@@ -6,6 +6,9 @@ import { storeToRefs } from 'pinia'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useObjectColorPickerStore } from '~/stores/objectColorPicker'
 import { useForceDrawingStore } from '~/stores/forceDrawing'
+import { useAnimationStore } from '~/stores/animation'
+const animationStore = useAnimationStore()
+const { collaging } = storeToRefs(animationStore)
 const selectedModeStore = useSelectedModeStore()
 const forceDrawingStore = useForceDrawingStore()
 const objectColorPickerStore = useObjectColorPickerStore()
@@ -86,6 +89,14 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const activeObject = canvasInstance?.getActiveObject() 
         if(activeObject && activeObject.get('uploadType')) {
             showClosePathBtn.value = false 
+            showGroupBtn.value = false
+            showColorBtn.value = false
+            showLayerUpBtn.value = false
+            showLayerDownBtn.value = false
+        }
+        if(collaging.value) {
+            showDeleteBtn.value = false
+            showClosePathBtn.value = false
             showGroupBtn.value = false
             showColorBtn.value = false
             showLayerUpBtn.value = false

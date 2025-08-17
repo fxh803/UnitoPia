@@ -3,7 +3,7 @@ import { useOverviewStore } from '~/stores/overview'
 import { Canvas } from 'fabric'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
-import { useCollageStore } from '~/stores/collage'
+import { useAnimationStore } from '~/stores/animation'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 // 定义数据类型接口
 interface ProcessedData {
@@ -243,17 +243,18 @@ function processDataBinding(result: ProcessedData, slideIndex: number) {
 // 发送数据到后端的函数
 // 轮询处理状态的函数
 async function startProgressTimer() {
-  const collageStore = useCollageStore()
-  const { collageId } = storeToRefs(collageStore)
+  const animationStore = useAnimationStore()
+  const { process_id,progress_data,result_data } = storeToRefs(animationStore)
   try {
-    const response = await fetch('http://localhost:5000/fetchProgressApi?id=' + collageId.value)
-    console.log(response)
+    const response = await fetch('http://localhost:5000/fetchProgressApi?id=' + process_id.value)
     if (response.ok) {
       // 解析 JSON 响应
       const result = await response.json()
-      collageStore.progress = result.progress
-      collageStore.result_data.push(result.result)
-      console.log('处理状态:', result)
+      if(result.progress){ 
+        progress_data.value.push(result.progress)
+        result_data.value.push(result.result)
+        animationStore.updateAnimation()
+      } 
     } else {
       console.error('获取处理状态失败:', response.statusText)
     }
@@ -263,22 +264,34 @@ async function startProgressTimer() {
 }
 
 export async function sendDataToServer(): Promise<boolean> {
-  const collageStore = useCollageStore()
-  const { collageId, progressTimer, collaging } = storeToRefs(collageStore)
+  const animationStore = useAnimationStore()
+  const { process_id, progressTimer, collage_result_type, canvas_width, canvas_height, collaging } = storeToRefs(animationStore)
   const selectedModeStore = useSelectedModeStore()
   try {
     // 设置系统为拼贴处理状态
-    collageStore.startCollaging()
+    collaging.value = true
     selectedModeStore.setSelectedMode(null)
 
     const data = await collectAllSlidesData()
-    collageStore.collage_data = data
+    for (const [index, subData] of data.entries()) {//对于每一个slide
+      subData.markers.forEach((marker: any) => {
+        if(marker.thumbnail.includes('data:image/png;base64,')){
+         collage_result_type.value.push('png')
+         return
+        } 
+      })
+      if (collage_result_type.value[index] === undefined) {
+        collage_result_type.value.push('svg')
+      }
+    }
     const time = Math.floor(Date.now() / 1000)
-    collageId.value = time.toString()
+    process_id.value = time.toString()
     const collageSeriesStore = useCollageSeriesStore()
     const canvas = collageSeriesStore.canvasRef?.()
     const originalWidth = canvas.width
     const originalHeight = canvas.height
+    canvas_width.value = originalWidth
+    canvas_height.value = originalHeight
     const sendData = {
       "data": data,
       "id": time,
@@ -302,18 +315,18 @@ export async function sendDataToServer(): Promise<boolean> {
     if (response.ok) {
       clearInterval(progressTimer.value)
       // 停止拼贴处理状态
-      collageStore.stopCollaging()
+      collaging.value = false
       return true
     } else {
       clearInterval(progressTimer.value)
       // 出错时也要停止拼贴处理状态
-      collageStore.stopCollaging()
+      collaging.value = false
       return false
     }
   } catch (error) {
     console.error('发送数据时出错:', error)
     // 出错时也要停止拼贴处理状态
-    collageStore.stopCollaging()
+    collaging.value = false
     clearInterval(progressTimer.value)
     return false
   }

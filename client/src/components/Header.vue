@@ -2,16 +2,22 @@
 // 页头无需复杂逻辑
 //导入server composables
 import { collectAllSlidesData, sendDataToServer } from '~/composables/server'
-import { useCollageStore } from '~/stores/collage'
+import { useAnimationStore } from '~/stores/animation'
 import { storeToRefs } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 
-const collageStore = useCollageStore()
-const { collaging, progress } = storeToRefs(collageStore)
+const animationStore = useAnimationStore()
+const { collaging, progress, result_data, replaying } = storeToRefs(animationStore)
 
 // 计算进度百分比
 const percentage = ref(0)
 
+// 计算是否显示replay按钮
+const showReplayButton = computed(() => result_data.value && result_data.value.length > 0 && !collaging.value)
+
+// 鼠标悬浮状态
+const isHoveringRun = ref(false)
+const isHoveringReplay = ref(false)
 // 监听progress变化，计算进度
 watch(progress, (newProgress) => {
   if (newProgress && collaging.value) {
@@ -31,6 +37,23 @@ watch(progress, (newProgress) => {
     percentage.value = 0
   }
 }, { immediate: true })
+
+// 处理replay按钮点击
+const handleReplay = () => {
+  if (replaying.value) {
+    animationStore.stopReplay()
+  } else {
+    animationStore.replay()
+  }
+}
+
+const handleRun = () => {
+  if (collaging.value) {
+    return
+  }else{
+    sendDataToServer()
+  }
+}
 </script>
 
 <template>
@@ -42,9 +65,9 @@ watch(progress, (newProgress) => {
       
       <!-- 播放按钮 -->
       <button 
-        class="ml-50px flex items-center gap-2 px-6 h-full bg-white hover:bg-gray-100 text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
-        @click="sendDataToServer"
-        :disabled="collaging"
+        class="ml-50px flex items-center gap-2 px-6 h-full bg-white  text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
+        :class="collaging ? 'hover:bg-red-500' : 'hover:bg-gray-100'"
+        @click="handleRun"
       >
         <div 
           v-if="!collaging"
@@ -54,7 +77,25 @@ watch(progress, (newProgress) => {
           v-else
           class="i-carbon:renew animate-spin text-lg"
         ></div>
-        <span>{{ collaging ? 'Running...' : 'Run' }}</span>
+        <span>{{ collaging ?  'Running...' : 'Run' }}</span>
+      </button>
+      
+      <!-- Replay 按钮 - 当result_data不为空时显示 -->
+      <button 
+        v-if="showReplayButton"
+        class="flex items-center gap-2 px-6 h-full bg-white  text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
+        :class="replaying ? 'hover:bg-red-500' : 'hover:bg-gray-100'"
+        @click="handleReplay"
+      >
+        <div 
+          v-if="!replaying"
+          class="i-carbon:reset text-lg" 
+        ></div>
+        <div 
+          v-else
+          class="i-carbon:renew animate-spin text-lg"
+        ></div>
+        <span>{{ replaying ? 'replaying...' : 'replay' }}</span>
       </button>
       
       <!-- Export 按钮 -->
