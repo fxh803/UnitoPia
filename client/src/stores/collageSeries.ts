@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import type { Canvas } from 'fabric'
+import { Canvas } from 'fabric'
 import { useOverviewStore } from '~/stores/overview'
+import { useBackgroundStore } from '~/stores/background'
+import { FabricImage } from 'fabric'
 
 export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 拼贴系列状态
@@ -115,29 +117,107 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     }
 
     // 添加新幻灯片
-    function addNewSlide() {
+    async function addNewSlide() {
         const canvasInstance = canvasRef.value?.()
         if (!canvasInstance) return
         stopListen.value = true
+
+        // 检查当前是否有背景
+        const backgroundStore = useBackgroundStore()
+        const hasBackground = backgroundStore.background
+
         // 清空画布
         clearCanvas()
 
         // 创建新的空白幻灯片
-        const json = JSON.stringify(canvasInstance.toJSON())
-        const preview = canvasInstance.toDataURL({
-            format: 'png',
-            multiplier: 2
-        })
+        let json = JSON.stringify(canvasInstance.toJSON())
+        let preview: string
+        let dataTypeArray: any[] = []
+        let markerIdArray: any[] = []
+        let forceTypeArray: any[] = []
+        let uploadTypeArray: any[] = []
+
+        // 如果有背景，添加到JSON数据中
+        if (hasBackground) {
+            try {
+                // 解析JSON数据
+                const slideData = JSON.parse(json)
+                // 使用fabric.js的Promise方式加载图片
+                const fabricImg = await FabricImage.fromURL(backgroundStore.background)
+
+                // 设置图片属性
+                fabricImg.set({
+                    left: canvasInstance.width / 2,
+                    top: canvasInstance.height / 2,
+                    originX: 'center',
+                    originY: 'center',
+                    selectable: false,
+                    evented: false,
+                    dataType: 'background',
+                    uploadType: 'background_png'
+                })
+
+                // 计算合适的缩放比例，使图片完全适应画布
+                const canvasWidth = canvasInstance.width || 400
+                const canvasHeight = canvasInstance.height || 400
+
+                const scaleX = canvasWidth / fabricImg.width
+                const scaleY = canvasHeight / fabricImg.height
+                const scale = Math.min(scaleX, scaleY) // 使用Math.min确保图片完全适应画布，不会超出边界
+
+                fabricImg.set({
+                    scaleX: scale,
+                    scaleY: scale
+                })
+
+                slideData.objects.unshift(fabricImg.toObject())
+
+                // 更新JSON数据
+                json = JSON.stringify(slideData)
+
+                // 更新四个数组
+                dataTypeArray.unshift('background')
+                uploadTypeArray.unshift('background_png')
+                markerIdArray.unshift(null)
+                forceTypeArray.unshift(null)
+
+                canvasInstance.add(fabricImg)
+                canvasInstance.renderAll()
+                
+                // 生成包含背景的preview
+                preview = canvasInstance.toDataURL({
+                    format: 'png',
+                    multiplier: 2
+                })
+
+            } catch (error) {
+                console.error('为新slide添加背景时出错:', error)
+                // 如果出错，使用默认的空白preview
+                preview = canvasInstance.toDataURL({
+                    format: 'png',
+                    multiplier: 2
+                })
+            }
+        } else {
+            // 没有背景时，使用默认的空白preview
+            preview = canvasInstance.toDataURL({
+                format: 'png',
+                multiplier: 2
+            })
+        }
+
         const slideId = generateSlideId()
+
         collageSeries.value.push({
             slideId,
             json,
             preview,
-            dataTypeArray: [],
-            markerIdArray: [],
-            forceTypeArray: [],
-            uploadTypeArray: []
+            dataTypeArray,
+            markerIdArray,
+            forceTypeArray,
+            uploadTypeArray
         })
+
         currentSlideIndex.value = collageSeries.value.length - 1
         stopListen.value = false
         overviewStore.updateMarkerObjects()
@@ -186,10 +266,10 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         // 获取要复制的幻灯片
         const originalSlide = collageSeries.value[idx]
-        
+
         // 创建新的 slideId
         const newSlideId = generateSlideId()
-        
+
         // 复制幻灯片数据
         const duplicatedSlide = {
             slideId: newSlideId,
@@ -254,10 +334,10 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         objects.forEach((obj, index) => {
             if (dataTypeArray[index]) {
                 obj.set('dataType', dataTypeArray[index])
-                if(dataTypeArray[index] === 'emitter'){
+                if (dataTypeArray[index] === 'emitter') {
                     obj.lockScalingX = true
-                    obj.lockScalingY = true 
-                    obj.lockRotation = true 
+                    obj.lockScalingY = true
+                    obj.lockRotation = true
                 }
             }
             if (markerIdArray[index]) {
@@ -266,16 +346,16 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             if (forceTypeArray[index]) {
                 obj.set('forceType', forceTypeArray[index])
                 // 恢复力对象的锁定属性
-                if (forceTypeArray[index] === 'fieldForce' ) {
+                if (forceTypeArray[index] === 'fieldForce') {
                     obj.lockScalingX = true
-                    obj.lockScalingY = true 
+                    obj.lockScalingY = true
                     obj.lockMovementX = true
-                    obj.lockMovementY = true 
+                    obj.lockMovementY = true
                 }
                 else if (forceTypeArray[index] === 'pointForce') {
                     obj.lockScalingX = true
                     obj.lockScalingY = true
-                    obj.lockRotation = true 
+                    obj.lockRotation = true
                 }
             }
             if (uploadTypeArray[index]) {
@@ -292,21 +372,161 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         return collageSeries.value[currentSlideIndex.value].slideId
     }
 
+    // 为所有slide添加背景对象
+    async function addBackgroundToAllSlides(backgroundObject: any) {
+        if (collageSeries.value.length === 0) return
+        stopListen.value = true
+
+        // 使用for...of循环支持await，排除当前slide
+        for (let index = 0; index < collageSeries.value.length; index++) {
+            // 跳过当前slide，因为它的背景已经在画布中了
+            if (index === currentSlideIndex.value) continue
+
+            const slide = collageSeries.value[index]
+            try {
+                // 解析slide的JSON数据
+                const slideData = JSON.parse(slide.json)
+
+                // 检查是否已经存在背景对象
+                const existingBackgroundIndex = slide.dataTypeArray.findIndex((dataType: any) =>
+                    dataType === 'background'
+                )
+                console.log('existingBackgroundIndex', existingBackgroundIndex)
+                // 如果存在背景对象，替换它；如果不存在，添加到最前面（最底层）
+                if (existingBackgroundIndex !== -1) {
+                    slideData.objects[existingBackgroundIndex] = backgroundObject
+                } else {
+                    slideData.objects.unshift(backgroundObject) // 添加到最前面，确保在最底层
+                }
+
+                // 更新slide的JSON数据
+                collageSeries.value[index].json = JSON.stringify(slideData)
+
+                // 更新四个数组，确保数据一致性
+                if (existingBackgroundIndex !== -1) {
+                    // 如果存在背景对象，更新对应位置的数组数据
+                    slide.dataTypeArray[existingBackgroundIndex] = 'background'
+                    slide.uploadTypeArray[existingBackgroundIndex] = 'background_png'
+                    // markerId和forceType保持为null，因为背景对象没有这些属性
+                    slide.markerIdArray[existingBackgroundIndex] = null
+                    slide.forceTypeArray[existingBackgroundIndex] = null
+                } else {
+                    // 如果不存在背景对象，在数组开头添加对应的数据
+                    slide.dataTypeArray.unshift('background')
+                    slide.uploadTypeArray.unshift('background_png')
+                    slide.markerIdArray.unshift(null)
+                    slide.forceTypeArray.unshift(null)
+                }
+
+                // 重新生成preview
+                await regenerateSlidePreview(index, slideData)
+
+            } catch (error) {
+                console.error(`更新slide ${index} 背景时出错:`, error)
+            }
+        }
+        stopListen.value = false
+    }
+
+    // 从所有slide中移除背景对象
+    async function removeBackgroundFromAllSlides() {
+        if (collageSeries.value.length === 0) return
+        stopListen.value = true
+
+        // 使用for...of循环支持await，排除当前slide
+        for (let index = 0; index < collageSeries.value.length; index++) {
+            // 跳过当前slide，因为它的背景已经通过backgroundStore.clearBackground()清除了
+            if (index === currentSlideIndex.value) continue
+
+            const slide = collageSeries.value[index]
+            try {
+                // 解析slide的JSON数据
+                const slideData = JSON.parse(slide.json)
+
+                if (slideData.objects) {
+                    // 找到背景对象的索引
+                    const backgroundIndex = slide.dataTypeArray.findIndex((dataType: any) =>
+                        dataType === 'background'
+                    )
+
+                    if (backgroundIndex !== -1) {
+                        // 移除背景对象
+                        slideData.objects.splice(backgroundIndex, 1)
+
+                        // 更新slide的JSON数据
+                        collageSeries.value[index].json = JSON.stringify(slideData)
+
+                        // 从相关数组中移除对应的数据
+                        slide.dataTypeArray.splice(backgroundIndex, 1)
+                        slide.uploadTypeArray.splice(backgroundIndex, 1)
+                        slide.markerIdArray.splice(backgroundIndex, 1)
+                        slide.forceTypeArray.splice(backgroundIndex, 1)
+
+                        // 重新生成preview
+                        await regenerateSlidePreview(index, slideData)
+                    }
+                }
+
+            } catch (error) {
+                console.error(`从slide ${index} 移除背景时出错:`, error)
+            }
+        }
+        stopListen.value = false
+    }
+
+    // 重新生成slide的preview
+    async function regenerateSlidePreview(slideIndex: number, slideData: any) {
+        try {
+            const canvas = canvasRef.value?.()
+            if (!canvas) return
+            //新建临时画布
+            // 画布大小与原fabric画布一致
+            const originalWidth = canvas.width
+            const originalHeight = canvas.height
+
+            const tempCanvas = new Canvas(document.createElement('canvas'), {
+                width: originalWidth,
+                height: originalHeight
+            })
+            //加载幻灯片数据
+            await tempCanvas.loadFromJSON(slideData)
+            //渲染画布
+            tempCanvas.renderAll()
+
+            // 生成新的preview
+            const newPreview = tempCanvas.toDataURL({
+                format: 'png',
+                multiplier: 2
+            })
+
+            // 更新slide的preview
+            collageSeries.value[slideIndex].preview = newPreview
+
+            // 清理临时画布
+            tempCanvas.dispose()
+
+        } catch (error) {
+            console.error(`重新生成slide ${slideIndex} preview时出错:`, error)
+        }
+    }
 
 
     return {
-        collageSeries,
-        currentSlideIndex,
-        stopListen,
-        canvasRef,
-        setCanvas,
-        initializeEmptySlide,
-        updateCurrentSlide,
-        addNewSlide,
-        handleCollageSeriesSelect,
-        handleDuplicateSlide,
-        handleDeleteCollageSeries,
-        getCurrentSlideId,
-        restoreCustomProperties
-    }
+    collageSeries,
+    currentSlideIndex,
+    stopListen,
+    canvasRef,
+    setCanvas,
+    initializeEmptySlide,
+    updateCurrentSlide,
+    addNewSlide,
+    handleCollageSeriesSelect,
+    handleDuplicateSlide,
+    handleDeleteCollageSeries,
+    getCurrentSlideId,
+    restoreCustomProperties,
+    addBackgroundToAllSlides,
+    removeBackgroundFromAllSlides,
+    regenerateSlidePreview
+}
 }) 

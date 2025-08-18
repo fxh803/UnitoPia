@@ -2,9 +2,13 @@
 import { storeToRefs } from 'pinia'
 import { FabricImage } from 'fabric'
 import { useBackgroundStore } from '~/stores/background'
+import { useCollageSeriesStore } from '~/stores/collageSeries'
 
 const backgroundStore = useBackgroundStore()
 const { canvasRef,creatingBackground,background } = storeToRefs(backgroundStore)
+
+const collageSeriesStore = useCollageSeriesStore()
+const { addBackgroundToAllSlides, removeBackgroundFromAllSlides } = collageSeriesStore
 
 
 // 文件上传相关
@@ -35,7 +39,7 @@ const handleFileUpload = (event: Event) => {
     fileInputRef.value.value = ''
   }
 }
-const setBackgroundImage = (imageDataUrl: string, fileName: string) => {
+const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
   console.log('开始设置背景图片:', fileName)
   
   // 获取canvas实例
@@ -53,8 +57,10 @@ const setBackgroundImage = (imageDataUrl: string, fileName: string) => {
   
   // 设置新的背景值
   background.value = imageDataUrl
-  // 使用fabric.js的Promise方式加载图片
-  FabricImage.fromURL(imageDataUrl).then((fabricImg) => {
+  
+  try {
+    // 使用fabric.js的Promise方式加载图片
+    const fabricImg = await FabricImage.fromURL(imageDataUrl)
     console.log('背景图片创建成功:', fabricImg)
     
     // 设置图片属性
@@ -93,14 +99,23 @@ const setBackgroundImage = (imageDataUrl: string, fileName: string) => {
     creatingBackground.value = false
     console.log('背景图片已成功设置:', fileName)
     
-  }).catch((error) => {
+    // 为所有slide添加背景对象
+    await addBackgroundToAllSlides(fabricImg.toObject())
+    
+  } catch (error) {
     console.error('背景图片加载失败:', error)
-  })
+  }
 }
 
 const triggerFileUpload = () => {
   creatingBackground.value = true
   fileInputRef.value?.click()
+}
+
+const clearBackground = async () => {
+  backgroundStore.clearBackground()
+  // 从所有slide中移除背景对象
+  await removeBackgroundFromAllSlides()
 }
 </script>
 
@@ -108,7 +123,7 @@ const triggerFileUpload = () => {
   <div class="flex flex-col gap-2">
     <!-- 背景图片上传按钮 -->
     <button
-      class="relative rounded flex h-10 w-10 items-center justify-center transition-colors cursor-pointer"
+      class="relative rounded flex h-10 w-10 items-center justify-center transition-colors cursor-pointer group"
              :class="[
          background 
            ? 'bg-gray-300 text-gray-500' 
@@ -124,8 +139,18 @@ const triggerFileUpload = () => {
          v-if="background"
          class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
        >
-         <span class="i-carbon-checkmark text-white text-xs" />
+         <span class="i-carbon-checkmark text-white text-xs transform translate-y-1px" />
        </div>
+      
+      <!-- 红色清除按钮 -->
+      <div 
+        v-if="background"
+        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+        @click.stop="clearBackground"
+        title="清除背景"
+      >
+        <span class="i-carbon-close text-white text-xs transform translate-y-1px" />
+      </div>
     </button>
     
     <!-- 隐藏的文件输入框 -->
