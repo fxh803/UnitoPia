@@ -191,9 +191,9 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
                 })
                 // 将组添加到画布
                 canvasInstance.add(group)
-                if (selectedModeStore.selectedMode === 'container') {
-                    canvasInstance.sendObjectToBack(group);
-                }
+                // if (selectedModeStore.selectedMode === 'container') {
+                //     canvasInstance.sendObjectToBack(group);
+                // }
                 canvasInstance.setActiveObject(group)
                 canvasInstance.requestRenderAll()
             }

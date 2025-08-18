@@ -45,12 +45,23 @@ const handleAddFieldForce = async () => {
       <div class="i-carbon:switch-layer-2"></div>
     </button>
 
-    <button class="rounded flex h-10 w-10 items-center justify-center" :class="[
-      mode === 'move'
-        ? 'bg-[#0d99ff] text-white'
-        : 'bg-white text-black hover:bg-[#f5f5f5]'
-    ]" title="Move" @click="() => setMode('move')">
-      <span class="i-carbon-move" />
+    <button
+      class="rounded flex h-10 w-10 items-center justify-center "
+      :class="[
+        'rounded flex h-10 w-10 items-center justify-center',
+        mode === 'move'
+          ? 'bg-[#0d99ff]'
+          : 'bg-white hover:bg-[#f5f5f5]'
+      ]"
+      title="Move"
+      @click="() => setMode('move')"
+    >
+      <img 
+        src="/cc-hand.svg" 
+        class="w-5 h-5" 
+        :class="mode === 'move' ? 'brightness-0 invert' : ''"
+        alt="Move" 
+      />
     </button>
 
     <button class="text-white rounded bg-red-600 flex h-10 w-10 items-center justify-center hover:bg-red-700"
