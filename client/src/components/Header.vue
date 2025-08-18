@@ -54,6 +54,10 @@ const handleRun = () => {
     sendDataToServer()
   }
 }
+
+const handleBackToEdit = () => {
+  animationStore.backToEdit()
+}
 </script>
 
 <template>
@@ -66,7 +70,11 @@ const handleRun = () => {
       <!-- 播放按钮 -->
       <button 
         class="ml-50px flex items-center gap-2 px-6 h-full bg-white  text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
-        :class="collaging ? 'hover:bg-red-500' : 'hover:bg-gray-100'"
+        :class="[
+          collaging ? 'hover:bg-red-500' : 'hover:bg-gray-100',
+          replaying ? 'opacity-50 cursor-not-allowed' : ''
+        ]"
+        :disabled="replaying"
         @click="handleRun"
       >
         <div 
@@ -99,9 +107,27 @@ const handleRun = () => {
       </button>
       
       <!-- Export 按钮 -->
-      <button class="flex items-center gap-2 px-6 h-full bg-white hover:bg-gray-100 text-gray-800 transition-colors duration-200 font-medium">
+      <button v-show="!collaging&&result_data.length>0" 
+      class="flex items-center gap-2 px-6 h-full bg-white hover:bg-gray-100 text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
+      :class="[ 
+          replaying ? 'opacity-50 cursor-not-allowed' : ''
+        ]">
         <div class="i-carbon:export text-lg"></div>
         <span>Export</span>
+      </button>
+      
+      <!-- Back to Edit 按钮 -->
+      <button 
+        v-show="!collaging&&result_data.length>0"
+        class="flex items-center gap-2 px-6 h-full bg-white hover:bg-gray-100 text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
+        :class="[
+          replaying ? 'opacity-50 cursor-not-allowed' : ''
+        ]"
+        :disabled="replaying"
+        @click="handleBackToEdit"
+      >
+        <div class="i-carbon:edit text-lg"></div>
+        <span>Back to Edit</span>
       </button>
     </header>
 

@@ -10,7 +10,7 @@ const selectedModeStore = useSelectedModeStore()
 const collageSeriesStore = useCollageSeriesStore()
 const animationStore = useAnimationStore()
 const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
-const { collaging } = storeToRefs(animationStore)
+const { collaging,result_data } = storeToRefs(animationStore)
 const { handleCollageSeriesSelect, handleDeleteCollageSeries, addNewSlide, handleDuplicateSlide } = collageSeriesStore
 
 // 折叠状态
@@ -47,7 +47,7 @@ function toggleCollapse() {
     >
       <!-- 拼贴处理状态遮罩 -->
       <div 
-        v-if="collaging"
+        v-if="collaging||result_data.length>0"
         class="absolute inset-0 bg-gray-300 bg-opacity-50 z-30 flex items-center justify-center"
       >
       </div>

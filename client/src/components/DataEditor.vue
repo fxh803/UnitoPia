@@ -8,7 +8,7 @@ import Overview from './Overview.vue'
 
 // 拼贴处理状态store
 const animationStore = useAnimationStore()
-const { collaging } = storeToRefs(animationStore)
+const { collaging ,result_data} = storeToRefs(animationStore)
 
 // 切换状态
 const activeTab = ref<'table' | 'overview'>('table')
@@ -23,7 +23,7 @@ const switchTab = (tab: 'table' | 'overview') => {
   <aside class="border-r border-gray-200 bg-gray-50 h-full w-full flex flex-col relative">
     <!-- 拼贴处理状态遮罩 -->
     <div 
-      v-if="collaging"
+      v-if="collaging||result_data.length>0"
       class="absolute inset-0 bg-gray-300 bg-opacity-50 z-30 flex items-center justify-center"
     >
     </div>

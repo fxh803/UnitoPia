@@ -39,21 +39,42 @@ export const useAnimationStore = defineStore('animation', {
   },
   actions: { 
     resetData() {
-      this.result_data = []
+      this.progressTimer = null
+      this.collaging = false
+      this.progress_data = []
+      this.collage_result_type = []
+      this.canvas_width = 0
+      this.canvas_height = 0
       this.srcArray = []
       this.posArray = []
       this.widthArray = []
       this.heightArray = []
       this.angleArray = []
+      this.elements = []
+      this.result_data = []
+      this.dataArray = []
+      this.attributesArray = []
       this.now_collage_idx = 0
       this.now_start_idx = 0
-      this.markerAnimationOn = false 
+      this.markerAnimationOn = false
+      this.markerAni = null
+      this.replayIdx = 0
+      this.ip = 'http://127.0.0.1:5000'
       this.process_id = null
+      this.replayTimer = null
+      this.time_interval = 2000
+      this.replaying = false
+      this.hoverAttr = null
+      this.hoverData = null
+      
     },
     stopReplay() {
       clearInterval(this.replayTimer);
       paper.view.off('frame', this.markerAni);
       this.replaying = false
+    },
+    backToEdit() { 
+      this.resetData()
     },
     resetReplayData() {
       this.replayIdx = 0
