@@ -115,6 +115,7 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
 }
 
 const triggerFileUpload = () => {
+  canvasModeStore.setMode(null)
   fileInputRef.value?.click()
 }
 </script>

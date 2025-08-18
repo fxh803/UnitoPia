@@ -82,7 +82,17 @@ function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: nu
     if (obj.get('dataType') === 'marker') {
       obj.set('visible', true)
       obj.set('opacity', 1)
-      if (obj.get('uploadType') === 'marker_svg') {
+      if (obj.get('uploadType') === 'marker_png') {
+        const thumbnail = obj.toDataURL({
+          format: 'png',
+          multiplier: 1
+        })
+        result.markers.push({
+          thumbnail,
+          markerId: obj.get('markerId')
+        })
+      }
+      else {
         // 导出 SVG 格式的 marker
         //导出前将marker移到画布的左上角
         obj.set('left', obj.width / 2)
@@ -93,17 +103,6 @@ function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: nu
           markerId: obj.get('markerId')
         })
       }
-      else {
-        const thumbnail = obj.toDataURL({
-          format: 'png',
-          multiplier: 1
-        })
-        result.markers.push({
-          thumbnail,
-          markerId: obj.get('markerId')
-        })
-      }
-
     }
   }
 }

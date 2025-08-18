@@ -3,7 +3,10 @@ import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useAnimationStore } from '~/stores/animation'
+import { useSelectedModeStore } from '~/stores/selectedMode'
 
+const selectedModeStore = useSelectedModeStore()
+  
 const collageSeriesStore = useCollageSeriesStore()
 const animationStore = useAnimationStore()
 const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
@@ -14,6 +17,7 @@ const { handleCollageSeriesSelect, handleDeleteCollageSeries, addNewSlide, handl
 const isCollapsed = ref(false)
 
 function handleClick(idx: number) {
+  selectedModeStore.setSelectedMode(null)
   handleCollageSeriesSelect(idx)
 }
 

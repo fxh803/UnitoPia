@@ -187,6 +187,7 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
 }
 
 const triggerFileUpload = () => {
+  canvasModeStore.setMode(null)
   fileInputRef.value?.click()
 }
 </script>
