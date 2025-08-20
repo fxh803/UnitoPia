@@ -20,7 +20,6 @@ let canvas: Canvas | null = null
 // 实时预览图
 const previewDataUrl = ref<string>('')
 const PREVIEW_TARGET_WIDTH_PX = 120
-let previewRafId: number | null = null
 
 function updatePreviewNow() {
   if (!canvas) return
@@ -30,14 +29,6 @@ function updatePreviewNow() {
   } catch (e) {
     // 忽略偶发错误
   }
-}
-
-function schedulePreviewUpdate() {
-  if (previewRafId != null) return
-  previewRafId = requestAnimationFrame(() => {
-    updatePreviewNow()
-    previewRafId = null
-  })
 }
 
 // 计算画布容器的实际尺寸
@@ -68,7 +59,7 @@ function updateCanvasSize() {
       canvas.setWidth(canvasWidth.value)
       canvas.setHeight(canvasHeight.value)
       canvas.renderAll()
-      schedulePreviewUpdate()
+      updatePreviewNow()
     }
   }
 }
@@ -113,7 +104,7 @@ onMounted(async () => {
       subObjectActionsStore.setCanvas(() => canvas)
 
       // 预览：绑定渲染后事件，节流更新
-      canvas.on('after:render', schedulePreviewUpdate)
+      canvas.on('after:render', updatePreviewNow)
 
       // 其他事件监听
       canvas.on('object:added', subCanvasModeStore.setDrawedObjectDataType)
@@ -137,7 +128,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (canvas) {
-    canvas.off('after:render', schedulePreviewUpdate)
+    canvas.off('after:render', updatePreviewNow)
     canvas.off('object:added', subCanvasModeStore.setDrawedObjectDataType)
     canvas.off('selection:created', subObjectActionsStore.setCurrentPathObj)
     canvas.off('selection:updated', subObjectActionsStore.setCurrentPathObj)
@@ -148,7 +139,6 @@ onBeforeUnmount(() => {
     canvas.off('object:modified')
     canvas.dispose()
   }
-  if (previewRafId != null) cancelAnimationFrame(previewRafId)
 })
 </script>
 
