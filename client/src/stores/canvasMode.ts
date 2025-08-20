@@ -120,19 +120,6 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       // 根据当前选择的模式设置dataType
       path.set('dataType', selectedModeStore.selectedMode);
 
-      // 如果是 marker 模式，生成唯一的 markerId
-      if (selectedModeStore.selectedMode === 'marker') {
-        const timestamp = Date.now()
-        const randomId = Math.random().toString(36).substr(2, 9)
-        const markerId = `marker-${timestamp}-${randomId}`
-        path.set('markerId', markerId) 
-      }
-
-      // // 在container模式下，将新绘制的路径移动到最底层（擦除路径除外）
-      // if (selectedModeStore.selectedMode === 'container' && mode.value !== 'erase') {
-      //   canvasInstance.sendObjectToBack(path, true);
-      // }
-
       // 应用当前模式的透明度规则
       selectedModeStore.handleModeSwitch(selectedModeStore.selectedMode);
     }

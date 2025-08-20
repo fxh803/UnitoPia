@@ -30,7 +30,7 @@ const { collaging ,result_data} = storeToRefs(animationStore)
       
       <!-- 下半部分：SubCanvasArea -->
       <div class="flex-1 min-h-0">
-        <SubCanvasArea />
+        <MarkerCanvasArea />
       </div>
     </div>
   </aside>

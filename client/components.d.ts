@@ -22,6 +22,8 @@ declare module 'vue' {
     FirstToolbar: typeof import('./src/components/FirstToolbar.vue')['default']
     ForceToolbar: typeof import('./src/components/ForceToolbar.vue')['default']
     Header: typeof import('./src/components/Header.vue')['default']
+    MarkerCanvasArea: typeof import('./src/components/MarkerCanvasArea.vue')['default']
+    MarkerObjectActionButtons: typeof import('./src/components/MarkerObjectActionButtons.vue')['default']
     MarkerToolbar: typeof import('./src/components/MarkerToolbar.vue')['default']
     ObjectActionButtons: typeof import('./src/components/ObjectActionButtons.vue')['default']
     ObjectColorPicker: typeof import('./src/components/ObjectColorPicker.vue')['default']
@@ -32,6 +34,8 @@ declare module 'vue' {
     RouterView: typeof import('vue-router')['RouterView']
     RunningStatusIndicator: typeof import('./src/components/RunningStatusIndicator.vue')['default']
     SubCanvasArea: typeof import('./src/components/subCanvasArea.vue')['default']
+    SubMarkerToolbar: typeof import('./src/components/subMarkerToolbar.vue')['default']
+    SubObjectActionButtons: typeof import('./src/components/SubObjectActionButtons.vue')['default']
     Table: typeof import('./src/components/Table.vue')['default']
     ToastPanel: typeof import('./src/components/ToastPanel.vue')['default']
   }

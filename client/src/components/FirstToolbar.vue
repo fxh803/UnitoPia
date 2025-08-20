@@ -16,19 +16,6 @@ const {setSelectedMode} = selectedModeStore
     <button
       class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
       :class="[
-        selectedMode === 'marker'
-          ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]',
-        collaging ? 'opacity-50 cursor-not-allowed' : ''
-      ]"
-      title="Marker Mode"
-      @click="setSelectedMode('marker')" 
-    >
-      <span class="i-carbon:data-categorical" />
-    </button>
-    <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
-      :class="[
         selectedMode === 'container'
           ? 'bg-[#0d99ff] text-white'
           : 'bg-white text-black hover:bg-[#f5f5f5]',

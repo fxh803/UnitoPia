@@ -121,11 +121,11 @@ onMounted(() => {
       <div class="text-center text-gray-500">
         <div class="text-4xl mb-4">🎯</div>
         <h3 class="text-lg font-medium mb-2">No Marker Objects</h3>
-        <p class="text-sm mb-4">Draw some marker objects on the canvas and they will appear here</p>
+        <p class="text-sm mb-4">Draw some marker objects on the sub-canvas and they will appear here</p>
         <div class="text-xs text-gray-400 space-y-1">
           <p>Steps:</p>
-          <p>1. Click the "Marker" button in the left toolbar to select marker mode</p>
-          <p>2. Draw objects on the canvas</p>
+          <p>1. Use the sub-canvas area to draw marker objects</p>
+          <p>2. Draw objects on the sub-canvas</p>
           <p>3. Drawn objects will automatically appear here</p>
         </div>
       </div>

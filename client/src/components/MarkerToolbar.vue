@@ -1,28 +1,20 @@
 <script setup lang="ts">
-import { useCanvasModeStore } from '~/stores/canvasMode'
+import { useSubCanvasModeStore } from '~/stores/markerCanvasMode'
 import ColorPicker from './ColorPicker.vue'
 import { storeToRefs } from 'pinia' 
 import * as fabric from 'fabric'
-const canvasModeStore = useCanvasModeStore()
-const {mode} = storeToRefs(canvasModeStore)
-const { setMode } = canvasModeStore
 
-const clearCanvas = () => { 
-    const canvasInstance = canvasModeStore.canvasRef?.()
-    if (!canvasInstance) return
-    // 复制一份对象数组，避免遍历时出错
-    const objects = canvasInstance.getObjects().concat();
-    objects.forEach(obj => {
-      if (obj.get('dataType') === 'marker') {
-        canvasInstance.remove(obj);
-      } 
-    });
-    canvasInstance.discardActiveObject();
-    canvasInstance.renderAll();
-    // 背景色会自动保留，无需重新设置 
-}
+const subCanvasModeStore = useSubCanvasModeStore()
+const {mode} = storeToRefs(subCanvasModeStore)
+const { setMode } = subCanvasModeStore
+
 // 文件上传相关
 const fileInputRef = ref<HTMLInputElement>()
+
+// Marker相关功能
+const clearCanvas = () => { 
+    subCanvasModeStore.clearMarkers()
+}
 
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -68,8 +60,7 @@ const handleFileUpload = (event: Event) => {
 const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
   console.log('开始添加图片到画布:', fileName)
   
-  // 获取canvas实例
-  const canvasInstance = canvasModeStore.canvasRef?.()
+  const canvasInstance = subCanvasModeStore.getCanvas()
   if (!canvasInstance) {
     console.error('Canvas实例未找到')
     return
@@ -94,10 +85,8 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
     })
     
     // 计算合适的缩放比例
-    const canvasWidth = canvasInstance.width || 400
-    const canvasHeight = canvasInstance.height || 400
-    const maxWidth = canvasWidth * 0.3
-    const maxHeight = canvasHeight * 0.3
+    const maxWidth = canvasInstance.width * 0.3
+    const maxHeight = canvasInstance.height * 0.3
     
     const scaleX = maxWidth / fabricImg.width
     const scaleY = maxHeight / fabricImg.height
@@ -127,8 +116,7 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
   console.log('开始添加SVG到画布:', fileName)
   
   try {
-    // 获取canvas实例
-    const canvasInstance = canvasModeStore.canvasRef?.()
+    const canvasInstance = subCanvasModeStore.getCanvas()
     if (!canvasInstance) {
       console.error('Canvas实例未找到')
       return
@@ -153,10 +141,8 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
     })
     
     // 计算合适的缩放比例
-    const canvasWidth = canvasInstance.width || 400
-    const canvasHeight = canvasInstance.height || 400
-    const maxWidth = canvasWidth * 0.3
-    const maxHeight = canvasHeight * 0.3
+    const maxWidth = canvasInstance.width * 0.3
+    const maxHeight = canvasInstance.height * 0.3
     
     const scaleX = maxWidth / svgObject.width
     const scaleY = maxHeight / svgObject.height
@@ -187,87 +173,82 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
 }
 
 const triggerFileUpload = () => {
-  canvasModeStore.setMode(null)
+  subCanvasModeStore.setMode(null)
   fileInputRef.value?.click()
 }
 </script>
 
 <template>
-  <div class="px-2 py-4 border border-[#e6e6e6] rounded-xl bg-white flex flex-col gap-3 shadow right-6 top-1/2 absolute z-10 -translate-y-1/2">
-        <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+  <!-- 横向排列的圆形工具栏 -->
+  <div class="flex items-center gap-2 p-2">
+    <!-- 颜色选择器 -->
+    <ColorPicker />
+    <!-- 绘制模式按钮 -->
+    <button
+      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
       :class="[
         mode === 'draw'
-          ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          ? 'bg-blue-500 text-white border-blue-600'
+          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
       ]"
-      title="Draw"
+      title="绘制模式"
       @click="() => setMode('draw')"
     >
-      <span class="i-carbon-pen" />
+      <span class="i-carbon-pen text-sm" />
     </button>
+    
+    <!-- 移动模式按钮 -->
     <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
       :class="[
         mode === 'move'
-          ? 'bg-[#0d99ff]'
-          : 'bg-white hover:bg-[#f5f5f5]'
+          ? 'bg-blue-500 text-white border-blue-600'
+          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
       ]"
-      title="Move"
+      title="移动模式"
       @click="() => setMode('move')"
     >
       <img 
         src="/cc-hand.svg" 
-        class="w-5 h-5" 
+        class="w-4 h-4" 
         :class="mode === 'move' ? 'brightness-0 invert' : ''"
-        alt="Move" 
+        alt="移动" 
       />
     </button>
+    
+    <!-- 橡皮擦按钮 -->
     <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
       :class="[
         mode === 'erase'
-          ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          ? 'bg-blue-500 text-white border-blue-600'
+          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
       ]"
-      title="Eraser"
+      title="橡皮擦"
       @click="() => setMode('erase')"
     >
-      <span class="i-carbon-erase" />
-    </button>
-    <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
-      :class="[
-        mode === 'rect'
-          ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
-      ]"
-      title="Rectangle"
-      @click="() => setMode('rect')"
-    >
-      <span class="i-carbon:checkbox" />
-    </button>
-    <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
-      :class="[
-        mode === 'ellipse'
-          ? 'bg-[#0d99ff] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
-      ]"
-      title="Ellipse"
-      @click="() => setMode('ellipse')"
-    >
-      <span class="i-carbon-circle-outline" />
+      <span class="i-carbon-erase text-sm" />
     </button>
     
-    <!-- PNG上传按钮 -->
+    <!-- 上传Marker按钮 -->
     <button
-      class="rounded flex h-10 w-10 items-center justify-center bg-white text-black hover:bg-[#f5f5f5] cursor-pointer"
-      title="upload marker"
+      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2 bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+      title="上传标记"
       @click="triggerFileUpload"
     >
-    <div class="i-carbon:upload"></div>
+      <span class="i-carbon-upload text-sm" />
     </button>
+    
+    <!-- 清除按钮 -->
+    <button
+      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2 bg-red-500 text-white border-red-600 hover:bg-red-600"
+      title="清除标记"
+      @click="clearCanvas"
+    >
+      <span class="i-carbon-trash-can text-sm" />
+    </button>
+    
+    
     
     <!-- 隐藏的文件输入框 -->
     <input
@@ -278,18 +259,9 @@ const triggerFileUpload = () => {
       class="hidden"
       @change="handleFileUpload"
     />
-    
-    <button
-      class="text-white rounded bg-red-600 flex h-10 w-10 items-center justify-center hover:bg-red-700 cursor-pointer"
-      title="Clear Canvas"
-      @click="clearCanvas"
-    >
-      <span class="i-carbon-trash-can" />
-    </button>
-    
-    <!-- 颜色选择器按钮 -->
-    <div class="flex justify-center pt-2 border-t border-gray-200">
-      <ColorPicker />
-    </div>
   </div>
 </template>
+
+<style scoped>
+/* 可以添加自定义样式 */
+</style>

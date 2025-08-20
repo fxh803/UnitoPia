@@ -1,24 +1,19 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useObjectColorPickerStore } from '~/stores/objectColorPicker'
-import { useObjectActionsStore } from '~/stores/objectActions'
-import { storeToRefs } from 'pinia'
-import { useSelectedModeStore } from '~/stores/selectedMode'
+import { useSubObjectActionsStore } from '~/stores/markerObjectActions'
+import { storeToRefs } from 'pinia' 
 const objectColorPickerStore = useObjectColorPickerStore()
 const colorPickerRef = ref<HTMLInputElement>()
-const objectActionsStore = useObjectActionsStore()
-const selectedModeStore = useSelectedModeStore()
+const subObjectActionsStore = useSubObjectActionsStore() 
 const {objectColor} = storeToRefs(objectColorPickerStore)
 const {
     showColorBtn, 
-} = storeToRefs(objectActionsStore)
-const {
-    isContainerMode
-} = storeToRefs(selectedModeStore)
+} = storeToRefs(subObjectActionsStore) 
 const {
     applyColor,
     getCurrentObjectColor
-} = objectActionsStore
+} =  subObjectActionsStore
  
 // 选择颜色
 const selectColor = (color: string) => {
@@ -44,7 +39,7 @@ const handleColorChange = (event: Event) => {
 </script>
 
 <template>
-  <div v-if="showColorBtn&&!isContainerMode" class="flex justify-center absolute"  >
+  <div v-if="showColorBtn" class="flex justify-center absolute"  >
     <button
       class="w-40px h-40px rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors"
       :style="{ backgroundColor: getCurrentObjectColor() }"

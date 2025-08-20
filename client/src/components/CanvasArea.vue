@@ -258,14 +258,12 @@ onMounted(async () => {
       <FirstToolbar />
       <!-- Container工具栏：仅在container模式下显示 -->
       <ContainerToolbar v-if="selectedMode === 'container'" />
-      <!-- Marker工具栏：仅在marker模式下显示 -->
-      <MarkerToolbar v-if="selectedMode === 'marker'" />
       <!-- Emitter工具栏：仅在emitter模式下显示 -->
       <EmitterToolbar v-if="selectedMode === 'emitter'" />
       <!-- Force工具栏：仅在force模式下显示 -->
       <ForceToolbar v-if="selectedMode === 'force'" />
       <!-- 画笔粗细调节面板，仅在绘制/擦除模式下显示 -->
-      <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" />
+      <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" canvasType="main" />
     </div>
   </section>
 </template>

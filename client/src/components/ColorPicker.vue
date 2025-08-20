@@ -25,7 +25,7 @@ const handleColorChange = (event: Event) => {
 <template>
   <div class="flex justify-center relative">
     <button
-      class="w-10 h-10 rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors"
+      class="w-8 h-8 rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors"
       :style="{ backgroundColor: colorPickerStore.selectedColor }"
       title="Color Picker"
       @click="openColorPicker"
