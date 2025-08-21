@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue'
 import { useObjectColorPickerStore } from '~/stores/objectColorPicker'
-import { useSubObjectActionsStore } from '~/stores/markerObjectActions'
+import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
 import { storeToRefs } from 'pinia' 
 const objectColorPickerStore = useObjectColorPickerStore()
 const colorPickerRef = ref<HTMLInputElement>()
-const subObjectActionsStore = useSubObjectActionsStore() 
+const markerObjectActionsStore = useMarkerObjectActionsStore() 
 const {objectColor} = storeToRefs(objectColorPickerStore)
 const {
     showColorBtn, 
-} = storeToRefs(subObjectActionsStore) 
+} = storeToRefs(markerObjectActionsStore) 
 const {
     applyColor,
     getCurrentObjectColor
-} =  subObjectActionsStore
+} =  markerObjectActionsStore
  
 // 选择颜色
 const selectColor = (color: string) => {

@@ -1,19 +1,23 @@
 <script setup lang="ts">
-import { useSubCanvasModeStore } from '~/stores/markerCanvasMode'
+import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import ColorPicker from './ColorPicker.vue'
 import { storeToRefs } from 'pinia' 
 import * as fabric from 'fabric'
+import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
 
-const subCanvasModeStore = useSubCanvasModeStore()
-const {mode} = storeToRefs(subCanvasModeStore)
-const { setMode } = subCanvasModeStore
+const markerCanvasModeStore = useMarkerCanvasModeStore()
+const {mode} = storeToRefs(markerCanvasModeStore)
+const { setMode } = markerCanvasModeStore
+
+// 形状绘制store
+const markerShapeDrawingStore = useMarkerShapeDrawingStore()
 
 // 文件上传相关
 const fileInputRef = ref<HTMLInputElement>()
 
 // Marker相关功能
 const clearCanvas = () => { 
-    subCanvasModeStore.clearMarkers()
+    markerCanvasModeStore.clearMarkers()
 }
 
 const handleFileUpload = (event: Event) => {
@@ -60,7 +64,7 @@ const handleFileUpload = (event: Event) => {
 const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
   console.log('开始添加图片到画布:', fileName)
   
-  const canvasInstance = subCanvasModeStore.getCanvas()
+  const canvasInstance = markerCanvasModeStore.getCanvas()
   if (!canvasInstance) {
     console.error('Canvas实例未找到')
     return
@@ -116,7 +120,7 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
   console.log('开始添加SVG到画布:', fileName)
   
   try {
-    const canvasInstance = subCanvasModeStore.getCanvas()
+    const canvasInstance = markerCanvasModeStore.getCanvas()
     if (!canvasInstance) {
       console.error('Canvas实例未找到')
       return
@@ -173,7 +177,7 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
 }
 
 const triggerFileUpload = () => {
-  subCanvasModeStore.setMode(null)
+  markerCanvasModeStore.setMode(null)
   fileInputRef.value?.click()
 }
 </script>
@@ -228,6 +232,34 @@ const triggerFileUpload = () => {
       @click="() => setMode('erase')"
     >
       <span class="i-carbon-erase text-sm" />
+    </button>
+    
+    <!-- 画框按钮 -->
+    <button
+      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
+      :class="[
+        mode === 'rect'
+          ? 'bg-blue-500 text-white border-blue-600'
+          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+      ]"
+      title="画框"
+      @click="() => setMode('rect')"
+    >
+      <span class="i-carbon-checkbox text-sm" />
+    </button>
+    
+    <!-- 画圈按钮 -->
+    <button
+      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
+      :class="[
+        mode === 'ellipse'
+          ? 'bg-blue-500 text-white border-blue-600'
+          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+      ]"
+      title="画圈"
+      @click="() => setMode('ellipse')"
+    >
+      <span class="i-carbon-circle-outline text-sm" />
     </button>
     
     <!-- 上传Marker按钮 -->

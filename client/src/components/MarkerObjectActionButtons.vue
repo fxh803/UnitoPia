@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import { useSubObjectActionsStore } from '~/stores/markerObjectActions'
+import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
 import { storeToRefs } from 'pinia'
 import { watch } from 'vue'
 
-const subObjectActionsStore = useSubObjectActionsStore()
+const markerObjectActionsStore = useMarkerObjectActionsStore()
 const {
     showDeleteBtn, 
     showClosePathBtn, 
@@ -15,7 +15,7 @@ const {
     actionBtnPosition,
     isPathClosed,
     isGroupMode
-} = storeToRefs(subObjectActionsStore)
+} = storeToRefs(markerObjectActionsStore)
 
 const {
     deleteActiveObject,
@@ -23,7 +23,7 @@ const {
     toggleGroup,
     bringForward,
     sendBackwards
-} = subObjectActionsStore
+} = markerObjectActionsStore
 
 // 删除对象并关闭圆盘
 const handleDeleteObject = () => {

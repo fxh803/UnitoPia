@@ -6,7 +6,7 @@ import { useObjectColorPickerStore } from '~/stores/objectColorPicker'
 
 const objectColorPickerStore = useObjectColorPickerStore()
 
-export const useSubObjectActionsStore = defineStore('subObjectActions', () => {
+export const useMarkerObjectActionsStore = defineStore('markerObjectActions', () => {
     const canvasRef = ref<(() => Canvas | null) | null>(null)
     const showDeleteBtn = ref(false)
     const actionBtnPosition = ref({ top: '0px', left: '0px' })
@@ -79,6 +79,12 @@ export const useSubObjectActionsStore = defineStore('subObjectActions', () => {
             showLayerUpBtn.value = false
             showLayerDownBtn.value = false
         }
+        console.log(showDeleteBtn.value)
+        console.log(showClosePathBtn.value)
+        console.log(showGroupBtn.value)
+        console.log(showColorBtn.value)
+        console.log(showLayerUpBtn.value)
+        console.log(showLayerDownBtn.value)
     }
 
     function updateActionBtnPosition() {

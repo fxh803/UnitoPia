@@ -3,8 +3,8 @@ import { ref } from 'vue'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useBrushSizeStore } from '~/stores/brushsize'
 
-export const useSubCanvasModeStore = defineStore('subCanvasMode', () => {
-  const mode = ref<'draw' | 'move' | 'erase' | null>(null)
+export const useMarkerCanvasModeStore = defineStore('markerCanvasMode', () => {
+  const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
   const canvasRef = ref<(() => Canvas | null) | null>(null)
 
   // 导入其他 store
@@ -17,7 +17,7 @@ export const useSubCanvasModeStore = defineStore('subCanvasMode', () => {
   }
 
   // 设置模式
-  function setMode(m: 'draw' | 'move' | 'erase' | null) {
+  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null) {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
 
@@ -82,6 +82,16 @@ export const useSubCanvasModeStore = defineStore('subCanvasMode', () => {
           obj.set('selectable', false)
           obj.set('evented', false)
         }
+      })
+    } else if (m === 'rect' || m === 'ellipse') {
+      // 形状绘制模式
+      canvasInstance.isDrawingMode = false
+      canvasInstance.selection = false
+      
+      // 禁用所有对象的交互
+      canvasInstance.getObjects().forEach(obj => {
+        obj.set('selectable', false)
+        obj.set('evented', false)
       })
     }
 
