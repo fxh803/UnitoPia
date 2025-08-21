@@ -74,13 +74,13 @@ async function updatePreview() {
 // 计算画布容器的实际尺寸
 const containerWidth = computed(() => {
   const parentWidth = window.innerWidth - resizeHandleStore.leftWidth
-  return parentWidth - 1
+  return parentWidth - 1 - 16
 })
 
 const containerHeight = computed(() => {
   if (canvasContainerRef.value) {
     const rect = canvasContainerRef.value.getBoundingClientRect()
-    return rect.height - 32
+    return rect.height - 16
   }
   return 300
 })
@@ -88,7 +88,7 @@ const containerHeight = computed(() => {
 // 更新画布尺寸
 function updateCanvasSize() {
   if (canvasEl.value && canvas) {
-    const newWidth = containerWidth.value - 32
+    const newWidth = containerWidth.value
     const newHeight = containerHeight.value
     if (newWidth !== canvasWidth.value || newHeight !== canvasHeight.value) {
       canvasWidth.value = newWidth
@@ -124,7 +124,7 @@ onMounted(async () => {
   await nextTick()
   setTimeout(() => {
     if (canvasEl.value && canvasContainerRef.value) {
-      const initialWidth = containerWidth.value - 32
+      const initialWidth = containerWidth.value
       const initialHeight = containerHeight.value
       canvasWidth.value = initialWidth
       canvasHeight.value = initialHeight
@@ -202,7 +202,7 @@ onBeforeUnmount(() => {
 
 <template>
   <!-- 画布区域 -->
-  <div ref="canvasContainerRef" class="p-4 bg-gray-100 min-h-0 w-full h-full relative">
+  <div ref="canvasContainerRef" class="flex justify-center items-center bg-gray-100 min-h-0 w-full h-full relative">
     <canvas ref="canvasEl" class="w-full h-full border border-gray-300 rounded-lg shadow-sm" />
 
     <!-- 实时预览图 - 左上角 -->
@@ -211,13 +211,15 @@ onBeforeUnmount(() => {
       <img :src="previewDataUrl" alt="" class="block w-30px h-30px h-auto rounded" />
     </div>
 
-    <!-- 新的横向工具栏 - 右上角 -->
-    <div class="absolute top-5 right-6 z-10">
-      <MarkerToolbar />
+    <!-- 工具栏 - 底部居中，卡片样式 -->
+    <div class="absolute left-1/2 bottom-5 -translate-x-1/2 z-10">
+      <div class="px-2 py-1 border border-[#e6e6e6] rounded-xl bg-white shadow">
+        <MarkerToolbar />
+      </div>
     </div>
 
     <!-- 画笔大小调节面板 - 左上角（避开预览图） -->
-    <BrushSizePanel v-if="markerCanvasModeStore.mode === 'draw' || markerCanvasModeStore.mode === 'erase'" canvasType="sub" />
+    <BrushSizePanel v-if="markerCanvasModeStore.mode === 'draw' || markerCanvasModeStore.mode === 'erase'"/>
 
     <!-- 对象操作按钮 -->
     <MarkerObjectActionButtons />

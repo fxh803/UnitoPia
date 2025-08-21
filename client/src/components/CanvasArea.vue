@@ -263,7 +263,7 @@ onMounted(async () => {
       <!-- Force工具栏：仅在force模式下显示 -->
       <ForceToolbar v-if="selectedMode === 'force'" />
       <!-- 画笔粗细调节面板，仅在绘制/擦除模式下显示 -->
-      <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" canvasType="main" />
+      <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" />
     </div>
   </section>
 </template>

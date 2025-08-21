@@ -1,40 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useBrushSizeStore } from '~/stores/brushsize'
 
-// 定义组件属性
-interface Props {
-  canvasType?: 'main' | 'sub' // 画布类型：主画布或子画布
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  canvasType: 'main' // 默认为主画布
-})
-
 const brushSizeStore = useBrushSizeStore()
-const {brushWidth} = storeToRefs(brushSizeStore) 
+const {brushWidth} = storeToRefs(brushSizeStore)
 
 const min = 1
 const max = 50
-
-// 根据画布类型计算面板位置
-const panelPosition = computed(() => {
-  if (props.canvasType === 'sub') {
-    return {
-      top: '60px', // 子画布下位置更高
-      right: '20px'
-    }
-  }
-  return {
-    top: '16px', // 主画布下保持原位置
-    right: '16px'
-  }
-})
 </script>
 
 <template>
-  <div class="brush-size-panel fixed-panel shadow" :style="panelPosition">
+  <div class="brush-size-panel fixed-panel shadow">
     <label class="label">Brush Size:</label>
     <input
       type="range"
@@ -61,6 +37,8 @@ const panelPosition = computed(() => {
 .fixed-panel {
   position: absolute;
   z-index: 20; 
+  top: 16px;
+  right: 16px;
 } 
 .label {
   font-size: 14px;

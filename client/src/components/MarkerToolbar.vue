@@ -183,31 +183,31 @@ const triggerFileUpload = () => {
 </script>
 
 <template>
-  <!-- 横向排列的圆形工具栏 -->
-  <div class="flex items-center gap-2 p-2">
+  <!-- 横向排列的矩形工具栏 -->
+  <div class="flex items-center gap-2 p-1">
     <!-- 颜色选择器 -->
     <ColorPicker />
     <!-- 绘制模式按钮 -->
     <button
-      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
+      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
       :class="[
         mode === 'draw'
-          ? 'bg-blue-500 text-white border-blue-600'
-          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+          ? 'bg-[#0d99ff] text-white'
+          : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="绘制模式"
       @click="() => setMode('draw')"
     >
-      <span class="i-carbon-pen text-sm" />
+      <span class="i-carbon-pen" />
     </button>
     
     <!-- 移动模式按钮 -->
     <button
-      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
+      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
       :class="[
         mode === 'move'
-          ? 'bg-blue-500 text-white border-blue-600'
-          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+          ? 'bg-[#0d99ff]'
+          : 'bg-white hover:bg-[#f5f5f5]'
       ]"
       title="移动模式"
       @click="() => setMode('move')"
@@ -222,65 +222,63 @@ const triggerFileUpload = () => {
     
     <!-- 橡皮擦按钮 -->
     <button
-      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
+      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
       :class="[
         mode === 'erase'
-          ? 'bg-blue-500 text-white border-blue-600'
-          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+          ? 'bg-[#0d99ff] text-white'
+          : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="橡皮擦"
       @click="() => setMode('erase')"
     >
-      <span class="i-carbon-erase text-sm" />
+      <span class="i-carbon-erase" />
     </button>
     
     <!-- 画框按钮 -->
     <button
-      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
+      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
       :class="[
         mode === 'rect'
-          ? 'bg-blue-500 text-white border-blue-600'
-          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+          ? 'bg-[#0d99ff] text-white'
+          : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="画框"
       @click="() => setMode('rect')"
     >
-      <span class="i-carbon-checkbox text-sm" />
+      <span class="i-carbon-checkbox" />
     </button>
     
     <!-- 画圈按钮 -->
     <button
-      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2"
+      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
       :class="[
         mode === 'ellipse'
-          ? 'bg-blue-500 text-white border-blue-600'
-          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+          ? 'bg-[#0d99ff] text-white'
+          : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
       title="画圈"
       @click="() => setMode('ellipse')"
     >
-      <span class="i-carbon-circle-outline text-sm" />
+      <span class="i-carbon-circle-outline" />
     </button>
     
     <!-- 上传Marker按钮 -->
     <button
-      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2 bg-white text-gray-700 border-gray-300 hover:bg-gray-50 hover:border-gray-400"
+      class="rounded flex h-7 w-7 items-center justify-center bg-white text-black hover:bg-[#f5f5f5] cursor-pointer"
       title="上传标记"
       @click="triggerFileUpload"
     >
-      <span class="i-carbon-upload text-sm" />
+      <span class="i-carbon-upload" />
     </button>
     
     <!-- 清除按钮 -->
     <button
-      class="w-8 h-8 rounded-full flex items-center justify-center cursor-pointer transition-all duration-200 border-2 bg-red-500 text-white border-red-600 hover:bg-red-600"
+      class="text-white rounded bg-red-600 flex h-7 w-7 items-center justify-center hover:bg-red-700 cursor-pointer"
       title="清除标记"
       @click="clearCanvas"
     >
-      <span class="i-carbon-trash-can text-sm" />
+      <span class="i-carbon-trash-can" />
     </button>
-    
-    
     
     <!-- 隐藏的文件输入框 -->
     <input
