@@ -332,9 +332,12 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             if (dataTypeArray[index]) {
                 obj.set('dataType', dataTypeArray[index])
                 if (dataTypeArray[index] === 'emitter') {
-                    obj.lockScalingX = true
-                    obj.lockScalingY = true
-                    obj.lockRotation = true
+                    obj.hasControls = false
+                }
+                if (dataTypeArray[index] === 'marker') {
+                    obj.hasControls = false
+                    obj.selectable = true
+                    obj.evented = true
                 }
             }
             if (markerIdArray[index]) {
@@ -344,15 +347,17 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 obj.set('forceType', forceTypeArray[index])
                 // 恢复力对象的锁定属性
                 if (forceTypeArray[index] === 'fieldForce') {
-                    obj.lockScalingX = true
-                    obj.lockScalingY = true
-                    obj.lockMovementX = true
-                    obj.lockMovementY = true
+                    obj.setControlVisible('tl', false);
+                    obj.setControlVisible('tr', false);
+                    obj.setControlVisible('br', false);
+                    obj.setControlVisible('bl', false);
+                    obj.setControlVisible('ml', false);
+                    obj.setControlVisible('mt', false);
+                    obj.setControlVisible('mr', false);
+                    obj.setControlVisible('mb', false);
                 }
                 else if (forceTypeArray[index] === 'pointForce') {
-                    obj.lockScalingX = true
-                    obj.lockScalingY = true
-                    obj.lockRotation = true
+                    obj.hasControls = false
                 }
             }
             if (uploadTypeArray[index]) {

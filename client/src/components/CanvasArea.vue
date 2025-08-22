@@ -229,7 +229,8 @@ async function handleDrop(e: DragEvent) {
         top: dropY,
         selectable: true,
         evented: true,
-        dataType: 'marker'
+        dataType: 'marker',
+        hasControls: false
       })
       
       // 添加到主画布（此时所有属性都已设置好）

@@ -120,9 +120,7 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
         dataType: 'emitter',
         selectable: false,
         evented: false,
-        lockScalingX: true,
-        lockScalingY: true,
-        lockRotation: true
+        hasControls: false
       })
       
       // 将group添加到画布

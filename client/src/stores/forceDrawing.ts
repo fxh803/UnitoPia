@@ -55,11 +55,9 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
       forceType: 'pointForce',
       selectable: false,
       evented: false,
-      lockScalingX: true,
-      lockScalingY: true,
-      lockRotation: true,
       originX: 'center',
-      originY: 'center'
+      originY: 'center',
+      hasControls: false
     })
 
     // 添加到画布
@@ -114,8 +112,6 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
          forceType: 'fieldForce',
          selectable: false,
          evented: false,
-         lockScalingX: true,
-         lockScalingY: true,
          lockMovementX: true,  // 锁定X轴移动
          lockMovementY: true,  // 锁定Y轴移动
          scaleX: scaleX,
@@ -123,6 +119,15 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
          visible: true,
          centeredScaling: true
        })
+
+       svgObject.setControlVisible('tl', false);
+       svgObject.setControlVisible('tr', false);
+       svgObject.setControlVisible('br', false);
+       svgObject.setControlVisible('bl', false);
+       svgObject.setControlVisible('ml', false);
+       svgObject.setControlVisible('mt', false);
+       svgObject.setControlVisible('mr', false);
+       svgObject.setControlVisible('mb', false);
 
       // 添加到画布
       canvasInstance.add(svgObject)
