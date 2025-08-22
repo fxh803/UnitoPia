@@ -246,6 +246,8 @@ onMounted(async () => {
     <!-- 主画布区域 -->
     <div ref="canvasAreaRef"
       class="p-2 border-r border-[#e6e6e6] bg-[#E5E5E5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden">
+      <!-- 一级工具栏：模式选择 - 放在头部 -->
+      <FirstToolbar />
       <!-- 新增canvas-wrapper，包裹canvas和button -->
       <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
         <!-- 画布本体 -->
@@ -254,8 +256,6 @@ onMounted(async () => {
         <!-- 对象操作按钮 -->
         <ObjectActionButtons />
       </div>
-      <!-- 一级工具栏：模式选择 -->
-      <FirstToolbar />
       <!-- Container工具栏：仅在container模式下显示 -->
       <ContainerToolbar v-if="selectedMode === 'container'" />
       <!-- Emitter工具栏：仅在emitter模式下显示 -->

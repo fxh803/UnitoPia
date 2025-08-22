@@ -220,7 +220,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         currentSlideIndex.value = collageSeries.value.length - 1
         stopListen.value = false
-        overviewStore.updateMarkerObjects()
+        // overviewStore.updateMarkerObjects()
     }
 
     // 选择幻灯片
@@ -245,12 +245,12 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     console.log(dataTypeArray, markerIdArray, forceTypeArray, uploadTypeArray)
                     restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, uploadTypeArray)
                     stopListen.value = false
-                    overviewStore.updateMarkerObjects()
+                    // overviewStore.updateMarkerObjects()
                 }, 200)
             })
         } else {
             stopListen.value = false
-            overviewStore.updateMarkerObjects()
+            // overviewStore.updateMarkerObjects()
         }
 
     }
@@ -293,7 +293,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         }
 
         stopListen.value = false
-        overviewStore.updateMarkerObjects()
+        // overviewStore.updateMarkerObjects()
 
         console.log(`Slide ${idx} duplicated successfully`)
     }
@@ -321,7 +321,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             currentSlideIndex.value -= 1
         }
         collageSeries.value.splice(idx, 1)
-        overviewStore.updateMarkerObjects()
+        // overviewStore.updateMarkerObjects()
     }
 
 
@@ -332,6 +332,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const objects = canvasInstance.getObjects()
         // 遍历画布对象和JSON对象，恢复自定义属性
         objects.forEach((obj, index) => {
+            obj.set('selectable', false)
+            obj.set('evented', false)
             if (dataTypeArray[index]) {
                 obj.set('dataType', dataTypeArray[index])
                 if (dataTypeArray[index] === 'emitter') {

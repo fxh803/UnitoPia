@@ -12,9 +12,9 @@ const {setSelectedMode} = selectedModeStore
 
 <template>
   <!-- 一级工具栏：模式选择 -->
-  <div v-show="!collaging&&!result_data.length>0" class="px-2 py-4 border border-[#e6e6e6] rounded-xl bg-white flex flex-col gap-3 shadow left-6 top-1/2 absolute z-10 -translate-y-1/2">
+  <div v-show="!collaging&&!result_data.length>0" class="px-4 py-2 border border-[#e6e6e6] rounded-xl bg-white flex flex-row gap-3 shadow top-2 left-2 absolute z-10">
     <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+      class="rounded flex h-10 px-3 items-center gap-2 cursor-pointer"
       :class="[
         selectedMode === 'container'
           ? 'bg-[#0d99ff] text-white'
@@ -25,9 +25,10 @@ const {setSelectedMode} = selectedModeStore
       @click="setSelectedMode('container')" 
     >
       <span class="i-carbon:area-custom" />
+      <span class="text-sm font-medium">Container</span>
     </button>
     <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+      class="rounded flex h-10 px-3 items-center gap-2 cursor-pointer"
       :class="[
         selectedMode === 'emitter'
           ? 'bg-[#0d99ff] text-white'
@@ -38,9 +39,10 @@ const {setSelectedMode} = selectedModeStore
       @click="setSelectedMode('emitter')" 
     >
     <div class="i-carbon:anchor"></div>
+    <span class="text-sm font-medium">Emitter</span>
     </button>
     <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+      class="rounded flex h-10 px-3 items-center gap-2 cursor-pointer"
       :class="[
         selectedMode === 'force'
           ? 'bg-[#0d99ff] text-white'
@@ -51,6 +53,7 @@ const {setSelectedMode} = selectedModeStore
       @click="setSelectedMode('force')" 
     >
       <span class="i-carbon:radio-button" />
+      <span class="text-sm font-medium">Force</span>
     </button>
   </div>
 </template>
