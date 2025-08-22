@@ -26,12 +26,7 @@ export const useSelectedModeStore = defineStore('selectedMode', () => {
             const objType = obj.get('dataType')
             
             if (newMode === null) {
-                // 取消选择模式，所有对象恢复正常透明度
-                if (objType === 'marker') {
-                    obj.set('opacity', 0)
-                } else {
                     obj.set('opacity', 1)
-                }
             } else if (objType === newMode) {
                 // 当前模式的对象保持完全不透明
                 obj.set('opacity', 1)

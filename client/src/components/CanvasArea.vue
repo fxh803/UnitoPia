@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Canvas, PencilBrush } from 'fabric'
+import * as fabric from 'fabric'
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
-import { storeToRefs } from 'pinia' 
+import { storeToRefs } from 'pinia'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useSelectedModeStore } from '~/stores/selectedMode'
@@ -11,13 +12,13 @@ import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useShapeDrawingStore } from '~/stores/shapeDrawing'
 import { useOverviewStore } from '~/stores/overview'
 import { useBezierDrawingStore } from '~/stores/bezierDrawing'
-import { useForceDrawingStore } from '~/stores/forceDrawing' 
+import { useForceDrawingStore } from '~/stores/forceDrawing'
 import { useAnimationStore } from '~/stores/animation'
 import { useBackgroundStore } from '~/stores/background'
 const animationStore = useAnimationStore()
-const {collaging,result_data} = storeToRefs(animationStore)
+const { collaging, result_data } = storeToRefs(animationStore)
 const selectedModeStore = useSelectedModeStore()
-const {selectedMode, isContainerMode} = storeToRefs(selectedModeStore) 
+const { selectedMode, isContainerMode } = storeToRefs(selectedModeStore)
 
 const overviewStore = useOverviewStore()
 const { updateMarkerObjects } = overviewStore
@@ -93,19 +94,19 @@ function updateCanvasSize() {
     }
   }
 }
-function addCanvasEventListeners(){
+function addCanvasEventListeners() {
   canvas.on({
-    'selection:created': ()=>{
+    'selection:created': () => {
       setCurrentPathObj()
       updateActionBtnVisble()
-    updateActionBtnPosition()
-    
+      updateActionBtnPosition()
+
     },
-    'selection:updated': ()=>{
+    'selection:updated': () => {
       setCurrentPathObj()
       updateActionBtnVisble()
-    updateActionBtnPosition()
-    
+      updateActionBtnPosition()
+
     },
     'selection:cleared': hideBtns,
     'object:moving': hideBtns,
@@ -129,7 +130,7 @@ function addCanvasEventListeners(){
     }
   })
 }
-function removeCanvasEventListeners(){
+function removeCanvasEventListeners() {
   canvas.off('selection:created')
   canvas.off('selection:updated')
   canvas.off('selection:cleared')
@@ -147,7 +148,7 @@ watch(collaging, (newVal) => {
     addCanvasEventListeners()
   }
 })
-watch (stopListen, (newVal) => {
+watch(stopListen, (newVal) => {
   if (!newVal) {
     addCanvasEventListeners()
   } else {
@@ -158,10 +159,10 @@ watch(selectedMode, (newMode, oldMode) => {
   if (newMode !== oldMode || newMode === null) {
     setMode(mode.value)
   }
-  if (newMode === 'force') { 
+  if (newMode === 'force') {
     startBlinkAnimation()
-  }else{ 
-     stopBlinkAnimation()
+  } else {
+    stopBlinkAnimation()
   }
 })
 // 监听 mode 变化，自动清理 shape 预览和事件
@@ -198,6 +199,63 @@ watch(brushWidth, (val) => {
   }
 })
 
+// 处理拖拽预览图到主画布
+function handleDragOver(e: DragEvent) {
+  e.preventDefault()
+  if (e.dataTransfer) {
+    e.dataTransfer.dropEffect = 'copy'
+  }
+}
+
+async function handleDrop(e: DragEvent) {
+  e.preventDefault()
+
+  if (!canvas || !e.dataTransfer) return
+
+  const groupJsonData = e.dataTransfer.getData('application/json')
+  if (!groupJsonData) return
+
+  const groupJson = JSON.parse(groupJsonData) 
+  
+  // 计算拖拽位置相对于画布的偏移
+  const canvasRect = canvasEl.value?.getBoundingClientRect()
+  if (!canvasRect) return
+
+  const dropX = e.clientX - canvasRect.left
+  const dropY = e.clientY - canvasRect.top 
+
+  try { 
+    
+    // 使用 fabric.util.enlivenObjects 重新创建对象 (Fabric.js 6.x 返回 Promise)
+    const objects = await fabric.util.enlivenObjects([groupJson]) 
+    
+    if (objects && objects.length > 0) {
+      const clonedObject = objects[0]
+      
+      // 调整位置到拖拽位置
+      clonedObject.set({
+        left: dropX,
+        top: dropY,
+        selectable: false,
+        evented: false,
+        dataType: 'marker',
+        uploadType: 'marker_dragged'
+      })
+      
+      // 添加到主画布
+      canvas.add(clonedObject)
+      canvas.renderAll()
+      
+      console.log('成功添加Marker画布预览对象到主画布')
+    } else {
+      console.warn('enlivenObjects返回的对象为空或无效')
+    }
+    
+  } catch (error) {
+    console.error('使用enlivenObjects创建对象时出错:', error)
+  }
+}
+
 onMounted(async () => {
   await nextTick()
   // 延迟一下确保DOM完全渲染
@@ -232,10 +290,10 @@ onMounted(async () => {
     // 初始化空白幻灯片
     initializeEmptySlide()
     addCanvasEventListeners()
-  } 
- 
+  }
+
 })
- 
+
 
 </script>
 
@@ -245,7 +303,8 @@ onMounted(async () => {
     <CollageSeriesPanel />
     <!-- 主画布区域 -->
     <div ref="canvasAreaRef"
-      class="p-2 border-r border-[#e6e6e6] bg-[#E5E5E5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden">
+      class="p-2 border-r border-[#e6e6e6] bg-[#E5E5E5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden"
+      @dragover="handleDragOver" @drop="handleDrop">
       <!-- 一级工具栏：模式选择 - 放在头部 -->
       <FirstToolbar />
       <!-- 新增canvas-wrapper，包裹canvas和button -->

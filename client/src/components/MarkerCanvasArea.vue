@@ -29,6 +29,32 @@ let canvas: Canvas | null = null
 
 // 实时预览图
 const previewDataUrl = ref<string>('')
+const previewGroup = ref<Group | null>(null)
+// 拖拽预览图到主画布
+function handlePreviewDragStart(e: DragEvent) {
+  if (!canvas || !previewGroup.value) return
+  
+  try {
+    // 直接获取预览组的JSON数据
+    const groupJson = previewGroup.value.toJSON() 
+    
+    // 设置拖拽数据
+    if (e.dataTransfer) {
+      e.dataTransfer.setData('application/json', JSON.stringify(groupJson))
+      e.dataTransfer.setData('text/plain', 'Marker Canvas Content')
+      e.dataTransfer.effectAllowed = 'copy'
+    }
+    
+    console.log('开始拖拽预览图，预览组JSON:', groupJson)
+  } catch (error) {
+    console.error('准备拖拽数据时出错:', error)
+    e.preventDefault()
+  }
+}
+
+function handlePreviewDragEnd(e: DragEvent) {
+  console.log('拖拽预览图结束')
+}
 
 async function updatePreview() {
   // 获取当前画布的所有对象
@@ -40,7 +66,7 @@ async function updatePreview() {
   const cloneObjects = await Promise.all(allObjects.map(async (obj) => {
     return obj.clone()
   }))
-  const group = new Group(cloneObjects)
+  previewGroup.value = new Group(cloneObjects)
   const tempCanvas = document.createElement('canvas')
   tempCanvas.width = 60
   tempCanvas.height = 60
@@ -50,21 +76,21 @@ async function updatePreview() {
     height: 60,
     backgroundColor: '#ffffff'
   })
-  const originWidth = group.width
-  const originHeight = group.height
+  const originWidth = previewGroup.value.width
+  const originHeight = previewGroup.value.height
   // 计算缩放比例，确保对象适合缩略图 
   const scaleX = 50 / Math.max(originWidth, 1)
   const scaleY = 50 / Math.max(originHeight, 1)
   const scale = Math.min(scaleX, scaleY, 1) // 不超过原始大小
   //把克隆对象放到画布正中央，做好缩放，并导出给previewDataUrl
-  group.set('left', 30)
-  group.set('top', 30)
-  group.set('scaleX', scale)
-  group.set('scaleY', scale)
-  group.set('originX', 'center')
-  group.set('originY', 'center')
-  group.set('opacity', 1)
-  tempFabricCanvas.add(group)
+  previewGroup.value.set('left', 30)
+  previewGroup.value.set('top', 30)
+  previewGroup.value.set('scaleX', scale)
+  previewGroup.value.set('scaleY', scale)
+  previewGroup.value.set('originX', 'center')
+  previewGroup.value.set('originY', 'center')
+  previewGroup.value.set('opacity', 1)
+  tempFabricCanvas.add(previewGroup.value)
   tempFabricCanvas.renderAll()
   previewDataUrl.value = tempFabricCanvas.toDataURL({ format: 'png', multiplier: 1, enableRetinaScaling: false as any })
 
@@ -207,7 +233,10 @@ onBeforeUnmount(() => {
 
     <!-- 实时预览图 - 左上角 -->
     <div v-if="previewDataUrl"
-      class="absolute top-5 left-5 z-10 bg-white/80 border border-gray-300 rounded shadow-sm p-1">
+      class="absolute top-5 left-5 z-10 bg-white/80 border border-gray-300 rounded shadow-sm p-1 cursor-move"
+      draggable="true"
+      @dragstart="handlePreviewDragStart"
+      @dragend="handlePreviewDragEnd">
       <img :src="previewDataUrl" alt="" class="block w-30px h-30px h-auto rounded" />
     </div>
 
