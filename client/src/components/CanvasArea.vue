@@ -4,7 +4,6 @@ import * as fabric from 'fabric'
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useObjectActionsStore } from '~/stores/objectActions'
-import { useColorPickerStore } from '~/stores/colorpicker'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
@@ -64,7 +63,6 @@ const canvasWrapperRef = ref<HTMLDivElement | null>(null)
 const canvasSize = ref(400)
 let canvas: Canvas | null = null
 
-const colorPickerStore = useColorPickerStore()
 const backgroundStore = useBackgroundStore()
 function getDpr() {
   return window.devicePixelRatio || 1
@@ -181,13 +179,7 @@ watch(mode, () => {
     removeForcePointListener()
   }
 })
-// 监听颜色变化，更新画笔颜色
-watch(() => colorPickerStore.selectedColor, (color) => {
-  // 更新画笔颜色（仅在Marker模式下）
-  if (canvas && canvas.freeDrawingBrush && !isContainerMode.value) {
-    canvas.freeDrawingBrush.color = color
-  }
-})
+
 
 // 画笔宽度变化时同步到画布
 watch(brushWidth, (val) => {
@@ -232,21 +224,22 @@ async function handleDrop(e: DragEvent) {
     if (objects && objects.length > 0) {
       const clonedObject = objects[0]
       
-      // 调整位置到拖拽位置
+      // 先添加到主画布
+      canvas.add(clonedObject)
+      
+      // 然后设置属性（确保对象已经完全初始化）
       clonedObject.set({
         left: dropX,
         top: dropY,
-        selectable: false,
-        evented: false,
-        dataType: 'marker',
-        uploadType: 'marker_dragged'
+        selectable: true,
+        evented: true,
+        dataType: 'marker'
       })
-      
-      // 添加到主画布
-      canvas.add(clonedObject)
+      // 强制更新对象
+      clonedObject.setCoords()
       canvas.renderAll()
       
-      console.log('成功添加Marker画布预览对象到主画布')
+      console.log('成功添加Marker画布预览对象到主画布，dataType:', clonedObject.get('dataType'))
     } else {
       console.warn('enlivenObjects返回的对象为空或无效')
     }

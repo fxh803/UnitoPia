@@ -94,6 +94,13 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
             showLayerUpBtn.value = false
             showLayerDownBtn.value = false
         }
+        if(activeObject && activeObject.get('dataType') === 'marker') { 
+            showClosePathBtn.value = false
+            showGroupBtn.value = false
+            showColorBtn.value = false
+            showLayerUpBtn.value = false
+            showLayerDownBtn.value = false
+        }
         if(collaging.value) {
             showDeleteBtn.value = false
             showClosePathBtn.value = false

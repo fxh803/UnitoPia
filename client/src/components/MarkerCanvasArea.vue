@@ -6,7 +6,9 @@ import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
+import { useColorPickerStore } from '~/stores/colorPicker'
 
+const colorPickerStore = useColorPickerStore()
 const resizeHandleStore = useResizeHandleStore()
 const markerCanvasModeStore = useMarkerCanvasModeStore()
 const markerObjectActionsStore = useMarkerObjectActionsStore()
@@ -14,7 +16,7 @@ const {
   updateActionBtnPosition,
   updateActionBtnVisble,
   hideBtns,
-  setCurrentPathObj,
+  setCurrentPathObj
 } = markerObjectActionsStore
 const brushSizeStore = useBrushSizeStore()
 
@@ -135,7 +137,13 @@ watch(() => resizeHandleStore.leftWidth, () => {
     updateCanvasSize()
   }, 0)
 })
-
+// 监听颜色变化，更新画笔颜色
+watch(() => colorPickerStore.selectedColor, (color) => {
+  // 更新画笔颜色（仅在Marker模式下）
+  if (canvas && canvas.freeDrawingBrush) {
+    canvas.freeDrawingBrush.color = color
+  }
+})
 // 监听画笔宽度变化
 watch(() => brushSizeStore.brushWidth, (newWidth) => {
   if (canvas && (markerCanvasModeStore.mode === 'draw' || markerCanvasModeStore.mode === 'erase')) {
