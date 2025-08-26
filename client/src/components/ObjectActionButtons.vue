@@ -4,7 +4,6 @@ import { useObjectActionsStore } from '~/stores/objectActions'
 import { storeToRefs } from 'pinia'
 import { watch } from 'vue'
 import { useSelectedModeStore } from '~/stores/selectedMode'
-import ObjectColorPicker from './ObjectColorPicker.vue'
 
 const objectActionsStore = useObjectActionsStore()
 const selectedModeStore = useSelectedModeStore()
@@ -15,9 +14,6 @@ const {
     showDeleteBtn, 
     showClosePathBtn, 
     showGroupBtn, 
-    showLayerUpBtn, 
-    showLayerDownBtn,
-    showColorBtn,
     actionBtnPosition,
     isPathClosed,
     isGroupMode
@@ -25,9 +21,7 @@ const {
 const {
     deleteActiveObject,
     togglePathClosed,
-    toggleGroup,
-    bringForward,
-    sendBackwards
+    toggleGroup
 } = objectActionsStore
 
 // 删除对象并关闭圆盘
@@ -85,14 +79,11 @@ const calculateButtonPosition = (angle: number) => {
 const deleteBtnPos = computed(() => calculateButtonPosition(30)) 
 const closePathBtnPos = computed(() => calculateButtonPosition(90))  
 const groupBtnPos = computed(() => calculateButtonPosition(-30)) 
-const layerDownBtnPos = computed(() => calculateButtonPosition(150))   
-const layerUpBtnPos = computed(() => calculateButtonPosition(210))  
-const colorBtnPos = computed(() => calculateButtonPosition(-90))  
 </script>
 
 <template>
     <!-- 更多按钮 -->
-    <button v-if="showDeleteBtn || showClosePathBtn || showGroupBtn || showLayerUpBtn || showLayerDownBtn || showColorBtn"
+    <button v-if="showDeleteBtn || showClosePathBtn || showGroupBtn"
         ref="moreBtnRef" class="more-btn" :style="actionBtnPosition" @click="toggleWheel">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
             <path
@@ -154,26 +145,6 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90))
                     <div v-if="!isGroupMode" class="i-carbon:group-objects"></div>
                     <div v-else class="i-carbon:ungroup-objects"></div>
                 </button>
-
-                <!-- 层级上移按钮 -->
-                <button v-if="showLayerUpBtn && !isContainerMode" class="wheel-btn layer-up-wheel-btn"
-                    :style="layerUpBtnPos" @click="bringForward">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        viewBox="0 0 16 16">
-                        <path d="M8 2L2 8h3v6h6V8h3L8 2z" />
-                    </svg>
-                </button>
-
-                <!-- 层级下移按钮 -->
-                <button v-if="showLayerDownBtn && !isContainerMode" class="wheel-btn layer-down-wheel-btn"
-                    :style="layerDownBtnPos" @click="sendBackwards">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        viewBox="0 0 16 16">
-                        <path d="M8 14L2 8h3V2h6v6h3L8 14z" />
-                    </svg>
-                </button>
-                <!-- 取色器按钮 -->
-                <ObjectColorPicker :style="colorBtnPos" class="wheel-btn color-wheel-btn" />
             </div>
         </div>
     </div>
@@ -352,30 +323,6 @@ const colorBtnPos = computed(() => calculateButtonPosition(-90))
 
 .group-wheel-btn:hover {
     background-color: #059669;
-}
-
-/* 层级上移按钮 */
-.layer-up-wheel-btn {
-    background-color: #8b5cf6;
-}
-
-.layer-up-wheel-btn:hover {
-    background-color: #7c3aed;
-}
-
-/* 层级下移按钮 */
-.layer-down-wheel-btn {
-    background-color: #f59e0b;
-}
-
-.layer-down-wheel-btn:hover {
-    background-color: #d97706;
-}
-
-/* 取色器按钮 */
-.color-wheel-btn {
-    background-color: transparent;
-    padding: 0;
 }
 
 /* 转盘出现动画 */
