@@ -152,7 +152,16 @@ watch(stopListen, (newVal) => {
 })
 watch(selectedMode, (newMode, oldMode) => {
   if (newMode !== oldMode || newMode === null) {
-    setMode(mode.value)
+    setMode(null)
+    if(selectedMode.value === null){
+        canvas?.getObjects().forEach(obj => {
+          if(obj.get('dataType') === 'marker'){
+            obj.selectable = true;
+            obj.evented = true;
+          }
+        });
+        canvas?.renderAll();
+    }
   }
   if (newMode === 'force') {
     startBlinkAnimation()

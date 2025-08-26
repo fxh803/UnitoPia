@@ -28,18 +28,10 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     // 再次点击同模式，取消激活
     if (mode.value === m) {
       mode.value = null;
-      canvasInstance.isDrawingMode = false;
-      canvasInstance.selection = false;
-      canvasInstance.getObjects().forEach(obj => {
-        obj.selectable = false;
-        obj.evented = false;
-      });
-      canvasInstance.discardActiveObject();
-      canvasInstance.renderAll();
-
-      return;
+    }else{
+      mode.value = m;
     }
-    mode.value = m;
+    
     // 统一先取消所有选中
     canvasInstance.discardActiveObject();
     // 统一设置
@@ -92,6 +84,12 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       canvasInstance.isDrawingMode = false;
       canvasInstance.selection = false;
       canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; }); 
+    } else {
+      canvasInstance.isDrawingMode = false;
+      canvasInstance.getObjects().forEach(obj => {  
+        obj.selectable = false; 
+        obj.evented = false; 
+      }); 
     }
     canvasInstance.renderAll();
   }
