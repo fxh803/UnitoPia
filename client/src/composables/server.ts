@@ -1,5 +1,4 @@
-import { useCollageSeriesStore } from '~/stores/collageSeries'
-import { useOverviewStore } from '~/stores/overview'
+import { useCollageSeriesStore } from '~/stores/collageSeries' 
 import { Canvas } from 'fabric'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
@@ -205,39 +204,7 @@ function processForce(tempCanvas: Canvas, result: ProcessedData, slideIndex: num
 }
 // 处理数据绑定
 function processDataBinding(result: ProcessedData, slideIndex: number) {
-  const collageSeriesStore = useCollageSeriesStore()
-  const overviewStore = useOverviewStore()
-  const { dataBindingSettings } = storeToRefs(overviewStore)
-  const slideId = collageSeriesStore.collageSeries[slideIndex].slideId
-  const markerData = Array.from(dataBindingSettings.value.entries())
-    .filter(([key, value]) => key.startsWith(slideId))
-    .map(([key, value]) => {
-      return {
-        dataField: value.dataField,
-        dataRange: value.dataRange,
-        visualEncoding: value.visualEncoding,
-        markerId: key.substring(key.indexOf('marker'))
-      }
-    })
-  const tableStore = useTableStore()
-  const tableData = tableStore.tableData
-  const dataBindingList: Array<{ data: Array<any>, markerId: string, visualEncoding: any }> = []
-
-  markerData.forEach(marker => {
-    const temp: any[] = []
-    // 用 slice 保证顺序和 dataRange 匹配
-    const tableRow = tableData.slice(marker.dataRange.start - 1, marker.dataRange.end)
-    tableRow.forEach((row: any) => {
-      temp.push(row[marker.dataField])
-    })
-    dataBindingList.push({
-      data: temp,
-      markerId: marker.markerId,
-      visualEncoding: marker.visualEncoding,
-      dataField: marker.dataField
-    })
-  })
-  result.dataBinding = dataBindingList
+   
 }
 // 发送数据到后端的函数
 // 轮询处理状态的函数

@@ -2,7 +2,6 @@
 import { storeToRefs } from 'pinia'
 import { useAnimationStore } from '~/stores/animation'
 import Table from './Table.vue'
-import Overview from './Overview.vue'
 
 // 拼贴处理状态store
 const animationStore = useAnimationStore()

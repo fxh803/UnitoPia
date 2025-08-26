@@ -8,8 +8,7 @@ import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useCanvasModeStore } from '~/stores/canvasMode'
-import { useShapeDrawingStore } from '~/stores/shapeDrawing'
-import { useOverviewStore } from '~/stores/overview'
+import { useShapeDrawingStore } from '~/stores/shapeDrawing' 
 import { useBezierDrawingStore } from '~/stores/bezierDrawing'
 import { useForceDrawingStore } from '~/stores/forceDrawing'
 import { useAnimationStore } from '~/stores/animation'
@@ -18,9 +17,7 @@ const animationStore = useAnimationStore()
 const { collaging, result_data } = storeToRefs(animationStore)
 const selectedModeStore = useSelectedModeStore()
 const { selectedMode, isContainerMode } = storeToRefs(selectedModeStore)
-
-const overviewStore = useOverviewStore()
-const { updateMarkerObjects } = overviewStore
+ 
 const brushSizeStore = useBrushSizeStore()
 const { brushWidth } = storeToRefs(brushSizeStore)
 
@@ -275,8 +272,7 @@ onMounted(async () => {
     collageSeriesStore.setCanvas(() => canvas)
     objectActionsStore.setCanvas(() => canvas)
     shapeDrawingStore.setCanvas(() => canvas)
-    selectedModeStore.setCanvas(() => canvas)
-    overviewStore.setCanvas(() => canvas)
+    selectedModeStore.setCanvas(() => canvas) 
     bezierDrawingStore.setCanvas(() => canvas)
     forceDrawingStore.setCanvas(() => canvas)
     backgroundStore.setCanvas(() => canvas)

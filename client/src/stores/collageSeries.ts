@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Canvas } from 'fabric'
-import { useOverviewStore } from '~/stores/overview'
 import { useBackgroundStore } from '~/stores/background'
 import { FabricImage } from 'fabric'
 
@@ -19,7 +18,6 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     const currentSlideIndex = ref(0)
     const stopListen = ref(false) // 添加标志
     const canvasRef = ref<(() => Canvas | null) | null>(null)
-    const overviewStore = useOverviewStore()
 
     // 生成唯一的 slide ID
     function generateSlideId(): string {
@@ -216,7 +214,6 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         currentSlideIndex.value = collageSeries.value.length - 1
         stopListen.value = false
-        // overviewStore.updateMarkerObjects()
     }
 
     // 选择幻灯片
@@ -241,12 +238,10 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     console.log(dataTypeArray, markerIdArray, forceTypeArray, uploadTypeArray)
                     restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, uploadTypeArray)
                     stopListen.value = false
-                    // overviewStore.updateMarkerObjects()
                 }, 200)
             })
         } else {
             stopListen.value = false
-            // overviewStore.updateMarkerObjects()
         }
 
     }
@@ -280,16 +275,12 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         // 在复制目标后面插入新幻灯片
         collageSeries.value.splice(idx + 1, 0, duplicatedSlide)
 
-        // 复制数据绑定设置
-        overviewStore.copyDataBindingSettings(originalSlide.slideId, newSlideId)
-
         // 如果复制的幻灯片在当前幻灯片之前或等于当前幻灯片，需要调整当前索引
         if (idx <= currentSlideIndex.value) {
             currentSlideIndex.value += 1
         }
 
         stopListen.value = false
-        // overviewStore.updateMarkerObjects()
 
         console.log(`Slide ${idx} duplicated successfully`)
     }
@@ -317,7 +308,6 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             currentSlideIndex.value -= 1
         }
         collageSeries.value.splice(idx, 1)
-        // overviewStore.updateMarkerObjects()
     }
 
 
