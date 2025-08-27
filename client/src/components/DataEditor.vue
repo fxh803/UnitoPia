@@ -27,9 +27,15 @@ const { collaging ,result_data} = storeToRefs(animationStore)
       <!-- 分隔线 -->
       <div class="border-t border-gray-200"></div>
       
-      <!-- 下半部分：SubCanvasArea -->
-      <div class="flex-1 min-h-0">
-        <MarkerCanvasArea />
+      <!-- 下半部分：左右两等边 -->
+      <div class="flex-1 min-h-0 flex">
+        <!-- 左半边 -->
+        <div class="w-1/2 border-r border-gray-200">
+          <MarkerCanvasArea />
+        </div>
+        <!-- 右半边 -->
+        <div class="w-1/2"> 
+        </div>
       </div>
     </div>
   </aside>

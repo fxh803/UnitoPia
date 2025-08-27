@@ -12,7 +12,7 @@ const {setSelectedMode} = selectedModeStore
 
 <template>
   <!-- 一级工具栏：模式选择 -->
-  <div v-show="!collaging&&!result_data.length>0" class="px-4 py-2 border border-[#e6e6e6] rounded-xl bg-white flex flex-row gap-3 shadow top-2 left-2 absolute z-10">
+  <div v-show="!collaging&&!result_data.length>0" class="px-4 py-2 border border-[#e6e6e6] rounded-xl bg-white flex flex-row gap-3 shadow top-2 left-1/2 -translate-x-1/2 absolute z-10">
     <button
       class="rounded flex h-10 px-3 items-center gap-2 cursor-pointer"
       :class="[

@@ -99,25 +99,13 @@ async function updatePreview() {
 
 }
 
-// 计算画布容器的实际尺寸
-const containerWidth = computed(() => {
-  const parentWidth = window.innerWidth - resizeHandleStore.leftWidth
-  return parentWidth - 1 - 16
-})
-
-const containerHeight = computed(() => {
-  if (canvasContainerRef.value) {
-    const rect = canvasContainerRef.value.getBoundingClientRect()
-    return rect.height - 16
-  }
-  return 300
-})
-
 // 更新画布尺寸
 function updateCanvasSize() {
-  if (canvasEl.value && canvas) {
-    const newWidth = containerWidth.value
-    const newHeight = containerHeight.value
+  
+  if (canvasEl.value && canvas) { 
+    const rect = canvasContainerRef.value.getBoundingClientRect()
+    const newWidth = rect.width-16
+    const newHeight = rect.height-16 
     if (newWidth !== canvasWidth.value || newHeight !== canvasHeight.value) {
       canvasWidth.value = newWidth
       canvasHeight.value = newHeight
@@ -158,8 +146,9 @@ onMounted(async () => {
   await nextTick()
   setTimeout(() => {
     if (canvasEl.value && canvasContainerRef.value) {
-      const initialWidth = containerWidth.value
-      const initialHeight = containerHeight.value
+      const rect = canvasContainerRef.value.getBoundingClientRect()
+      const initialWidth = rect.width-16
+      const initialHeight = rect.height-16
       canvasWidth.value = initialWidth
       canvasHeight.value = initialHeight
       canvas = new Canvas(canvasEl.value, {

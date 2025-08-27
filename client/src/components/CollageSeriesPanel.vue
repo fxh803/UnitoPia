@@ -36,6 +36,9 @@ function handleAddNew() {
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
 }
+onMounted(() => {
+  isCollapsed.value = window.innerWidth < 1440
+})
 </script>
 
 <template>
