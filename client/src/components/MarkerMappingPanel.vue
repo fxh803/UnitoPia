@@ -1,0 +1,154 @@
+<script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import { useMarkerStore } from '~/stores/marker'
+import { useTableStore } from '~/stores/table'
+
+const markerStore = useMarkerStore()
+const tableStore = useTableStore()
+
+const { markers } = storeToRefs(markerStore)
+const { tableColumns } = storeToRefs(tableStore)
+
+// 从 store 获取 marker 映射配置
+const getMarkerMapping = markerStore.getMarkerMapping
+
+// 处理视觉编码变化
+const handleVisualEncodingChange = (markerId: string, encoding: 'size' | 'width' | 'height') => {
+  markerStore.updateVisualEncoding(markerId, encoding)
+}
+
+// 处理数据字段变化
+const handleDataFieldChange = (markerId: string, field: string) => {
+  markerStore.updateDataField(markerId, field)
+}
+
+// 处理数据范围变化
+const handleDataRangeChange = (markerId: string, start: number, end: number) => {
+  markerStore.updateDataRange(markerId, start, end)
+}
+</script>
+
+<template>
+  <div class="h-full flex flex-col bg-white">
+
+    <!-- Marker 列表 -->
+    <div class="flex-1 overflow-y-auto p-4">
+      <div v-if="markers.length > 0" class="space-y-4">
+        <div v-for="marker in markers" :key="marker.id"
+          class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+
+          <!-- 垂直布局 -->
+          <div class="flex space-x-4">
+
+            <!-- 左侧：缩略图 -->
+            <div class="flex-shrink-0">
+              <div
+                class="w-16 h-16 border border-gray-300 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                <img v-if="marker.thumbnail" :src="marker.thumbnail" alt="Thumbnail" 
+                  class="w-full h-full object-cover" />
+                <span v-else class="text-gray-400 text-xs">Preview</span>
+              </div>
+            </div>
+
+            <!-- 右侧：数据绑定操作 - 垂直布局 -->
+            <div class="flex-1 flex flex-col space-y-3">
+
+              <!-- 视觉编码选择器 -->
+              <div class="flex flex-col space-y-1">
+                <span class="text-xs font-medium text-gray-700">Visual Encoding:</span>
+                <div class="flex space-x-3 justify-center">
+                  <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" :value="'size'" 
+                      :checked="getMarkerMapping(marker.id).visualEncoding === 'size'"
+                      @change="handleVisualEncodingChange(marker.id, 'size')"
+                      :name="`visualEncoding-${marker.id}`"
+                      class="w-4 h-4 text-blue-600" />
+                    <span class="text-xs text-gray-600">Size</span>
+                  </label>
+                  <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" :value="'width'" 
+                      :checked="getMarkerMapping(marker.id).visualEncoding === 'width'"
+                      @change="handleVisualEncodingChange(marker.id, 'width')"
+                      :name="`visualEncoding-${marker.id}`"
+                      class="w-3 h-3 text-blue-600" />
+                    <span class="text-xs text-gray-600">Width</span>
+                  </label>
+                  <label class="flex items-center space-x-2 cursor-pointer">
+                    <input type="radio" :value="'height'" 
+                      :checked="getMarkerMapping(marker.id).visualEncoding === 'height'"
+                      @change="handleVisualEncodingChange(marker.id, 'height')"
+                      :name="`visualEncoding-${marker.id}`"
+                      class="w-3 h-3 text-blue-600" />
+                    <span class="text-xs text-gray-600">Height</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- 数据绑定选择器 -->
+              <div class="flex flex-col space-y-1">
+                <span class="text-xs font-medium text-gray-700">Data Binding:</span>
+                <div v-if="tableColumns && tableColumns.length > 0" class="flex flex-col space-y-1">
+                  <!-- 数据字段下拉框 -->
+                  <div class="flex justify-center">
+                                         <select v-model="getMarkerMapping(marker.id).dataField"
+                       @change="handleDataFieldChange(marker.id, getMarkerMapping(marker.id).dataField)"
+                       :class="[
+                         'px-2 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 w-full max-w-32',
+                         getMarkerMapping(marker.id).dataField === '' ? 'text-gray-400' : 'text-gray-900'
+                       ]">
+                       <option value="" disabled>Select Field</option>
+                       <option v-for="column in tableColumns" :key="column" :value="column">
+                         {{ column }}
+                       </option>
+                     </select>
+                  </div>
+                  
+                  <!-- 数据范围输入 -->
+                  <div class="flex items-center space-x-1 justify-center">
+                    <span class="text-xs text-gray-600">Range:</span>
+                    <input type="number" 
+                      :value="getMarkerMapping(marker.id).dataRange.start === -1 ? '' : getMarkerMapping(marker.id).dataRange.start"
+                      @input="(e) => {
+                        const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
+                        handleDataRangeChange(marker.id, value, getMarkerMapping(marker.id).dataRange.end);
+                      }"
+                      class="w-16 px-1 py-0.5 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="1" placeholder="start" />
+                    <span class="text-xs text-gray-500">-</span>
+                    <input type="number" 
+                      :value="getMarkerMapping(marker.id).dataRange.end === -1 ? '' : getMarkerMapping(marker.id).dataRange.end"
+                      @input="(e) => {
+                        const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
+                        handleDataRangeChange(marker.id, getMarkerMapping(marker.id).dataRange.start, value);
+                      }"
+                      class="w-16 px-1 py-0.5 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      min="1" placeholder="end" />
+                  </div>
+                </div>
+                <div v-else class="flex justify-center">
+                  <div class="text-center text-gray-400 text-xs">
+                    <p>No data available</p>
+                    <p class="text-xs">Please load data in the Table tab first</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 空状态 -->
+      <div v-else class="text-center py-8">
+        <div class="text-gray-400">
+          <div class="text-4xl mb-2">📝</div>
+          <p class="text-lg font-medium">No Marker Data</p>
+          <p class="text-sm">Please draw content on the left canvas and click the save button</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+/* 可以添加自定义样式 */
+</style>

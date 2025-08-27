@@ -3,7 +3,9 @@ import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import ColorPicker from './ColorPicker.vue'
 import { storeToRefs } from 'pinia' 
 import * as fabric from 'fabric'
+import { Canvas, Group } from 'fabric'
 import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
+import { useMarkerStore } from '~/stores/marker'
 
 const markerCanvasModeStore = useMarkerCanvasModeStore()
 const {mode} = storeToRefs(markerCanvasModeStore)
@@ -11,6 +13,9 @@ const { setMode } = markerCanvasModeStore
 
 // 形状绘制store
 const markerShapeDrawingStore = useMarkerShapeDrawingStore()
+
+// Marker store
+const markerStore = useMarkerStore()
 
 // 文件上传相关
 const fileInputRef = ref<HTMLInputElement>()
@@ -180,6 +185,58 @@ const triggerFileUpload = () => {
   markerCanvasModeStore.setMode(null)
   fileInputRef.value?.click()
 }
+
+// 保存当前画布上的所有 marker 对象
+const saveMarkers = async () => {
+  const canvasInstance = markerCanvasModeStore.getCanvas() 
+  // 获取画布上所有对象
+  const allObjects = canvasInstance.getObjects()
+  //新建一个fabricjs的group，将所有objectsgroup一起
+  const cloneObjects = await Promise.all(allObjects.map(async (obj) => {
+    return obj.clone()
+  }))
+  const group = new Group(cloneObjects)
+  const tempCanvas = document.createElement('canvas')
+  tempCanvas.width = 60
+  tempCanvas.height = 60
+
+  const tempFabricCanvas = new Canvas(tempCanvas, {
+    width: 60,
+    height: 60,
+    backgroundColor: '#ffffff'
+  })
+  const originWidth = group.width
+  const originHeight = group.height
+  // 计算缩放比例，确保对象适合缩略图 
+  const scaleX = 50 / Math.max(originWidth, 1)
+  const scaleY = 50 / Math.max(originHeight, 1)
+  const scale = Math.min(scaleX, scaleY, 1) // 不超过原始大小
+  //把克隆对象放到画布正中央，做好缩放，并导出给previewDataUrl
+  group.set('left', 30)
+  group.set('top', 30)
+  group.set('scaleX', scale)
+  group.set('scaleY', scale)
+  group.set('originX', 'center')
+  group.set('originY', 'center')
+  group.set('opacity', 1)
+  tempFabricCanvas.add(group)
+  tempFabricCanvas.renderAll()
+  const thumbnail = tempFabricCanvas.toDataURL({ format: 'png', multiplier: 1, enableRetinaScaling: false as any })
+   // 获取所有对象的 JSON 数据
+   const jsonData = allObjects.map(obj => obj.toJSON())
+    
+    // 保存到 store
+    const markerData = {
+      thumbnail,
+      jsonData
+    }
+    
+    const savedMarker = markerStore.addMarker(markerData)
+    console.log('Canvas 已保存:', savedMarker)
+    
+    // 清理临时画布
+    tempFabricCanvas.dispose()
+}
 </script>
 
 <template>
@@ -269,6 +326,15 @@ const triggerFileUpload = () => {
       @click="triggerFileUpload"
     >
       <span class="i-carbon-upload" />
+    </button>
+    
+    <!-- 保存按钮 -->
+    <button
+      class="rounded flex h-7 w-7 items-center justify-center bg-green-600 text-white hover:bg-green-700 cursor-pointer"
+      title="保存标记"
+      @click="saveMarkers"
+    >
+      <span class="i-carbon-save" />
     </button>
     
     <!-- 清除按钮 -->

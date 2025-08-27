@@ -2,6 +2,7 @@
 import { storeToRefs } from 'pinia'
 import { useAnimationStore } from '~/stores/animation'
 import Table from './Table.vue'
+import MarkerMappingPanel from './MarkerMappingPanel.vue'
 
 // 拼贴处理状态store
 const animationStore = useAnimationStore()
@@ -35,6 +36,7 @@ const { collaging ,result_data} = storeToRefs(animationStore)
         </div>
         <!-- 右半边 -->
         <div class="w-1/2"> 
+          <MarkerMappingPanel />
         </div>
       </div>
     </div>
