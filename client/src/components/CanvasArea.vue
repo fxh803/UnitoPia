@@ -211,47 +211,71 @@ async function handleDrop(e: DragEvent) {
   if (!canvas || !e.dataTransfer) return
 
   const groupJsonData = e.dataTransfer.getData('application/json')
+  const markerId = e.dataTransfer.getData('text/plain')
   if (!groupJsonData) return
 
-  const groupJson = JSON.parse(groupJsonData) 
-  
-  // 计算拖拽位置相对于画布的偏移
-  const canvasRect = canvasEl.value?.getBoundingClientRect()
-  if (!canvasRect) return
 
-  const dropX = e.clientX - canvasRect.left
-  const dropY = e.clientY - canvasRect.top 
+  try {
+    const groupJson = JSON.parse(groupJsonData)
+    
+    // 计算拖拽位置相对于画布的偏移
+    const canvasRect = canvasEl.value?.getBoundingClientRect()
+    if (!canvasRect) return
 
-  try { 
-    
-    // 使用 fabric.util.enlivenObjects 重新创建对象 (Fabric.js 6.x 返回 Promise)
-    const objects = await fabric.util.enlivenObjects([groupJson]) 
-    
-    if (objects && objects.length > 0) {
-      const clonedObject = objects[0]
-      // 先设置所有属性（包括dataType），然后再添加到画布
-      clonedObject.set({
-        left: dropX,
-        top: dropY,
-        selectable: true,
-        evented: true,
-        dataType: 'marker',
-        hasControls: false
-      })
+    const dropX = e.clientX - canvasRect.left
+    const dropY = e.clientY - canvasRect.top 
+
+    try { 
+      // 使用 fabric.util.enlivenObjects 重新创建对象 (Fabric.js 6.x 返回 Promise)
+      // 确保传递的是对象数组，每个对象都有 type 属性
+      const objects = await fabric.util.enlivenObjects(groupJson, 'fabric') 
       
-      // 添加到主画布（此时所有属性都已设置好）
-      canvas.add(clonedObject)
-      // 强制更新对象
-      clonedObject.setCoords()
-      canvas.renderAll()
+      if (objects && objects.length > 0) {
+        const clonedObject = objects[0]
+        // 先设置所有属性（包括dataType），然后再添加到画布
+        clonedObject.set({
+          left: dropX,
+          top: dropY,
+          selectable: true,
+          evented: true,
+          dataType: 'marker',
+          hasControls: false,
+          originX: 'center',
+          originY: 'center'
+        })
+        
+        // 调节对象大小，最大高/宽为50，保持宽高比
+        const maxSize = 50
+        const currentWidth = clonedObject.width || clonedObject.getScaledWidth()
+        const currentHeight = clonedObject.height || clonedObject.getScaledHeight()
+        
+        if (currentWidth > 0 && currentHeight > 0) {
+          const scaleX = maxSize / Math.max(currentWidth, currentHeight)
+          const scaleY = scaleX // 保持宽高比
+          
+          clonedObject.set({
+            scaleX: scaleX,
+            scaleY: scaleY
+          })
+        }
+        
+        // 添加到主画布（此时所有属性都已设置好）
+        canvas.add(clonedObject)
+        // 强制更新对象
+        clonedObject.setCoords()
+        canvas.renderAll()
+        
+        console.log('成功添加Marker画布预览对象到主画布，dataType:', clonedObject.get('dataType'))
+      } else {
+        console.warn('enlivenObjects返回的对象为空或无效')
+      }
       
-      console.log('成功添加Marker画布预览对象到主画布，dataType:', clonedObject.get('dataType'))
-    } else {
-      console.warn('enlivenObjects返回的对象为空或无效')
+    } catch (enlivenError) {
+      console.error('使用enlivenObjects创建对象时出错:', enlivenError)
+       
     }
-    
-  } catch (error) {
-    console.error('使用enlivenObjects创建对象时出错:', error)
+  } catch (parseError) {
+    console.error('解析拖拽数据失败:', parseError)
   }
 }
 

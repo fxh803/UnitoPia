@@ -26,6 +26,29 @@ const handleDataFieldChange = (markerId: string, field: string) => {
 const handleDataRangeChange = (markerId: string, start: number, end: number) => {
   markerStore.updateDataRange(markerId, start, end)
 }
+
+// 处理 marker 拖拽开始
+const handleMarkerDragStart = (markerId: string, e: DragEvent) => {
+  if (e.dataTransfer) {
+    // 直接传递 marker 的 jsonData
+    const marker = markers.value.find(m => m.id === markerId)
+    if (marker && marker.jsonData) {
+      e.dataTransfer.setData('application/json', JSON.stringify(marker.jsonData))
+      e.dataTransfer.setData('text/plain', `Marker: ${markerId}`)
+    }
+  }
+  isDragging.value = true
+  console.log('开始拖拽 marker:', markerId)
+}
+
+// 处理 marker 拖拽结束
+const handleMarkerDragEnd = () => {
+  isDragging.value = false
+  console.log('拖拽 marker 结束')
+}
+
+// 拖拽时的样式状态
+const isDragging = ref(false)
 </script>
 
 <template>
@@ -35,7 +58,13 @@ const handleDataRangeChange = (markerId: string, start: number, end: number) => 
     <div class="flex-1 overflow-y-auto p-4">
       <div v-if="markers.length > 0" class="space-y-4">
         <div v-for="marker in markers" :key="marker.id"
-          class="bg-white border border-gray-200 rounded-lg p-2 shadow-sm flex space-x-4">
+          :class="[
+            'bg-white border rounded-lg p-2 shadow-sm flex space-x-4 cursor-move transition-all duration-200',
+            isDragging ? 'border-blue-400 shadow-lg bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+          ]"
+          draggable="true"
+          @dragstart="handleMarkerDragStart(marker.id, $event)"
+          @dragend="handleMarkerDragEnd">
 
           <!-- 左侧：缩略图 -->
           <div class="flex-shrink-0">
