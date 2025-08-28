@@ -241,7 +241,8 @@ async function handleDrop(e: DragEvent) {
           dataType: 'marker',
           hasControls: false,
           originX: 'center',
-          originY: 'center'
+          originY: 'center',
+          markerId: markerId
         })
         
         // 调节对象大小，最大高/宽为50，保持宽高比

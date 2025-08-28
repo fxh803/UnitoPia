@@ -34,7 +34,7 @@ const handleMarkerDragStart = (markerId: string, e: DragEvent) => {
     const marker = markers.value.find(m => m.id === markerId)
     if (marker && marker.jsonData) {
       e.dataTransfer.setData('application/json', JSON.stringify(marker.jsonData))
-      e.dataTransfer.setData('text/plain', `Marker: ${markerId}`)
+      e.dataTransfer.setData('text/plain', markerId)
     }
   }
   isDragging.value = true

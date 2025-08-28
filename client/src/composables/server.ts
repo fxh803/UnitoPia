@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
 import { useAnimationStore } from '~/stores/animation'
 import { useSelectedModeStore } from '~/stores/selectedMode'
+import { useMarkerStore } from '~/stores/marker'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -57,11 +58,11 @@ export async function collectAllSlidesData(): Promise<ProcessedData> {
       //渲染画布
       tempCanvas.renderAll()
       collageSeriesStore.restoreCustomProperties(tempCanvas, slide.dataTypeArray, slide.markerIdArray, slide.forceTypeArray, slide.uploadTypeArray)
-      processMarker(tempCanvas, result, i)
-      processForce(tempCanvas, result, i)
-      processEmitter(tempCanvas, result, i)
-      processContainer(tempCanvas, result, i)
-      processDataBinding(result, i)
+      processMarker(tempCanvas, result)
+      processForce(tempCanvas, result)
+      processEmitter(tempCanvas, result)
+      processContainer(tempCanvas, result)
+      processDataBinding(tempCanvas, result)
       resultList.push(result)
     }
     console.log('数据收集完成')
@@ -74,7 +75,7 @@ export async function collectAllSlidesData(): Promise<ProcessedData> {
 }
 
 // 处理 marker 对象
-function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: number) {
+function processMarker(tempCanvas: Canvas, result: ProcessedData) {
   //解析对应索引的幻灯片
   const canvasObjects = tempCanvas.getObjects()
   for (const obj of canvasObjects) {
@@ -107,7 +108,7 @@ function processMarker(tempCanvas: Canvas, result: ProcessedData, slideIndex: nu
 }
 
 // 处理整个画布（隐藏除 container 元素以外的对象）
-function processContainer(tempCanvas: Canvas, result: ProcessedData, slideIndex: number) {
+function processContainer(tempCanvas: Canvas, result: ProcessedData) {
 
   const canvasObjects = tempCanvas.getObjects()
   const containerObjs = canvasObjects.filter(obj => obj.get('dataType') === 'container')
@@ -128,7 +129,7 @@ function processContainer(tempCanvas: Canvas, result: ProcessedData, slideIndex:
 }
 
 // 处理 emitter 对象（只能有一个）
-function processEmitter(tempCanvas: Canvas, result: ProcessedData, slideIndex: number) {
+function processEmitter(tempCanvas: Canvas, result: ProcessedData) {
   const canvasObjects = tempCanvas.getObjects()
   for (const obj of canvasObjects) {
     if (obj.get('dataType') === 'emitter') {
@@ -178,7 +179,7 @@ function processEmitter(tempCanvas: Canvas, result: ProcessedData, slideIndex: n
 }
 
 // 处理 force 对象
-function processForce(tempCanvas: Canvas, result: ProcessedData, slideIndex: number) {
+function processForce(tempCanvas: Canvas, result: ProcessedData) {
   const canvasObjects = tempCanvas.getObjects()
   for (const obj of canvasObjects) {
     if (obj.get('dataType') === 'force') {
@@ -203,9 +204,35 @@ function processForce(tempCanvas: Canvas, result: ProcessedData, slideIndex: num
   }
 }
 // 处理数据绑定
-function processDataBinding(result: ProcessedData, slideIndex: number) {
-   
+function processDataBinding(tempCanvas: Canvas, result: ProcessedData) {
+  const canvasObjects = tempCanvas.getObjects()
+  const tableStore = useTableStore()
+  const tableData = tableStore.tableData
+  const dataBindingList: Array<{ data: Array<any>, markerId: string, visualEncoding: any }> = []
+  for (const obj of canvasObjects) {
+    if (obj.get('dataType') === 'marker') {
+      const markerId = obj.get('markerId')
+      const markerStore = useMarkerStore() 
+      const markersData = markerStore.markers.find(m => m.id === markerId)
+      const dataField = markersData.mapping.dataField
+      const dataRange = markersData.mapping.dataRange
+      const visualEncoding = markersData.mapping.visualEncoding
+      const temp: any[] = [] 
+      // 用 slice 保证顺序和 dataRange 匹配
+      const tableRow = tableData.slice(dataRange.start - 1, dataRange.end) 
+      tableRow.forEach((row: any) => {
+        temp.push(row[dataField])
+      })
+      dataBindingList.push({
+        data: temp,
+        markerId: markerId,
+        visualEncoding: visualEncoding
+      })
+    }
+  }
+  result.dataBinding = dataBindingList
 }
+
 // 发送数据到后端的函数
 // 轮询处理状态的函数
 async function startProgressTimer() {
