@@ -357,13 +357,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         })
     }
 
-    // 获取当前幻灯片的 slideId
-    function getCurrentSlideId(): string {
-        if (collageSeries.value.length === 0 || currentSlideIndex.value >= collageSeries.value.length) {
-            return ''
-        }
-        return collageSeries.value[currentSlideIndex.value].slideId
-    }
+
 
     // 为所有slide添加背景对象
     async function addBackgroundToAllSlides(backgroundObject: any) {
@@ -509,17 +503,16 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     currentSlideIndex,
     stopListen,
     canvasRef,
-    setCanvas,
-    initializeEmptySlide,
-    updateCurrentSlide,
-    addNewSlide,
-    handleCollageSeriesSelect,
-    handleDuplicateSlide,
-    handleDeleteCollageSeries,
-    getCurrentSlideId,
-    restoreCustomProperties,
-    addBackgroundToAllSlides,
-    removeBackgroundFromAllSlides,
-    regenerateSlidePreview
+            setCanvas,
+        initializeEmptySlide,
+        updateCurrentSlide,
+        addNewSlide,
+        handleCollageSeriesSelect,
+        handleDuplicateSlide,
+        handleDeleteCollageSeries,
+        restoreCustomProperties,
+        addBackgroundToAllSlides,
+        removeBackgroundFromAllSlides,
+        regenerateSlidePreview
 }
 }) 

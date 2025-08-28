@@ -18,18 +18,12 @@ export const useResizeHandleStore = defineStore('resizeHandle', () => {
     isDragging.value = dragging
   }
   
-  // 获取右侧容器的宽度（用于计算subCanvasArea的尺寸）
-  function getRightWidth() {
-    // 这里可以根据实际需要计算右侧宽度
-    // 或者直接返回一个响应式的计算值
-    return window.innerWidth - leftWidth.value
-  }
+
   
   return {
     leftWidth,
     isDragging,
     updateLeftWidth,
-    setDragging,
-    getRightWidth
+    setDragging
   }
 })

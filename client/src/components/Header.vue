@@ -15,9 +15,7 @@ const percentage = ref(0)
 // 计算是否显示replay按钮
 const showReplayButton = computed(() => result_data.value && result_data.value.length > 0 && !collaging.value)
 
-// 鼠标悬浮状态
-const isHoveringRun = ref(false)
-const isHoveringReplay = ref(false)
+
 // 监听progress变化，计算进度
 watch(progress, (newProgress) => {
   if (newProgress && collaging.value) {

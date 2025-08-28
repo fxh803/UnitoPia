@@ -179,18 +179,7 @@ export const useMarkerShapeDrawingStore = defineStore('markerShapeDrawing', () =
     el.removeEventListener('mouseup', onMarkerShapeMouseUp)
   }
 
-  // 清理状态
-  function clearDrawingState() {
-    isDrawingShape.value = false
-    shapeStart.value = null
-    if (previewShape.value) {
-      const canvasInstance = markerCanvasRef.value?.()
-      if (canvasInstance && previewShape.value) {
-        canvasInstance.remove(previewShape.value)
-      }
-      previewShape.value = null
-    }
-  }
+
 
   return {
     // 状态
@@ -201,7 +190,6 @@ export const useMarkerShapeDrawingStore = defineStore('markerShapeDrawing', () =
     // 方法
     setMarkerCanvas,
     addMarkerShapeEventListeners,
-    removeMarkerShapeEventListeners,
-    clearDrawingState
+    removeMarkerShapeEventListeners
   }
 })
