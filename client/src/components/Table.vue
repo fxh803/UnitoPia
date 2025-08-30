@@ -3,9 +3,11 @@ import { ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table' 
 import { useCollageSeriesStore } from '~/stores/collageSeries'
+import { useMarkerStore } from '~/stores/marker'
 const collageSeriesStore = useCollageSeriesStore()
 const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
 const tableStore = useTableStore()
+const markerStore = useMarkerStore()
 const isDragOver = ref(false)
 const isScrolling = ref(false)
 const cellClasses = ref<Record<number, Record<number, string>>>({})
@@ -23,25 +25,22 @@ const handleScrolling = () => {
 
 // 单元格类名处理
 const cellClassName = ({ rowIndex, column, columnIndex }: any) => {
-  //    if (isScrolling.value) {
-  //    return cellClasses.value[rowIndex]?.[columnIndex] || ''
-  //  } else {
-  //   const slideId = collageSeries.value[currentSlideIndex.value].slideId
-  //   const markerData = Array.from(dataBindingSettings.value.entries())
-  //     .filter(([key, value]) => key.startsWith(slideId))
-  //     .map(([key, value]) => value)
-  //   console.log(slideId, markerData)
-  //        for (const data of markerData) {
-  //      if (data.dataField === column.property && data.dataRange.start <= rowIndex + 1 && data.dataRange.end >= rowIndex + 1) {
-  //        // 确保 rowIndex 存在
-  //        if (!cellClasses.value[rowIndex]) {
-  //          cellClasses.value[rowIndex] = {}
-  //        }
-  //        cellClasses.value[rowIndex][columnIndex] = `highlight-cell`
-  //        return `highlight-cell`
-  //      }
-  //    }
-  // }
+     if (isScrolling.value) {
+     return cellClasses.value[rowIndex]?.[columnIndex] || ''
+   } else {
+    const markerData = markerStore.markers
+    for (const data of markerData) {
+       if (data.mapping.dataField === column.property && data.mapping.dataRange.start <= rowIndex + 1 && data.mapping.dataRange.end >= rowIndex + 1) {
+         // 确保 rowIndex 存在，如果不存在则创建
+         if (!cellClasses.value[rowIndex]) {
+           cellClasses.value[rowIndex] = {}
+         }
+         cellClasses.value[rowIndex][columnIndex] = `highlight-cell`
+         return `highlight-cell`
+       }
+    }
+    
+  }
 
   return ''
 }

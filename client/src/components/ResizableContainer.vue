@@ -5,7 +5,7 @@ import { useResizeHandleStore } from '~/stores/resizeHandle'
 const resizeHandleStore = useResizeHandleStore()
 const container = ref<HTMLElement | null>(null)
 const showBar = ref(false)
-const minRightWidth = 680
+const minRightWidth = 780
 function startDrag(_e: MouseEvent) {
   resizeHandleStore.setDragging(true)
   document.body.style.cursor = 'col-resize'
