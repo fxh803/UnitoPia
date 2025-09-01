@@ -3,7 +3,7 @@ import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { storeToRefs } from 'pinia'
 import { FabricImage } from 'fabric'
-
+import { sendUploadContainerToServer } from '~/composables/server'
 const canvasModeStore = useCanvasModeStore() 
 const { mode } = storeToRefs(canvasModeStore)
 const { setMode } = canvasModeStore
@@ -34,12 +34,12 @@ const handleFileUpload = (event: Event) => {
   if (file && file.type === 'image/png') {
     // 创建文件读取器
     const reader = new FileReader()
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       const result = e.target?.result as string
       console.log('PNG文件已上传:', file.name)
-      
+      const processedImg = await sendUploadContainerToServer(result) 
       // 将图片添加到画布作为container对象
-      addImageToCanvas(result, file.name)
+      addImageToCanvas(processedImg, file.name)
     }
     reader.readAsDataURL(file)
   } else if (file) {
@@ -53,7 +53,7 @@ const handleFileUpload = (event: Event) => {
 }
 
 const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
-  console.log('开始添加图片到画布:', fileName)
+  console.log('开始添加图片到画布:', imageDataUrl, fileName)
   
   // 获取canvas实例
   const canvasInstance = canvasModeStore.canvasRef?.()

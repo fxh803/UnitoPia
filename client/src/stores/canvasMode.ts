@@ -9,7 +9,7 @@ import { useBackgroundStore } from '~/stores/background'
 export const useCanvasModeStore = defineStore('canvasMode', () => {
   const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force' | null>(null)
   const canvasRef = ref<(() => Canvas | null) | null>(null)
-
+  const containerColor = ref([200, 200, 200, 0.6])
   // 导入其他 store
   const selectedModeStore = useSelectedModeStore()
   const colorPickerStore = useColorPickerStore()
@@ -42,7 +42,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; });
       if (canvasInstance.freeDrawingBrush) {
         // Container模式下使用黑色，Marker模式下使用选择的颜色
-        canvasInstance.freeDrawingBrush.color = selectedModeStore.isContainerMode ? '#000000' : colorPickerStore.selectedColor;
+        canvasInstance.freeDrawingBrush.color = selectedModeStore.isContainerMode ? 'rgba(' + containerColor.value.join(',') + ')' : colorPickerStore.selectedColor;
         canvasInstance.freeDrawingBrush.width = brushSizeStore.brushWidth * dpr;
       }
     } else if (m === 'erase') {
@@ -184,6 +184,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     setCanvas,
     setDrawedObjectDataType,
     adjustLayer,
-    canvasRef
+    canvasRef,
+    containerColor
   }
 }) 

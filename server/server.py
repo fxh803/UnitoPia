@@ -7,10 +7,11 @@ import math
 import base64
 import re
 import cairosvg
-from unitopia import Unitopia 
+# from unitopia import Unitopia 
+from utils import *
 app = Flask(__name__, template_folder='',static_folder="")
 CORS(app)  # 启用跨域支持
-unitopia = Unitopia() 
+# unitopia = Unitopia() 
 progress_data = {}
 @app.route('/processDataApi', methods=['POST'])
 def process_data():  
@@ -152,7 +153,7 @@ def process_data():
         json.dump(json_data, f, indent=4)
  
     
-    unitopia.start_collage(f'./workdir/{str(id)}_{i}/collage.json',id = str(id),callback=collage_callback)
+    # unitopia.start_collage(f'./workdir/{str(id)}_{i}/collage.json',id = str(id),callback=collage_callback)
     # 返回处理结果
     return jsonify({
         "success": True,
@@ -169,6 +170,23 @@ def fetch_progress_api():
     # 获取进度
     res = progress_data.get(id,{}) 
     return res
+@app.route('/uploadContainerApi', methods=['POST'])
+def upload_container_api():
+    request_data = request.get_json()
+    container = request_data['container']
+    color = request_data['containerColor']
+    container = base64_to_image(container) 
+    container = transparency(container,color) 
+    # 裁剪到非透明区域
+    container = crop_to_content(container)
+    buffer = BytesIO()
+    container.save(buffer, format='PNG')
+    image_bytes = buffer.getvalue()
+    # 将字节流编码为 Base64 字符串
+    base64_string = base64.b64encode(image_bytes).decode('utf-8') 
+    # 添加base64头部
+    base64_with_header = f"data:image/png;base64,{base64_string}"
+    return jsonify({"container": base64_with_header })
 
 if __name__ == '__main__': 
     

@@ -5,6 +5,7 @@ import { useTableStore } from '~/stores/table'
 import { useAnimationStore } from '~/stores/animation'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useMarkerStore } from '~/stores/marker'
+import { useCanvasModeStore } from '~/stores/canvasMode'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -325,4 +326,24 @@ export async function sendDataToServer(): Promise<boolean> {
   }
 }
 
-
+export async function sendUploadContainerToServer(stringBase64: string) {
+  const canvasModeStore = useCanvasModeStore()
+  const { containerColor } = storeToRefs(canvasModeStore)
+   const response = await fetch('http://localhost:5000/uploadContainerApi', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({'container': stringBase64, 'containerColor': containerColor.value})
+  })
+  if (response.ok) {
+    // 解析 JSON 响应
+    const result = await response.json()
+    if(result.container){  
+      return result.container
+    } 
+  } else {
+    console.error('获取处理状态失败:', response.statusText)
+  } 
+  return ''
+}

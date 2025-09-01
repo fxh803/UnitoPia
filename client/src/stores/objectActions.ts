@@ -125,7 +125,9 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         if (!isPathClosed.value) {
             const strokeColor = currentPathObj.value.stroke || '#000'
             currentPathObj.value.set('fill', strokeColor)
+            currentPathObj.value.set('stroke', 'rgba(0,0,0,0)')
         } else {
+            currentPathObj.value.set('stroke', currentPathObj.value.fill)
             currentPathObj.value.set('fill', null)
         }
         canvasInstance?.requestRenderAll()
