@@ -52,10 +52,10 @@ const isDragging = ref(false)
 </script>
 
 <template>
-  <div class="h-full flex flex-col bg-white">
+  <div class="h-full flex flex-col bg-white overflow-x-auto">
 
     <!-- Marker 列表 -->
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 overflow-y-auto p-2  min-w-320px">
       <div v-if="markers.length > 0" class="space-y-4">
         <div v-for="marker in markers" :key="marker.id"
           :class="[

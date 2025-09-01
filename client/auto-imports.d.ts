@@ -91,6 +91,7 @@ declare global {
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
   const sendDataToServer: typeof import('./src/composables/server')['sendDataToServer']
+  const sendUploadContainerToServer: typeof import('./src/composables/server')['sendUploadContainerToServer']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
@@ -395,6 +396,7 @@ declare module 'vue' {
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
     readonly sendDataToServer: UnwrapRef<typeof import('./src/composables/server')['sendDataToServer']>
+    readonly sendUploadContainerToServer: UnwrapRef<typeof import('./src/composables/server')['sendUploadContainerToServer']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
