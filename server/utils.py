@@ -129,7 +129,18 @@ def find_region_containing_point(image, pos):
  
 
 
-def grid_based_sampling(contour, num_points):
+def grid_based_sampling(contour, num_points, shrink_distance=10):
+    """
+    基于网格的采样，通过收缩轮廓避免点在边缘初始化
+    
+    Args:
+        contour: OpenCV轮廓
+        num_points: 需要生成的点数
+        shrink_distance: 轮廓收缩距离（像素）
+    
+    Returns:
+        生成的点列表
+    """
     if contour is None or num_points <= 0:
         return []
     
@@ -139,7 +150,30 @@ def grid_based_sampling(contour, num_points):
     if contour_area <= 0:
         return []
     
-    # 2. 动态调整网格间距，确保生成的点数 >= num_points
+    # 2. 收缩轮廓
+    # 创建二值图像
+    binary_img = np.zeros((h, w), dtype=np.uint8)
+    # 将轮廓绘制到图像上
+    contour_adjusted = contour - [x, y]
+    cv2.drawContours(binary_img, [contour_adjusted], -1, 255, -1)
+    
+    # 使用形态学腐蚀操作收缩轮廓
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (shrink_distance*2+1, shrink_distance*2+1))
+    shrunk_img = cv2.erode(binary_img, kernel, iterations=1)
+    
+    # 找到收缩后的轮廓
+    shrunk_contours, _ = cv2.findContours(shrunk_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    # 如果没有找到收缩后的轮廓，使用原轮廓
+    if not shrunk_contours:
+        target_contour = contour
+    else:
+        # 直接取第一个（也是唯一的）收缩轮廓
+        target_contour = shrunk_contours[0]
+        # 调整坐标回到原坐标系
+        target_contour = target_contour + [x, y]
+    
+    # 3. 动态调整网格间距，确保生成的点数 >= num_points
     grid_size = int(np.sqrt(contour_area / num_points))
     points = []
     
@@ -148,7 +182,7 @@ def grid_based_sampling(contour, num_points):
         # 生成网格点
         for i in range(x, x + w, grid_size):
             for j in range(y, y + h, grid_size):
-                if cv2.pointPolygonTest(contour, (i, j), False) >= 0:
+                if cv2.pointPolygonTest(target_contour, (i, j), False) >= 0:
                     points.append((i, j))
         
         # 检查是否生成足够的点
@@ -158,7 +192,7 @@ def grid_based_sampling(contour, num_points):
             # 缩小网格间距（例如每次减少10%）
             grid_size = max(1, int(grid_size * 0.9))  # 避免grid_size=0
 
-    # 3. 随机下采样到目标点数（保证均匀性）
+    # 4. 随机下采样到目标点数（保证均匀性）
     if len(points) > num_points:
         # 计算轮廓质心
         M = cv2.moments(contour)
