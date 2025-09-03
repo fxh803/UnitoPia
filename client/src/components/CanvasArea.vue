@@ -204,6 +204,20 @@ function handleDragOver(e: DragEvent) {
   }
 }
 
+// 删除指定markerId的所有对象
+function removeObjectsByMarkerId(markerId: string) {
+  if (!canvas) return
+
+  const objects = canvas.getObjects().concat()
+  objects.forEach(obj => {
+    if (obj.get('dataType') === 'marker' && obj.get('markerId') === markerId) {
+      canvas.remove(obj)
+    }
+  })
+  canvas.discardActiveObject()
+  canvas.renderAll()
+}
+
 async function handleDrop(e: DragEvent) {
   e.preventDefault()
 
@@ -213,6 +227,8 @@ async function handleDrop(e: DragEvent) {
   const markerId = e.dataTransfer.getData('text/plain')
   if (!groupJsonData) return
 
+  // 在拖拽之前先删除相同markerId的对象
+  removeObjectsByMarkerId(markerId)
 
   try {
     const groupJson = JSON.parse(groupJsonData)
@@ -225,7 +241,6 @@ async function handleDrop(e: DragEvent) {
     const dropY = e.clientY - canvasRect.top
     const result = await handleMarkerDropCanvas(markerId, [dropX, dropY])
     const pos = result.init_pos
-    // const size = result.grid_size
     try {
       for (const p of pos) {
         const currentDropX = p.x
@@ -238,14 +253,18 @@ async function handleDrop(e: DragEvent) {
           group.set({
             left: currentDropX,
             top: currentDropY,
-            selectable: true,
-            evented: true,
+            selectable: false,
+            evented: false,
             dataType: 'marker',
             hasControls: false,
             originX: 'center',
             originY: 'center',
             markerId: markerId
           })
+          if (selectedMode.value === null) {
+            group.selectable = true;
+            group.evented = true;
+          }
 
           // 调节对象大小，最大高/宽为50，保持宽高比
           const maxSize = 10

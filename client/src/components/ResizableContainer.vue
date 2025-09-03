@@ -5,7 +5,7 @@ import { useResizeHandleStore } from '~/stores/resizeHandle'
 const resizeHandleStore = useResizeHandleStore()
 const container = ref<HTMLElement | null>(null)
 const showBar = ref(false)
-const minRightWidth = ref(300)
+const minRightWidth = ref(640)
 function startDrag(_e: MouseEvent) {
   resizeHandleStore.setDragging(true)
   document.body.style.cursor = 'col-resize'
@@ -43,7 +43,7 @@ onMounted(() => {
   nextTick(() => {
     if (container.value) {
       const containerWidth = container.value.offsetWidth
-      const rightWidth = Math.max(containerWidth * 0.4, 600) 
+      const rightWidth = Math.max(containerWidth * 0.4, 640) 
       const initialWidth = containerWidth - rightWidth
       resizeHandleStore.updateLeftWidth(initialWidth)
     }
