@@ -223,7 +223,9 @@ async function handleDrop(e: DragEvent) {
 
     const dropX = e.clientX - canvasRect.left
     const dropY = e.clientY - canvasRect.top
-    const pos = await handleMarkerDropCanvas(markerId, [dropX, dropY])
+    const result = await handleMarkerDropCanvas(markerId, [dropX, dropY])
+    const pos = result.init_pos
+    // const size = result.grid_size
     try {
       for (const p of pos) {
         const currentDropX = p.x

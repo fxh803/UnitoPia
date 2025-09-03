@@ -205,7 +205,8 @@ def marker_drop_api():
 
     # 2. 在container图像上找到pos所在的非透明区域
     contour = find_region_containing_point(container, pos)
-    
+    # 获取container的宽高
+    width, height = container.size
     if contour is None:
         # 如果点击位置没有在非透明区域内，返回错误
         return jsonify({
@@ -215,7 +216,7 @@ def marker_drop_api():
         })
     
     # 3. 在找到的区域内生成均匀分布的点 
-    uniform_points = grid_based_sampling(contour, num_markers)
+    uniform_points = grid_based_sampling(contour, num_markers,width,height)
     # 将点坐标转换为字典格式
     init_positions = [{"x": int(point[0]), "y": int(point[1])} for point in uniform_points]
     

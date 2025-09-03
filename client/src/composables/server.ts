@@ -388,7 +388,7 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
     const result = await response.json()
     console.log(result)
     if (result.init_pos) {
-      return result.init_pos
+      return result
       
     }
   } else {

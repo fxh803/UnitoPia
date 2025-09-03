@@ -129,7 +129,7 @@ def find_region_containing_point(image, pos):
  
 
 
-def grid_based_sampling(contour, num_points, shrink_distance=10):
+def grid_based_sampling(contour, num_points, canvas_width, canvas_height, shrink_distance=10):
     """
     基于网格的采样，通过收缩轮廓避免点在边缘初始化
     
@@ -152,14 +152,31 @@ def grid_based_sampling(contour, num_points, shrink_distance=10):
     
     # 2. 收缩轮廓
     # 创建二值图像
-    binary_img = np.zeros((h, w), dtype=np.uint8)
-    # 将轮廓绘制到图像上
-    contour_adjusted = contour - [x, y]
-    cv2.drawContours(binary_img, [contour_adjusted], -1, 255, -1)
+    binary_img = np.zeros((canvas_height, canvas_width), dtype=np.uint8) 
+    cv2.drawContours(binary_img, [contour], -1, 255, -1)
     
     # 使用形态学腐蚀操作收缩轮廓
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (shrink_distance*2+1, shrink_distance*2+1))
     shrunk_img = cv2.erode(binary_img, kernel, iterations=1)
+    
+    # 创建彩色图像，将两个轮廓用不同颜色显示
+    # 创建3通道彩色图像
+    comparison_img = np.zeros((canvas_height, canvas_width, 3), dtype=np.uint8)
+    
+    # 原轮廓用蓝色显示
+    comparison_img[binary_img > 0] = [255, 0, 0]  # 蓝色 (BGR格式)
+    
+    # 收缩后轮廓用红色显示
+    comparison_img[shrunk_img > 0] = [0, 0, 255]  # 红色 (BGR格式)
+    
+    # 重叠区域用绿色显示
+    overlap = (binary_img > 0) & (shrunk_img > 0)
+    comparison_img[overlap] = [0, 255, 0]  # 绿色 (BGR格式)
+    
+    # 保存对比图像
+    cv2.imwrite('contour_comparison.png', comparison_img)
+    print(f"已保存轮廓对比图像: contour_comparison.png")
+    print(f"蓝色: 原轮廓, 红色: 收缩后轮廓, 绿色: 重叠区域") 
     
     # 找到收缩后的轮廓
     shrunk_contours, _ = cv2.findContours(shrunk_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -169,9 +186,7 @@ def grid_based_sampling(contour, num_points, shrink_distance=10):
         target_contour = contour
     else:
         # 直接取第一个（也是唯一的）收缩轮廓
-        target_contour = shrunk_contours[0]
-        # 调整坐标回到原坐标系
-        target_contour = target_contour + [x, y]
+        target_contour = shrunk_contours[0] 
     
     # 3. 动态调整网格间距，确保生成的点数 >= num_points
     grid_size = int(np.sqrt(contour_area / num_points))
