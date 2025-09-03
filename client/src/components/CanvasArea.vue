@@ -8,6 +8,7 @@ import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useCanvasModeStore } from '~/stores/canvasMode'
+import { useCanvasStore } from '~/stores/canvas'
 import { useShapeDrawingStore } from '~/stores/shapeDrawing'
 import { useBezierDrawingStore } from '~/stores/bezierDrawing'
 import { useForceDrawingStore } from '~/stores/forceDrawing'
@@ -33,8 +34,10 @@ const {
 } = collageSeriesStore
 
 const canvasModeStore = useCanvasModeStore()
+const canvasStore = useCanvasStore()
 const { mode } = storeToRefs(canvasModeStore)
-const { setMode, setDrawedObjectDataType, adjustLayer } = canvasModeStore
+const { setMode } = canvasModeStore
+const { setDrawedObjectDataType, adjustLayer, containerColor } = canvasStore
 
 const objectActionsStore = useObjectActionsStore()
 const {
@@ -121,6 +124,20 @@ function addCanvasEventListeners() {
     },
     'object:removed': () => {
       updateCurrentSlide()
+    },
+    'mouse:over': (e) => {
+      // 鼠标悬停在对象上时添加偏透明蓝色效果
+      if (e.target && e.target.get('dataType') === 'container') {
+        e.target.set('opacity', 0.7)
+        canvas.renderAll()
+      }
+    },
+    'mouse:out': (e) => {
+      // 鼠标离开对象时恢复原始透明度
+      if (e.target && e.target.get('dataType') === 'container') {
+        e.target.set('opacity', 1)      
+        canvas.renderAll()
+      }
     }
   })
 }
@@ -134,6 +151,8 @@ function removeCanvasEventListeners() {
   canvas.off('object:modified')
   canvas.off('object:added')
   canvas.off('object:removed')
+  canvas.off('mouse:over')
+  canvas.off('mouse:out')
 }
 watch(collaging, (newVal) => {
   if (newVal) {
@@ -332,6 +351,7 @@ onMounted(async () => {
     bezierDrawingStore.setCanvas(() => canvas)
     forceDrawingStore.setCanvas(() => canvas)
     backgroundStore.setCanvas(() => canvas)
+    canvasStore.setCanvas(() => canvas)
     // 初始化空白幻灯片
     initializeEmptySlide()
     addCanvasEventListeners()

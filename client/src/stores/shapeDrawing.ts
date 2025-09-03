@@ -1,10 +1,12 @@
 import { defineStore } from 'pinia'
 import { useColorPickerStore } from '~/stores/colorpicker'  
 import { useCanvasModeStore } from '~/stores/canvasMode' 
+import { useCanvasStore } from '~/stores/canvas'
 import { Rect, Ellipse } from 'fabric'
 export const useShapeDrawingStore = defineStore('shapeDrawing', () => {
     const colorPickerStore = useColorPickerStore() 
     const canvasModeStore = useCanvasModeStore()
+    const canvasStore = useCanvasStore()
     const isDrawingShape = ref(false)
     const shapeStart = ref<{ x: number, y: number } | null>(null)
     const previewShape = ref<any>(null)
@@ -21,7 +23,7 @@ export const useShapeDrawingStore = defineStore('shapeDrawing', () => {
       isDrawingShape.value = true
       const pointer = canvasInstance.getPointer(e)
       shapeStart.value = { x: pointer.x, y: pointer.y }
-      const containerColor = canvasModeStore.containerColor
+      const containerColor = canvasStore.containerColor
       const strokeColor = 'rgba(' + containerColor.join(',') + ')'
       // 创建预览形状
       if (canvasModeStore.mode === 'rect') {
@@ -89,7 +91,7 @@ export const useShapeDrawingStore = defineStore('shapeDrawing', () => {
       const pointer = canvasInstance.getPointer(e)
       const startX = shapeStart.value.x
       const startY = shapeStart.value.y
-      const containerColor = canvasModeStore.containerColor
+      const containerColor = canvasStore.containerColor
       const strokeColor = 'rgba(' + containerColor.join(',') + ')'
       let shapeObj = null
       if (canvasModeStore.mode === 'rect') {

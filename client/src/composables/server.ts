@@ -6,6 +6,7 @@ import { useAnimationStore } from '~/stores/animation'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useMarkerStore } from '~/stores/marker'
 import { useCanvasModeStore } from '~/stores/canvasMode'
+import { useCanvasStore } from '~/stores/canvas'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -330,8 +331,8 @@ export async function sendDataToServer(): Promise<boolean> {
 }
 
 export async function sendUploadContainerToServer(stringBase64: string) {
-  const canvasModeStore = useCanvasModeStore()
-  const { containerColor } = storeToRefs(canvasModeStore)
+  const canvasStore = useCanvasStore()
+  const { containerColor } = storeToRefs(canvasStore)
   const response = await fetch('http://localhost:5000/uploadContainerApi', {
     method: 'POST',
     headers: {
