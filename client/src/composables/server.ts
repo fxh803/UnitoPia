@@ -12,6 +12,7 @@ interface ProcessedData {
   markers: Array<{
     thumbnail: string
     markerId: string
+    pos: Array<{ x: number, y: number }>
   }> // base64 字符串数组
   container: string // 整个画布的 base64（隐藏除 container 元素以外的对象）
   emitter: Array<{ x: number; y: number }>
@@ -78,39 +79,67 @@ export async function collectAllSlidesData(): Promise<ProcessedData> {
 
 // 处理 marker 对象
 function processMarker(tempCanvas: Canvas) {
-  //解析对应索引的幻灯片
-  const markers: Array<{
-    thumbnail: string
-    markerId: string
-  }> = []
   const canvasObjects = tempCanvas.getObjects()
+  
+  // 先获取所有不重复的markerId
+  const uniqueMarkerIds = new Set<string>()
   for (const obj of canvasObjects) {
     if (obj.get('dataType') === 'marker') {
-      obj.set('visible', true)
-      obj.set('opacity', 1)
-      if (obj.get('uploadType') === 'marker_png') {
-        const thumbnail = obj.toDataURL({
-          format: 'png',
-          multiplier: 1
-        })
-        markers.push({
-          thumbnail,
-          markerId: obj.get('markerId')
-        })
-      }
-      else {
-        // 导出 SVG 格式的 marker
-        //导出前将marker移到画布的左上角
-        obj.set('left', obj.width / 2)
-        obj.set('top', obj.height / 2)
-        const svgString = obj.toSVG()
-        markers.push({
-          thumbnail: svgString,
-          markerId: obj.get('markerId')
-        })
+      const markerId = obj.get('markerId')
+      if (markerId) {
+        uniqueMarkerIds.add(markerId)
       }
     }
   }
+  
+  // 为每个唯一的markerId收集位置信息
+  const markers: Array<{
+    thumbnail: string
+    markerId: string
+    pos: Array<{ x: number, y: number }>
+  }> = []
+  
+  for (const markerId of uniqueMarkerIds) {
+    // 收集该markerId的所有位置
+    const positions: Array<{ x: number, y: number }> = []
+    let thumbnail = ''
+    
+    for (const obj of canvasObjects) {
+      if (obj.get('dataType') === 'marker' && obj.get('markerId') === markerId) {
+        // 记录位置
+        positions.push({
+          x: obj.get('left') || 0,
+          y: obj.get('top') || 0
+        })
+        
+        // 只生成一次thumbnail（使用第一个对象）
+        if (!thumbnail) {
+          obj.set('visible', true)
+          obj.set('opacity', 1)
+          // 根据宽高比放大，最长边为100
+          const currentWidth = obj.width || obj.getScaledWidth()
+          const currentHeight = obj.height || obj.getScaledHeight()
+          const maxSize = 100 
+          const scale = maxSize / Math.max(currentWidth, currentHeight)
+          obj.set({
+            scaleX: scale,
+            scaleY: scale
+          }) 
+          // 导出前将marker移到画布的左上角
+          obj.set('left', obj.width*scale / 2)
+          obj.set('top', obj.height*scale / 2)
+          thumbnail = obj.toSVG()
+        }
+      }
+    }
+    
+    markers.push({
+      thumbnail,
+      markerId,
+      pos: positions
+    })
+  }
+  
   return markers
 }
 
@@ -220,12 +249,25 @@ function processForce(tempCanvas: Canvas) {
 // 处理数据绑定
 function processDataBinding(tempCanvas: Canvas) {
   const canvasObjects = tempCanvas.getObjects() 
-  const dataBindingList: Array<{ data: Array<any>, markerId: string, visualEncoding: any }> = []
+  
+  // 先获取所有不重复的markerId
+  const uniqueMarkerIds = new Set<string>()
   for (const obj of canvasObjects) {
     if (obj.get('dataType') === 'marker') {
       const markerId = obj.get('markerId')
-      const markerStore = useMarkerStore()
-      const markersData = markerStore.markers.find(m => m.id === markerId)
+      if (markerId) {
+        uniqueMarkerIds.add(markerId)
+      }
+    }
+  }
+  
+  // 再提取dataBindingList
+  const dataBindingList: Array<{ data: Array<any>, markerId: string, visualEncoding: any }> = []
+  const markerStore = useMarkerStore()
+  
+  for (const markerId of uniqueMarkerIds) {
+    const markersData = markerStore.markers.find(m => m.id === markerId)
+    if (markersData) {
       const visualEncoding = markersData.mapping.visualEncoding
       const data = pharseData(markerId)
       dataBindingList.push({
