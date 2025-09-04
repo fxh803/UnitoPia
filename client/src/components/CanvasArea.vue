@@ -14,7 +14,7 @@ import { useBezierDrawingStore } from '~/stores/bezierDrawing'
 import { useForceDrawingStore } from '~/stores/forceDrawing'
 import { useAnimationStore } from '~/stores/animation'
 import { useBackgroundStore } from '~/stores/background'
-import { handleMarkerDropCanvas } from '~/composables/server'
+import { handleMarkerDropCanvas, pharseData } from '~/composables/server'
 const animationStore = useAnimationStore()
 const { collaging, result_data } = storeToRefs(animationStore)
 const selectedModeStore = useSelectedModeStore()
@@ -131,11 +131,26 @@ function addCanvasEventListeners() {
         e.target.set('opacity', 0.7)
         canvas.renderAll()
       }
+      console.log(e.target)
+      if (e.target && e.target.get('dataType') === 'emitter') {
+        // emitter是group，需要遍历其中的子对象设置透明度
+        e.target.getObjects().forEach((childObj: any) => {
+          childObj.set('opacity', 0.5)
+        })
+        canvas.renderAll()
+      }
     },
     'mouse:out': (e) => {
       // 鼠标离开对象时恢复原始透明度
       if (e.target && e.target.get('dataType') === 'container') {
         e.target.set('opacity', 1)      
+        canvas.renderAll()
+      }
+      if (e.target && e.target.get('dataType') === 'emitter') {
+        // emitter是group，需要遍历其中的子对象恢复透明度
+        e.target.getObjects().forEach((childObj: any) => {
+          childObj.set('opacity', 1)
+        })
         canvas.renderAll()
       }
     }
@@ -237,35 +252,169 @@ function removeObjectsByMarkerId(markerId: string) {
   canvas.renderAll()
 }
 
-async function handleDrop(e: DragEvent) {
-  e.preventDefault()
+// 检测拖拽位置是否在emitter上
+function isDropOnEmitter(dropX: number, dropY: number): boolean {
+  if (!canvas) return false
+  
+  const objects = canvas.getObjects()
+  for (const obj of objects) {
+    if (obj.get('dataType') === 'emitter') {
+      // 获取emitter对象的边界框
+      const bounds = obj.getBoundingRect()
+      if (dropX >= bounds.left && dropX <= bounds.left + bounds.width &&
+          dropY >= bounds.top && dropY <= bounds.top + bounds.height) {
+        return true
+      }
+    }
+  }
+  return false
+}
 
-  if (!canvas || !e.dataTransfer) return
+// 在贝塞尔曲线上采样n个点
+function sampleBezierPoints(p0: {x: number, y: number}, p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}, n: number): Array<{x: number, y: number}> {
+  const points: Array<{x: number, y: number}> = []
+  
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1) // 参数t从0到1
+    
+    // 三次贝塞尔曲线公式: B(t) = (1-t)³P₀ + 3(1-t)²tP₁ + 3(1-t)t²P₂ + t³P₃
+    const x = Math.pow(1 - t, 3) * p0.x + 
+              3 * Math.pow(1 - t, 2) * t * p1.x + 
+              3 * (1 - t) * Math.pow(t, 2) * p2.x + 
+              Math.pow(t, 3) * p3.x
+    
+    const y = Math.pow(1 - t, 3) * p0.y + 
+              3 * Math.pow(1 - t, 2) * t * p1.y + 
+              3 * (1 - t) * Math.pow(t, 2) * p2.y + 
+              Math.pow(t, 3) * p3.y
+    
+    points.push({ x, y })
+  }
+  
+  return points
+}
 
-  const groupJsonData = e.dataTransfer.getData('application/json')
-  const markerId = e.dataTransfer.getData('text/plain')
-  if (!groupJsonData) return
+// 计算贝塞尔曲线的近似长度
+function getBezierApproxLength(p0: {x: number, y: number}, p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}): number {
+  // 使用控制多边形估算长度
+  const d1 = Math.sqrt(Math.pow(p1.x - p0.x, 2) + Math.pow(p1.y - p0.y, 2))
+  const d2 = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
+  const d3 = Math.sqrt(Math.pow(p3.x - p2.x, 2) + Math.pow(p3.y - p2.y, 2))
+  return d1 + d2 + d3
+}
 
-  // 在拖拽之前先删除相同markerId的对象
-  removeObjectsByMarkerId(markerId)
-
+// 在emitter上采样n个均匀分布的点（对整个group进行采样）
+function getEmitterSampledPoints(n: number = 10): Array<{ x: number; y: number }> {
+  if (!canvas) return []
+  
+  const objects = canvas.getObjects()
+  
+  for (const obj of objects) {
+    if (obj.get('dataType') === 'emitter') {
+      // 收集所有贝塞尔曲线段
+      const bezierSegments: Array<{
+        p0: {x: number, y: number},
+        p1: {x: number, y: number},
+        p2: {x: number, y: number},
+        p3: {x: number, y: number}
+      }> = []
+      
+      // 遍历 group 中的所有贝塞尔曲线段
+      obj.getObjects().forEach((groupObj: any) => {
+        if (groupObj.type === 'path' && groupObj.path) {
+          const path = groupObj.path
+          if (Array.isArray(path)) {
+            // 处理每个贝塞尔曲线段
+            for (let i = 0; i < path.length; i++) {
+              const segment = path[i]
+              if (segment[0] === 'M') {
+                // 找到下一个C段
+                if (i + 1 < path.length && path[i + 1][0] === 'C') {
+                  const cSegment = path[i + 1]
+                  const p0 = { x: segment[1], y: segment[2] } // 起始点
+                  const p1 = { x: cSegment[1], y: cSegment[2] } // 第一个控制点
+                  const p2 = { x: cSegment[3], y: cSegment[4] } // 第二个控制点
+                  const p3 = { x: cSegment[5], y: cSegment[6] } // 终点
+                  
+                  bezierSegments.push({ p0, p1, p2, p3 })
+                }
+              }
+            }
+          }
+        }
+      })
+      
+      if (bezierSegments.length === 0) return []
+      
+      // 计算每个段的长度
+      const segmentLengths: number[] = []
+      let totalLength = 0
+      
+      for (const segment of bezierSegments) {
+        const length = getBezierApproxLength(segment.p0, segment.p1, segment.p2, segment.p3)
+        segmentLengths.push(length)
+        totalLength += length
+      }
+      
+      // 在整个路径上均匀分布n个采样点
+      const sampledPoints: Array<{ x: number; y: number }> = []
+      
+      for (let i = 0; i < n; i++) {
+        const globalT = i / (n - 1) // 全局参数t从0到1
+        const targetLength = globalT * totalLength
+        
+        // 找到目标长度对应的贝塞尔曲线段
+        let currentLength = 0
+        let targetSegmentIndex = 0
+        let segmentT = 0
+        
+        for (let j = 0; j < bezierSegments.length; j++) {
+          const segmentLength = segmentLengths[j]
+          if (currentLength + segmentLength >= targetLength) {
+            targetSegmentIndex = j
+            segmentT = (targetLength - currentLength) / segmentLength
+            break
+          }
+          currentLength += segmentLength
+        }
+        
+        // 在目标贝塞尔曲线段上采样
+        const targetSegment = bezierSegments[targetSegmentIndex]
+        const point = sampleBezierPoints(
+          targetSegment.p0, 
+          targetSegment.p1, 
+          targetSegment.p2, 
+          targetSegment.p3, 
+          2
+        )[1] // 使用segmentT参数
+        
+        // 重新计算正确的点
+        const t = segmentT
+        const x = Math.pow(1 - t, 3) * targetSegment.p0.x + 
+                  3 * Math.pow(1 - t, 2) * t * targetSegment.p1.x + 
+                  3 * (1 - t) * Math.pow(t, 2) * targetSegment.p2.x + 
+                  Math.pow(t, 3) * targetSegment.p3.x
+        
+        const y = Math.pow(1 - t, 3) * targetSegment.p0.y + 
+                  3 * Math.pow(1 - t, 2) * t * targetSegment.p1.y + 
+                  3 * (1 - t) * Math.pow(t, 2) * targetSegment.p2.y + 
+                  Math.pow(t, 3) * targetSegment.p3.y
+        
+        sampledPoints.push({ x, y })
+      }
+      
+      return sampledPoints
+    }
+  }
+  
+  return []
+}
+async function addMarkers( groupJson: string, pos: Array<{ x: number, y: number }>, markerId: string) {
   try {
-    const groupJson = JSON.parse(groupJsonData)
-
-    // 计算拖拽位置相对于画布的偏移
-    const canvasRect = canvasEl.value?.getBoundingClientRect()
-    if (!canvasRect) return
-
-    const dropX = e.clientX - canvasRect.left
-    const dropY = e.clientY - canvasRect.top
-    const result = await handleMarkerDropCanvas(markerId, [dropX, dropY])
-    const pos = result.init_pos
-    try {
       for (const p of pos) {
         const currentDropX = p.x
         const currentDropY = p.y
         const objects = await fabric.util.enlivenObjects(groupJson, 'fabric')
-
         if (objects && objects.length > 0) {
           const group = new Group(objects)
           // 先设置所有属性（包括dataType），然后再添加到画布
@@ -316,8 +465,48 @@ async function handleDrop(e: DragEvent) {
       console.error('使用enlivenObjects创建对象时出错:', enlivenError)
 
     }
-  } catch (parseError) {
-    console.error('解析拖拽数据失败:', parseError)
+}
+// 处理拖拽到emitter上的事件
+function handleEmitterDrop(groupJsonData: string, markerId: string, dropX: number, dropY: number) {
+  const data = pharseData(markerId)  
+  const groupJson = JSON.parse(groupJsonData)
+  const n = data.length  
+  const emitterSampledPoints = getEmitterSampledPoints(n)
+  console.log(`Emitter 采样 ${n} 个点:`, emitterSampledPoints) 
+  addMarkers(groupJson, emitterSampledPoints, markerId)
+   
+}
+async function handleMarkerDrop(groupJsonData: string, markerId: string, dropX: number, dropY: number) {
+    const groupJson = JSON.parse(groupJsonData)
+    const result = await handleMarkerDropCanvas(markerId, [dropX, dropY])
+    const pos = result.init_pos
+    addMarkers(groupJson, pos, markerId) 
+}
+function handleDrop(e: DragEvent) {
+  e.preventDefault()
+
+  if (!canvas || !e.dataTransfer) return
+
+  const groupJsonData = e.dataTransfer.getData('application/json')
+  const markerId = e.dataTransfer.getData('text/plain')
+  if (!groupJsonData) return
+
+  // 计算拖拽位置相对于画布的偏移
+  const canvasRect = canvasEl.value?.getBoundingClientRect()
+  if (!canvasRect) return
+
+  const dropX = e.clientX - canvasRect.left
+  const dropY = e.clientY - canvasRect.top
+  // 在拖拽之前先删除相同markerId的对象
+  removeObjectsByMarkerId(markerId)
+
+
+  // 检查是否拖拽到emitter上
+  if (isDropOnEmitter(dropX, dropY)) {
+    handleEmitterDrop(groupJsonData, markerId, dropX, dropY)
+  }
+  else{
+    handleMarkerDrop(groupJsonData, markerId, dropX, dropY)
   }
 }
 

@@ -351,7 +351,7 @@ export async function sendUploadContainerToServer(stringBase64: string) {
   }
   return ''
 }
-function pharseData(markerId: string) {
+export function pharseData(markerId: string) {
   const markerStore = useMarkerStore()
   const tableStore = useTableStore()
   const tableData = tableStore.tableData
