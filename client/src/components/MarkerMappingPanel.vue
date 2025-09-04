@@ -47,6 +47,14 @@ const handleMarkerDragEnd = () => {
   console.log('拖拽 marker 结束')
 }
 
+// 防止拖拽时触发输入事件
+const preventInputDuringDrag = (e: Event) => {
+  if (isDragging.value) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+}
+
 // 拖拽时的样式状态
 const isDragging = ref(false)
 </script>
@@ -84,20 +92,29 @@ const isDragging = ref(false)
               <div class="flex space-x-3 justify-center">
                 <label class="flex items-center space-x-2 cursor-pointer">
                   <input type="radio" :value="'size'" :checked="getMarkerMapping(marker.id).visualEncoding === 'size'"
-                    @change="handleVisualEncodingChange(marker.id, 'size')" :name="`visualEncoding-${marker.id}`"
+                    @change="(e) => {
+                      if (isDragging.value) return;
+                      handleVisualEncodingChange(marker.id, 'size');
+                    }" :name="`visualEncoding-${marker.id}`"
                     class="w-3 h-3 text-blue-600" />
                   <span class="text-xs text-gray-600">Size</span>
                 </label>
                 <label class="flex items-center space-x-2 cursor-pointer">
                   <input type="radio" :value="'width'" :checked="getMarkerMapping(marker.id).visualEncoding === 'width'"
-                    @change="handleVisualEncodingChange(marker.id, 'width')" :name="`visualEncoding-${marker.id}`"
+                    @change="(e) => {
+                      if (isDragging.value) return;
+                      handleVisualEncodingChange(marker.id, 'width');
+                    }" :name="`visualEncoding-${marker.id}`"
                     class="w-3 h-3 text-blue-600" />
                   <span class="text-xs text-gray-600">Width</span>
                 </label>
                 <label class="flex items-center space-x-2 cursor-pointer">
                   <input type="radio" :value="'height'"
                     :checked="getMarkerMapping(marker.id).visualEncoding === 'height'"
-                    @change="handleVisualEncodingChange(marker.id, 'height')" :name="`visualEncoding-${marker.id}`"
+                    @change="(e) => {
+                      if (isDragging.value) return;
+                      handleVisualEncodingChange(marker.id, 'height');
+                    }" :name="`visualEncoding-${marker.id}`"
                     class="w-3 h-3 text-blue-600" />
                   <span class="text-xs text-gray-600">Height</span>
                 </label>
@@ -111,7 +128,10 @@ const isDragging = ref(false)
                 <div class="flex justify-center space-x-1  items-center">
                   <span class="text-xs font-medium text-gray-700">Data Binding:</span>
                   <select v-model="getMarkerMapping(marker.id).dataField"
-                    @change="handleDataFieldChange(marker.id, getMarkerMapping(marker.id).dataField)" :class="[
+                    @change="(e) => {
+                      if (isDragging.value) return;
+                      handleDataFieldChange(marker.id, getMarkerMapping(marker.id).dataField);
+                    }" :class="[
                       'px-2  border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 w-32 h-6',
                       getMarkerMapping(marker.id).dataField === '' ? 'text-gray-400' : 'text-gray-900'
                     ]">
@@ -128,18 +148,24 @@ const isDragging = ref(false)
                   <input type="number"
                     :value="getMarkerMapping(marker.id).dataRange.start === -1 ? '' : getMarkerMapping(marker.id).dataRange.start"
                     @input="(e) => {
+                      if (isDragging.value) return;
                       const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
                       handleDataRangeChange(marker.id, value, getMarkerMapping(marker.id).dataRange.end);
                     }"
+                    @mousedown="preventInputDuringDrag"
+                    @mouseup="preventInputDuringDrag"
                     class="w-19 px-1 py-0.5 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="1" placeholder="start" />
                   <span class="text-xs text-gray-500">-</span>
                   <input type="number"
                     :value="getMarkerMapping(marker.id).dataRange.end === -1 ? '' : getMarkerMapping(marker.id).dataRange.end"
                     @input="(e) => {
+                      if (isDragging.value) return;
                       const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
                       handleDataRangeChange(marker.id, getMarkerMapping(marker.id).dataRange.start, value);
                     }"
+                    @mousedown="preventInputDuringDrag"
+                    @mouseup="preventInputDuringDrag"
                     class="w-19 px-1 py-0.5 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
                     min="1" placeholder="end" />
                 </div>

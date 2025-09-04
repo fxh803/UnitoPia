@@ -270,30 +270,6 @@ function isDropOnEmitter(dropX: number, dropY: number): boolean {
   return false
 }
 
-// 在贝塞尔曲线上采样n个点
-function sampleBezierPoints(p0: {x: number, y: number}, p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}, n: number): Array<{x: number, y: number}> {
-  const points: Array<{x: number, y: number}> = []
-  
-  for (let i = 0; i < n; i++) {
-    const t = i / (n - 1) // 参数t从0到1
-    
-    // 三次贝塞尔曲线公式: B(t) = (1-t)³P₀ + 3(1-t)²tP₁ + 3(1-t)t²P₂ + t³P₃
-    const x = Math.pow(1 - t, 3) * p0.x + 
-              3 * Math.pow(1 - t, 2) * t * p1.x + 
-              3 * (1 - t) * Math.pow(t, 2) * p2.x + 
-              Math.pow(t, 3) * p3.x
-    
-    const y = Math.pow(1 - t, 3) * p0.y + 
-              3 * Math.pow(1 - t, 2) * t * p1.y + 
-              3 * (1 - t) * Math.pow(t, 2) * p2.y + 
-              Math.pow(t, 3) * p3.y
-    
-    points.push({ x, y })
-  }
-  
-  return points
-}
-
 // 计算贝塞尔曲线的近似长度
 function getBezierApproxLength(p0: {x: number, y: number}, p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}): number {
   // 使用控制多边形估算长度
@@ -301,6 +277,20 @@ function getBezierApproxLength(p0: {x: number, y: number}, p1: {x: number, y: nu
   const d2 = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2))
   const d3 = Math.sqrt(Math.pow(p3.x - p2.x, 2) + Math.pow(p3.y - p2.y, 2))
   return d1 + d2 + d3
+}
+
+// 计算贝塞尔曲线上的点
+function calculateBezierPoint(p0: {x: number, y: number}, p1: {x: number, y: number}, p2: {x: number, y: number}, p3: {x: number, y: number}, t: number): {x: number, y: number} {
+  const t2 = t * t
+  const t3 = t2 * t
+  const mt = 1 - t
+  const mt2 = mt * mt
+  const mt3 = mt2 * mt
+  
+  return {
+    x: mt3 * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t3 * p3.x,
+    y: mt3 * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t3 * p3.y
+  }
 }
 
 // 在emitter上采样n个均匀分布的点（对整个group进行采样）
@@ -380,27 +370,8 @@ function getEmitterSampledPoints(n: number = 10): Array<{ x: number; y: number }
         
         // 在目标贝塞尔曲线段上采样
         const targetSegment = bezierSegments[targetSegmentIndex]
-        const point = sampleBezierPoints(
-          targetSegment.p0, 
-          targetSegment.p1, 
-          targetSegment.p2, 
-          targetSegment.p3, 
-          2
-        )[1] // 使用segmentT参数
-        
-        // 重新计算正确的点
-        const t = segmentT
-        const x = Math.pow(1 - t, 3) * targetSegment.p0.x + 
-                  3 * Math.pow(1 - t, 2) * t * targetSegment.p1.x + 
-                  3 * (1 - t) * Math.pow(t, 2) * targetSegment.p2.x + 
-                  Math.pow(t, 3) * targetSegment.p3.x
-        
-        const y = Math.pow(1 - t, 3) * targetSegment.p0.y + 
-                  3 * Math.pow(1 - t, 2) * t * targetSegment.p1.y + 
-                  3 * (1 - t) * Math.pow(t, 2) * targetSegment.p2.y + 
-                  Math.pow(t, 3) * targetSegment.p3.y
-        
-        sampledPoints.push({ x, y })
+        const point = calculateBezierPoint(targetSegment.p0, targetSegment.p1, targetSegment.p2, targetSegment.p3, segmentT)
+        sampledPoints.push(point)
       }
       
       return sampledPoints
