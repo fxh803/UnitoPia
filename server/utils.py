@@ -155,8 +155,13 @@ def grid_based_sampling(contour, num_points, canvas_width, canvas_height, shrink
     binary_img = np.zeros((canvas_height, canvas_width), dtype=np.uint8) 
     cv2.drawContours(binary_img, [contour], -1, 255, -1)
     
-    # 使用形态学腐蚀操作收缩轮廓
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (shrink_distance*2+1, shrink_distance*2+1))
+    # 3. 动态调整网格间距，确保生成的点数 >= num_points
+    grid_size = int(np.sqrt(contour_area / num_points))
+    
+    # 使用基于grid_size的形态学腐蚀操作收缩轮廓
+    # 腐蚀核大小基于grid_size，确保腐蚀程度与网格密度匹配
+    erosion_size = max(1, grid_size // 2)  # 腐蚀核大小为grid_size的一半，至少为1
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (erosion_size*2+1, erosion_size*2+1))
     shrunk_img = cv2.erode(binary_img, kernel, iterations=1)
     
     # 创建彩色图像，将两个轮廓用不同颜色显示
@@ -188,8 +193,7 @@ def grid_based_sampling(contour, num_points, canvas_width, canvas_height, shrink
         # 直接取第一个（也是唯一的）收缩轮廓
         target_contour = shrunk_contours[0] 
     
-    # 3. 动态调整网格间距，确保生成的点数 >= num_points
-    grid_size = int(np.sqrt(contour_area / num_points))
+    # 4. 动态调整网格间距，确保生成的点数 >= num_points
     points = []
     
     while True:
