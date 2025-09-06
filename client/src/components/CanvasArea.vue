@@ -406,7 +406,7 @@ async function addMarkers( groupJson: string, pos: Array<{ x: number, y: number 
           }
 
           // 调节对象大小，最大高/宽为50，保持宽高比
-          const maxSize = 10
+          const maxSize = 40
           const currentWidth = group.width || group.getScaledWidth()
           const currentHeight = group.height || group.getScaledHeight()
 
