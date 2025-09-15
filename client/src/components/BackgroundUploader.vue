@@ -5,10 +5,20 @@ import { useBackgroundStore } from '~/stores/background'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 
 const backgroundStore = useBackgroundStore()
-const { canvasRef,creatingBackground,background } = storeToRefs(backgroundStore)
+const { canvasRef, creatingBackground } = storeToRefs(backgroundStore)
+const { getCurrentOverviewBackground, setCurrentOverviewBackground } = backgroundStore
 
 const collageSeriesStore = useCollageSeriesStore()
+const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
 const { addBackgroundToAllSlides, removeBackgroundFromAllSlides } = collageSeriesStore
+
+// 计算当前总览的背景
+const currentBackground = computed(() => {
+  if (overviews.value.length === 0) return null
+  const currentOverview = overviews.value[currentOverviewIndex.value]
+  if (!currentOverview) return null
+  return getCurrentOverviewBackground(currentOverview.overviewId)
+})
 
 
 // 文件上传相关
@@ -41,6 +51,7 @@ const handleFileUpload = (event: Event) => {
 }
 const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
   console.log('开始设置背景图片:', fileName)
+  const currentOverview = overviews.value[currentOverviewIndex.value]
   
   // 获取canvas实例
   const canvasInstance = canvasRef.value?.()
@@ -53,10 +64,10 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
   console.log('Canvas实例获取成功:', canvasInstance)
   
   // 先清空之前的背景
-  backgroundStore.clearBackground()
+  backgroundStore.clearBackground(currentOverview.overviewId)
   
-  // 设置新的背景值
-  background.value = imageDataUrl
+  // 设置新的背景值到当前总览
+  setCurrentOverviewBackground(currentOverview.overviewId, imageDataUrl)
   
   try {
     // 使用fabric.js的Promise方式加载图片
@@ -99,7 +110,7 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
     creatingBackground.value = false
     console.log('背景图片已成功设置:', fileName)
     
-    // 为所有slide添加背景对象
+    // 为当前总览的所有slide添加背景对象
     await addBackgroundToAllSlides(fabricImg.toObject())
     
   } catch (error) {
@@ -113,8 +124,13 @@ const triggerFileUpload = () => {
 }
 
 const clearBackground = async () => {
-  backgroundStore.clearBackground()
-  // 从所有slide中移除背景对象
+  // 获取当前总览
+  if (overviews.value.length === 0) return
+  const currentOverview = overviews.value[currentOverviewIndex.value]
+  if (!currentOverview) return
+  
+  backgroundStore.clearBackground(currentOverview.overviewId)
+  // 从当前总览的所有slide中移除背景对象
   await removeBackgroundFromAllSlides()
 }
 </script>
@@ -125,18 +141,18 @@ const clearBackground = async () => {
     <button
       class="relative rounded flex h-10 w-10 items-center justify-center transition-colors cursor-pointer group"
              :class="[
-         background 
+         currentBackground 
            ? 'bg-gray-300 text-gray-500' 
            : 'bg-white text-black hover:bg-[#f5f5f5]'
        ]"
-       :title="background ? 'background uploaded' : 'upload background'"
+       :title="currentBackground ? 'background uploaded' : 'upload background'"
                @click="triggerFileUpload"
     >
       <span class="i-carbon-image text-lg" />
       
              <!-- 绿色打勾图标 -->
        <div 
-         v-if="background"
+         v-if="currentBackground"
          class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center"
        >
          <span class="i-carbon-checkmark text-white text-xs transform translate-y-1px" />
@@ -144,7 +160,7 @@ const clearBackground = async () => {
       
       <!-- 红色清除按钮 -->
       <div 
-        v-if="background"
+        v-if="currentBackground"
         class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
         @click.stop="clearBackground"
         title="清除背景"

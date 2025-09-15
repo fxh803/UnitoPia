@@ -6,7 +6,7 @@ import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
-import { useColorPickerStore } from '~/stores/colorPicker'
+import { useColorPickerStore } from '~/stores/colorpicker'
 
 const colorPickerStore = useColorPickerStore()
 const resizeHandleStore = useResizeHandleStore()

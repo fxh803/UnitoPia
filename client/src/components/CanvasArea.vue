@@ -130,8 +130,7 @@ function addCanvasEventListeners() {
       if (e.target && e.target.get('dataType') === 'container') {
         e.target.set('opacity', 0.7)
         canvas.renderAll()
-      }
-      console.log(e.target)
+      } 
       if (e.target && e.target.get('dataType') === 'emitter') {
         // emitter是group，需要遍历其中的子对象设置透明度
         e.target.getObjects().forEach((childObj: any) => {
