@@ -77,7 +77,6 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
       selectable: false,
       evented: false,
       dataType: 'container',
-      uploadType:'container_png'
     })
     
     // 计算合适的缩放比例

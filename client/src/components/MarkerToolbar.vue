@@ -108,7 +108,6 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
       selectable: false,
       evented: false,
       dataType: 'marker', 
-      uploadType:'marker_png'
     })
     
     // 计算合适的缩放比例
@@ -164,7 +163,6 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
       selectable: false,
       evented: false,
       dataType: 'marker',
-      uploadType:'marker_svg'
     })
     
     // 计算合适的缩放比例

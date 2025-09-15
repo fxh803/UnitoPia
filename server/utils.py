@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 import numpy as np
 import random
+import xml.etree.ElementTree as ET
 def base64_to_image(base64_data): 
     # 检查是否为 SVG
     if base64_data.startswith('data:image/svg+xml'): 
@@ -227,3 +228,151 @@ def grid_based_sampling(contour, num_points, canvas_width, canvas_height, shrink
         points = points[:num_points]
     
     return points
+
+
+def rect_to_path(rect_element):
+    """将rect元素转换为path元素"""
+    x = float(rect_element.get('x', 0))
+    y = float(rect_element.get('y', 0))
+    width = float(rect_element.get('width', 0))
+    height = float(rect_element.get('height', 0))
+    rx = rect_element.get('rx', 0)
+    ry = rect_element.get('ry', 0)
+    
+    # 处理圆角矩形
+    if rx and ry:
+        rx_val = float(rx)
+        ry_val = float(ry)
+        # 创建圆角矩形的path
+        path_data = f"M {x},{y+ry_val} A {rx_val},{ry_val} 0 0,1 {x+rx_val},{y} H {x+width-rx_val} A {rx_val},{ry_val} 0 0,1 {x+width},{y+ry_val} V {y+height-ry_val} A {rx_val},{ry_val} 0 0,1 {x+width-rx_val},{y+height} H {x+rx_val} A {rx_val},{ry_val} 0 0,1 {x},{y+height-ry_val} Z"
+    else:
+        # 创建普通矩形的path
+        path_data = f"M {x},{y} L {x+width},{y} L {x+width},{y+height} L {x},{y+height} Z"
+    
+    # 创建path元素
+    path_element = ET.Element('path')
+    path_element.set('d', path_data)
+    
+    # 复制其他属性
+    for attr_name, attr_value in rect_element.attrib.items():
+        if attr_name not in ['x', 'y', 'width', 'height', 'rx', 'ry']:
+            path_element.set(attr_name, attr_value)
+    
+    return path_element
+
+
+def ellipse_to_path(ellipse_element):
+    """将ellipse元素转换为path元素"""
+    cx = float(ellipse_element.get('cx', 0))
+    cy = float(ellipse_element.get('cy', 0))
+    rx = float(ellipse_element.get('rx', 0))
+    ry = float(ellipse_element.get('ry', 0))
+    
+    # 创建椭圆的path
+    path_data = f"M {cx-rx},{cy} A {rx},{ry} 0 1,1 {cx+rx},{cy} A {rx},{ry} 0 1,1 {cx-rx},{cy} Z"
+    
+    # 创建path元素
+    path_element = ET.Element('path')
+    path_element.set('d', path_data)
+    
+    # 复制其他属性
+    for attr_name, attr_value in ellipse_element.attrib.items():
+        if attr_name not in ['cx', 'cy', 'rx', 'ry']:
+            path_element.set(attr_name, attr_value)
+    
+    return path_element
+
+
+def complete_svg(marker_string):
+    """完善SVG字符串，添加头部和尾部，并计算尺寸"""
+    import re
+    
+    # 获取marker_string的最外围的<g>的transform="matrix(xx xx xx xx xx xx)"的最后两个数
+    g_match = re.search(r'<g[^>]*transform="matrix\(([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\s+([-\d.]+)\)"[^>]*>', marker_string)
+    
+    # 设置默认值
+    scale_x = 100.0
+    scale_y = 100.0
+    if g_match:
+        # 最后两个数是偏移量
+        scale_x = float(g_match.group(5))
+        scale_y = float(g_match.group(6))
+    
+    svg_width = scale_x * 2
+    svg_height = scale_y * 2
+    
+    # 添加SVG头部和尾部
+    svg_header = f'<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 {svg_width} {svg_height}" width="{svg_width}" height="{svg_height}">\n'
+    svg_footer = '\n</svg>'
+    
+    return svg_header + marker_string + svg_footer, svg_width, svg_height
+
+
+def contains_image_element(svg_string):
+    """检查SVG字符串是否包含image元素"""
+    try:
+        root = ET.fromstring(svg_string)
+        
+        # 定义命名空间
+        namespaces = {'svg': 'http://www.w3.org/2000/svg'}
+        
+        # 递归查找所有image元素 - 使用多种方式查找
+        images = []
+        # 方式1：使用命名空间
+        images.extend(root.findall('.//svg:image', namespaces))
+        # 方式2：不使用命名空间（处理没有命名空间的情况）
+        images.extend(root.findall('.//image'))
+        
+        # 去重
+        images = list(set(images))
+        
+        print(f"找到 {len(images)} 个image元素")
+        return len(images) > 0
+    except ET.ParseError:
+        return False
+
+
+def convert_shapes_to_paths(svg_string):
+    """将SVG字符串中的rect和ellipse元素转换为path元素"""
+    try:
+        # 解析SVG字符串
+        root = ET.fromstring(svg_string) 
+        
+        # 递归函数来查找并替换元素
+        def replace_elements_in_tree(element):
+            # 查找当前元素的直接子元素中的rect和ellipse
+            children_to_replace = []
+            for child in list(element):
+                if child.tag.endswith('rect') or child.tag == 'rect':
+                    children_to_replace.append((child, 'rect'))
+                elif child.tag.endswith('ellipse') or child.tag == 'ellipse':
+                    children_to_replace.append((child, 'ellipse'))
+            
+            # 替换找到的元素
+            for child, shape_type in children_to_replace:
+                if shape_type == 'rect':
+                    new_element = rect_to_path(child)
+                else:  # ellipse
+                    new_element = ellipse_to_path(child)
+                
+                # 获取子元素在父元素中的索引
+                parent = element
+                child_index = list(parent).index(child)
+                
+                # 移除旧元素，插入新元素
+                parent.remove(child)
+                parent.insert(child_index, new_element)
+            
+            # 递归处理所有子元素
+            for child in element:
+                replace_elements_in_tree(child)
+        
+        # 从根元素开始处理
+        replace_elements_in_tree(root)
+        
+        # 返回修改后的SVG字符串
+        return ET.tostring(root, encoding='unicode')
+    except ET.ParseError as e:
+        print(f"XML解析错误: {e}")
+        # 如果解析失败，返回原字符串
+        return svg_string

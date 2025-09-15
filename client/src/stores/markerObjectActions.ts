@@ -71,14 +71,6 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
             showGroupBtn.value = false
         }
 
-        // 如果是上传的图片/SVG，不显示某些按钮
-        if (currentPathObj.value && currentPathObj.value.get('uploadType')) {
-            showClosePathBtn.value = false 
-            showGroupBtn.value = false
-            showColorBtn.value = false
-            showLayerUpBtn.value = false
-            showLayerDownBtn.value = false
-        }
         console.log(showDeleteBtn.value)
         console.log(showClosePathBtn.value)
         console.log(showGroupBtn.value)

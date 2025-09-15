@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice">
+  <!-- Tileable checkerboard pattern: light-gray + white -->
+  <defs>
+    <!-- pattern size: 40x40 -->
+    <pattern id="checker" width="40" height="40" patternUnits="userSpaceOnUse">
+      <!-- white square (top-left) -->
+      <rect x="0" y="0" width="20" height="20" fill="#ffffff" />
+      <rect x="20" y="20" width="20" height="20" fill="#ffffff" />
+      <!-- gray squares -->
+      <rect x="20" y="0" width="20" height="20" fill="#e6e6e6" />
+      <rect x="0" y="20" width="20" height="20" fill="#e6e6e6" />
+    </pattern>
+  </defs>
+
+  <!-- fill the full canvas with the pattern -->
+  <rect width="100%" height="100%" fill="url(#checker)" />
+</svg>

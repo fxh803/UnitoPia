@@ -28,7 +28,7 @@ const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   
-  if (file && file.type.startsWith('image/')) {
+  if (file && file.type === 'image/png') {
     // 创建文件读取器
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -41,7 +41,7 @@ const handleFileUpload = (event: Event) => {
     }
     reader.readAsDataURL(file)
   } else if (file) {
-    alert('请选择图片文件')
+    alert('请选择 PNG 格式的图片文件')
   }
   
   // 清空文件输入框，允许重复选择同一文件
@@ -82,8 +82,7 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
       originY: 'center',
       selectable: false,
       evented: false,
-      dataType: 'background',
-      uploadType: 'background_png'
+      dataType: 'background'
     })
     
     // 计算合适的缩放比例，使图片完全适应画布
@@ -173,7 +172,7 @@ const clearBackground = async () => {
     <input
       ref="fileInputRef"
       type="file"
-      accept="image/*"
+      accept="image/png"
       class="hidden"
       @change="handleFileUpload"
     />

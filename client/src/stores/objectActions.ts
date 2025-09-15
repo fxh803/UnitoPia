@@ -68,10 +68,6 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
             }
         }
         const activeObject = canvasInstance?.getActiveObject() 
-        if(activeObject && activeObject.get('uploadType')) {
-            showClosePathBtn.value = false 
-            showGroupBtn.value = false
-        }
         if(activeObject && activeObject.get('dataType') === 'marker') { 
             showClosePathBtn.value = false
             showGroupBtn.value = false

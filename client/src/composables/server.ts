@@ -29,50 +29,61 @@ interface ProcessedData {
   }>
 }
 
-// 收集所有幻灯片数据的函数
-export async function collectAllSlidesData(): Promise<ProcessedData> {
+// 收集所有总览数据的函数
+export async function collectAllSlidesData(): Promise<Array<{overviewId: string, slides: ProcessedData[]}>> {
   console.log('开始收集')
   const collageSeriesStore = useCollageSeriesStore()
 
-  const resultList = []
+  const overviewsResult = []
   try {
-    // 遍历所有幻灯片
-    for (let i = 0; i < collageSeriesStore.collageSeries.length; i++) {
-      const result: ProcessedData = {
-        markers: [],
-        container: '',
-        emitter: null,
-        forces: [],
-        dataBinding: []
-      }
-      const slide = collageSeriesStore.collageSeries[i]
-      const canvas = collageSeriesStore.canvasRef?.()
-      //新建临时画布
-      // 画布大小与原fabric画布一致
-      const originalWidth = canvas.width
-      const originalHeight = canvas.height
+    // 遍历所有总览
+    for (let overviewIdx = 0; overviewIdx < collageSeriesStore.overviews.length; overviewIdx++) {
+      const overview = collageSeriesStore.overviews[overviewIdx]
+      const slidesResult = []
+      
+      // 遍历当前总览的所有幻灯片
+      for (let slideIdx = 0; slideIdx < overview.collageSeries.length; slideIdx++) {
+        const result: ProcessedData = {
+          markers: [],
+          container: '',
+          emitter: null,
+          forces: [],
+          dataBinding: []
+        }
+        const slide = overview.collageSeries[slideIdx]
+        const canvas = collageSeriesStore.canvasRef?.()
+        //新建临时画布
+        // 画布大小与原fabric画布一致
+        const originalWidth = canvas.width
+        const originalHeight = canvas.height
 
-      const tempCanvas = new Canvas(document.createElement('canvas'), {
-        width: originalWidth,
-        height: originalHeight
+        const tempCanvas = new Canvas(document.createElement('canvas'), {
+          width: originalWidth,
+          height: originalHeight
+        })
+        //加载幻灯片数据
+        await tempCanvas.loadFromJSON(slide.json)
+        //渲染画布
+        tempCanvas.renderAll()
+        collageSeriesStore.restoreCustomProperties(tempCanvas, slide.dataTypeArray, slide.markerIdArray, slide.forceTypeArray)
+        result.markers = processMarker(tempCanvas)
+        result.forces = processForce(tempCanvas)
+        result.emitter = processEmitter(tempCanvas)
+        result.container = processContainer(tempCanvas)
+        result.dataBinding = processDataBinding(tempCanvas)
+        slidesResult.push(result)
+      }
+      
+      overviewsResult.push({
+        overviewId: overview.overviewId,
+        slides: slidesResult
       })
-      //加载幻灯片数据
-      await tempCanvas.loadFromJSON(slide.json)
-      //渲染画布
-      tempCanvas.renderAll()
-      collageSeriesStore.restoreCustomProperties(tempCanvas, slide.dataTypeArray, slide.markerIdArray, slide.forceTypeArray, slide.uploadTypeArray)
-      result.markers = processMarker(tempCanvas)
-      result.forces = processForce(tempCanvas)
-      result.emitter = processEmitter(tempCanvas)
-      result.container = processContainer(tempCanvas)
-      result.dataBinding = processDataBinding(tempCanvas)
-      resultList.push(result)
     }
     console.log('数据收集完成')
-    return resultList
+    return overviewsResult
 
   } catch (error) {
-    console.error('收集幻灯片数据时出错:', error)
+    console.error('收集总览数据时出错:', error)
     throw error
   }
 }
@@ -313,15 +324,17 @@ export async function sendDataToServer(): Promise<boolean> {
     selectedModeStore.setSelectedMode(null)
 
     const data = await collectAllSlidesData()
-    for (const [index, subData] of data.entries()) {//对于每一个slide
-      subData.markers.forEach((marker: any) => {
-        if (marker.thumbnail.includes('data:image/png;base64,')) {
-          collage_result_type.value.push('png')
-          return
+    for (const overview of data) {//对于每一个总览
+      for (const slide of overview.slides) {//对于每一个slide
+        slide.markers.forEach((marker: any) => {
+          if (marker.thumbnail.includes('data:image/png;base64,')) {
+            collage_result_type.value.push('png')
+            return
+          }
+        })
+        if (collage_result_type.value.length === 0 || collage_result_type.value[collage_result_type.value.length - 1] === undefined) {
+          collage_result_type.value.push('svg')
         }
-      })
-      if (collage_result_type.value[index] === undefined) {
-        collage_result_type.value.push('svg')
       }
     }
     const time = Math.floor(Date.now() / 1000)
