@@ -32,31 +32,6 @@ let canvas: Canvas | null = null
 // 实时预览图
 const previewDataUrl = ref<string>('')
 const previewGroup = ref<Group | null>(null)
-// // 拖拽预览图到主画布
-// function handlePreviewDragStart(e: DragEvent) {
-//   if (!canvas || !previewGroup.value) return
-  
-//   try {
-//     // 直接获取预览组的JSON数据
-//     const groupJson = previewGroup.value.toJSON() 
-    
-//     // 设置拖拽数据
-//     if (e.dataTransfer) {
-//       e.dataTransfer.setData('application/json', JSON.stringify(groupJson))
-//       e.dataTransfer.setData('text/plain', 'Marker Canvas Content')
-//       e.dataTransfer.effectAllowed = 'copy'
-//     }
-    
-//     console.log('开始拖拽预览图，预览组JSON:', groupJson)
-//   } catch (error) {
-//     console.error('准备拖拽数据时出错:', error)
-//     e.preventDefault()
-//   }
-// }
-
-// function handlePreviewDragEnd(e: DragEvent) {
-//   console.log('拖拽预览图结束')
-// }
 
 async function updatePreview() {
   // 获取当前画布的所有对象

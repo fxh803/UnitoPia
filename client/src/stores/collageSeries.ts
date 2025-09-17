@@ -670,7 +670,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         clearCanvas()
         // 创建空白幻灯片
         const canvasInstance = canvasRef.value?.()
-        let json = '{"objects":[],"background":""}'
+        let json = ''
         let preview = ''
         
         if (canvasInstance) {
