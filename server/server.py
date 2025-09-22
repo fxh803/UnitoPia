@@ -20,14 +20,14 @@ def process_data():
     
     # 获取请求数据
     request_data = request.get_json() 
-    data = request_data['data'][0]['slides']
+    data = request_data['data']
     id = request_data['id']
     canvas_width = request_data['canvasWidth']
     canvas_height = request_data['canvasHeight'] 
     json_data = {
         "collage": []
     }
-    for i, collage_data in enumerate(data):#这是要输入的数据
+    for i, collage_data in enumerate(data):#这是单个collage任务中的多个collage子任务
         #文件夹准备
         os.makedirs(f"./workdir/{str(id)}_{i}", exist_ok=True) 
         os.makedirs(f"./workdir/{str(id)}_{i}/markers", exist_ok=True)

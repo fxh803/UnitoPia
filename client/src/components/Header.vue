@@ -7,7 +7,7 @@ import { storeToRefs } from 'pinia'
 import { ref, watch, computed } from 'vue'
 
 const animationStore = useAnimationStore()
-const { collaging, progress, result_data, replaying } = storeToRefs(animationStore)
+const { collaging, progress, result_data, replaying,now_overview_idx,totalOverview } = storeToRefs(animationStore)
 
 // 计算进度百分比
 const percentage = ref(0)
@@ -24,10 +24,12 @@ watch(progress, (newProgress) => {
     const steps = newProgress.steps
     const now_collage = newProgress.now_collage
     const total_collage = newProgress.total_collage
+    const now_overview = newProgress.now_overview_idx
+    const total_overview = newProgress.totalOverview
     
     if (totalsteps > 0 && total_collage > 0) {
       const currentTypeProgress = steps / totalsteps
-      percentage.value = ((now_collage + currentTypeProgress / 2 + 1 / 2 * type) / total_collage) * 100
+      percentage.value = ((now_collage + currentTypeProgress / 2 + 1 / 2 * type) / total_collage) * 100 * (now_overview+1) / total_overview
       // 确保百分比在0-100之间
       percentage.value = Math.min(Math.max(percentage.value, 0), 100)
     }

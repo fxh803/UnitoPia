@@ -3,7 +3,6 @@ import { defineStore, storeToRefs } from 'pinia'
 import paper from "paper";
 export const useAnimationStore = defineStore('animation', {
   state: () => ({
-    progressTimer: null,
     collaging: false,
     progress_data: [],
     collage_result_type: [],
@@ -20,7 +19,6 @@ export const useAnimationStore = defineStore('animation', {
     attributesArray: [],
     now_collage_idx: 0,
     now_start_idx: 0, 
-    markerAnimationOn: false,
     markerAni: null, 
     replayIdx: 0,
     ip: 'http://127.0.0.1:5000',
@@ -29,7 +27,9 @@ export const useAnimationStore = defineStore('animation', {
     time_interval: 2000,
     replaying: false,
     hoverAttr: null,
-    hoverData: null
+    hoverData: null,
+    totalOverview:0,
+    now_overview_idx:0
 
   }),
   getters: { 
@@ -39,7 +39,6 @@ export const useAnimationStore = defineStore('animation', {
   },
   actions: { 
     resetData() {
-      this.progressTimer = null
       this.collaging = false
       this.progress_data = []
       this.collage_result_type = []
@@ -56,13 +55,10 @@ export const useAnimationStore = defineStore('animation', {
       this.attributesArray = []
       this.now_collage_idx = 0
       this.now_start_idx = 0
-      this.markerAnimationOn = false
       this.markerAni = null
       this.replayIdx = 0
-      this.ip = 'http://127.0.0.1:5000'
       this.process_id = null
       this.replayTimer = null
-      this.time_interval = 2000
       this.replaying = false
       this.hoverAttr = null
       this.hoverData = null
@@ -85,7 +81,6 @@ export const useAnimationStore = defineStore('animation', {
       this.angleArray = []
       this.now_collage_idx = 0
       this.now_start_idx = 0
-      this.markerAnimationOn = false
     },
     removeAnimation() {
       if (this.markerAni) {
@@ -154,7 +149,7 @@ export const useAnimationStore = defineStore('animation', {
       if (now_collage != this.now_collage_idx && type === 1) {// 如果进行的collage变了，要绘制新的elements
         console.log('1')
         paper.view.off('frame', this.markerAni); 
-        this.markerAnimationOn = false 
+        this.markerAni = null
 
         this.now_start_idx = this.elements.length
         this.setData(now_collage, this.now_start_idx)
@@ -252,12 +247,11 @@ export const useAnimationStore = defineStore('animation', {
           }
         }
 
-        if (!this.markerAnimationOn) {
+        if (!this.markerAni) {
           this.markerAni = (event) => {
             this.markerAnimation(event, this.now_start_idx);
           };
           paper.view.on('frame', this.markerAni);
-          this.markerAnimationOn = true
         }
 
       }
@@ -423,12 +417,11 @@ export const useAnimationStore = defineStore('animation', {
             }
           }
 
-          if (!this.markerAnimationOn) {
+          if (!this.markerAni) {
             this.markerAni = (event) => {
               this.markerAnimation(event, this.now_start_idx);
             };
             paper.view.on('frame', this.markerAni);
-            this.markerAnimationOn = true
           }
 
         }
@@ -437,6 +430,13 @@ export const useAnimationStore = defineStore('animation', {
           this.stopReplay()
         }
       }, this.time_interval);
+    },
+    nextOverview() {
+      this.now_collage_idx = 0
+      this.now_start_idx = 0
+      this.removeAnimation()
+      this.removeElements()
+      this.now_overview_idx += 1
     }
   },
 })

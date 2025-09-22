@@ -295,13 +295,15 @@ function processDataBinding(tempCanvas: Canvas) {
 // 轮询处理状态的函数
 async function startProgressTimer() {
   const animationStore = useAnimationStore()
-  const { process_id, progress_data, result_data } = storeToRefs(animationStore)
+  const { process_id, progress_data, result_data,totalOverview,now_overview_idx } = storeToRefs(animationStore)
   try {
     const response = await fetch('http://localhost:5000/fetchProgressApi?id=' + process_id.value)
     if (response.ok) {
       // 解析 JSON 响应
       const result = await response.json()
       if (result.progress) {
+        result.progress["now_overview_idx"] = now_overview_idx
+        result.progress["totalOverview"] = totalOverview
         progress_data.value.push(result.progress)
         result_data.value.push(result.result)
         animationStore.updateAnimation()
@@ -315,17 +317,20 @@ async function startProgressTimer() {
 }
 
 export async function sendDataToServer(): Promise<boolean> {
+  const progressTimer = ref(null)
   const animationStore = useAnimationStore()
-  const { process_id, progressTimer, collage_result_type, canvas_width, canvas_height, collaging } = storeToRefs(animationStore)
+  const { process_id, collage_result_type, canvas_width, canvas_height, collaging, totalOverview, now_overview_idx } = storeToRefs(animationStore)
   const selectedModeStore = useSelectedModeStore()
   try {
     // 设置系统为拼贴处理状态
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
-
-    const data = await collectAllSlidesData()
+    const data = await collectAllSlidesData()  
+    totalOverview.value = data.length
+    now_overview_idx.value = 0
     for (const overview of data) {//对于每一个总览
-      for (const slide of overview.slides) {//对于每一个slide
+      //对于每一个slide检查marker的类型 
+      for (const slide of overview.slides) {
         slide.markers.forEach((marker: any) => {
           if (marker.thumbnail.includes('data:image/png;base64,')) {
             collage_result_type.value.push('png')
@@ -334,46 +339,57 @@ export async function sendDataToServer(): Promise<boolean> {
         }) 
         collage_result_type.value.push('svg') 
       }
-    }
-    const time = Math.floor(Date.now() / 1000)
-    process_id.value = time.toString()
-    const collageSeriesStore = useCollageSeriesStore()
-    const canvas = collageSeriesStore.canvasRef?.()
-    const originalWidth = canvas.width
-    const originalHeight = canvas.height
-    canvas_width.value = originalWidth
-    canvas_height.value = originalHeight
-    const sendData = {
-      "data": data,
-      "id": time,
-      "canvasWidth": originalWidth,
-      "canvasHeight": originalHeight
-    }
-    console.log(sendData)
-    progressTimer.value = setInterval(() => {
-      startProgressTimer()
-    }, 2000)
-    // 这里实现向后端发送数据的逻辑
-    const response = await fetch('http://localhost:5000/processDataApi', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(sendData)
-    })
-    console.log(response)
+    
+      const time = Math.floor(Date.now() / 1000)
+      process_id.value = time.toString()
+      const collageSeriesStore = useCollageSeriesStore()
+      const canvas = collageSeriesStore.canvasRef?.()
+      const originalWidth = canvas.width
+      const originalHeight = canvas.height
+      canvas_width.value = originalWidth
+      canvas_height.value = originalHeight
+      const sendData = {
+        "data": overview.slides,
+        "id": time,
+        "canvasWidth": originalWidth,
+        "canvasHeight": originalHeight
+      }
+      console.log(sendData)
+      progressTimer.value = setInterval(() => {
+        startProgressTimer()
+      }, 2000)
+      
+      try {
+        // 这里实现向后端发送数据的逻辑
+        const response = await fetch('http://localhost:5000/processDataApi', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(sendData)
+        })
+        console.log(response)
 
-    if (response.ok) {
-      clearInterval(progressTimer.value)
-      // 停止拼贴处理状态
-      collaging.value = false
-      return true
-    } else {
-      clearInterval(progressTimer.value)
-      // 出错时也要停止拼贴处理状态
-      collaging.value = false
-      return false
+        if (!response.ok) {
+          clearInterval(progressTimer.value)
+          // 出错时停止拼贴处理状态
+          collaging.value = false
+          return false
+        }
+        
+        clearInterval(progressTimer.value)
+        animationStore.nextOverview()
+      } catch (error) {
+        console.error(`处理 overview ${time} 时出错:`, error)
+        clearInterval(progressTimer.value)
+        collaging.value = false
+        return false
+      }
     }
+    
+    // 所有overview都处理完成后，停止拼贴处理状态
+    collaging.value = false
+    return true
   } catch (error) {
     console.error('发送数据时出错:', error)
     // 出错时也要停止拼贴处理状态
