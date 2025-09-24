@@ -190,7 +190,7 @@ export const useAnimationStore = defineStore('animation', {
         this.now_collage_idx = now_collage
 
       }
-      else if (this.result_data.length === 1) {//一开始
+      else if (this.elements.length === 0) {//一开始
         this.setData(now_collage, 0)
         console.log('2')
         for (let i = 0; i < this.posArray.length; i++) {
@@ -227,7 +227,7 @@ export const useAnimationStore = defineStore('animation', {
           this.elements.push(raster);
         } 
       }
-      else if (this.result_data.length > 1) {
+      else if (this.elements.length > 0) {
         console.log('3')
         this.setData(now_collage, this.now_start_idx)
         for (let i = this.now_start_idx; i < this.elements.length; i++) {//这里先set好数据
@@ -434,6 +434,7 @@ export const useAnimationStore = defineStore('animation', {
     nextOverview() {
       this.now_collage_idx = 0
       this.now_start_idx = 0
+      this.collage_result_type = []
       this.removeAnimation()
       this.removeElements()
       this.now_overview_idx += 1

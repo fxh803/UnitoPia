@@ -10,7 +10,7 @@ const { getCurrentOverviewBackground, setCurrentOverviewBackground } = backgroun
 
 const collageSeriesStore = useCollageSeriesStore()
 const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
-const { addBackgroundToAllSlides, removeBackgroundFromAllSlides } = collageSeriesStore
+const { addBackgroundToAllSlides, removeBackgroundFromAllSlides, updateCurrentSlide } = collageSeriesStore
 
 // 计算当前总览的背景
 const currentBackground = computed(() => {
@@ -103,7 +103,8 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
     
     // 将背景图片移动到最底层
     canvasInstance.sendObjectToBack(fabricImg, true)
-    
+    //保证当前幻灯片的缩略图更新
+    updateCurrentSlide()
     // 重新渲染画布
     canvasInstance.renderAll()
     creatingBackground.value = false

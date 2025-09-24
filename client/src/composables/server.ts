@@ -378,7 +378,9 @@ export async function sendDataToServer(): Promise<boolean> {
         }
         
         clearInterval(progressTimer.value)
-        animationStore.nextOverview()
+        if (now_overview_idx.value < totalOverview.value - 1) {
+          animationStore.nextOverview()
+        } 
       } catch (error) {
         console.error(`处理 overview ${time} 时出错:`, error)
         clearInterval(progressTimer.value)
