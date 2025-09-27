@@ -97,16 +97,14 @@ export const useAnimationStore = defineStore('animation', {
         this.markerAni = null
       } 
     },
-    removeElements() {
-      console.log('removeElements')
+    removeElements() { 
       this.elements.forEach(element => {
         element.remove();
       });
       this.elements = []
     },
     setData(now_collage, startIndex) {//对最新的数据进行整理
-      const result = this.result_data[this.result_data.length - 1]
-      console.log(this.collage_result_type)
+      const result = this.result_data[this.result_data.length - 1] 
       for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
         if (this.collage_result_type[now_collage] === 'svg')
           this.srcArray[i] = `${this.ip}/workdir/${this.process_id}_${now_collage}/render_files/${i + 1 - startIndex}.svg`
@@ -174,6 +172,7 @@ export const useAnimationStore = defineStore('animation', {
             dataLoaded: false,
             collage_idx: now_collage,
             onLoad: () => {
+              console.log(this.srcArray[i])
               raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
               raster.rotate(this.angleArray[i] * (180 / Math.PI))
               raster.imgLoaded = true;
@@ -214,6 +213,7 @@ export const useAnimationStore = defineStore('animation', {
             dataLoaded: false,
             collage_idx: now_collage,
             onLoad: (e) => {
+              console.log(this.srcArray[i])
               raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
               raster.rotate(this.angleArray[i] * (180 / Math.PI))
               raster.imgLoaded = true
@@ -329,8 +329,7 @@ export const useAnimationStore = defineStore('animation', {
       this.process_id = this.progress_data[this.replayIdx].process_id;
       this.collage_result_type = this.progress_data[this.replayIdx].collage_result_type;
       
-      if (now_overview != this.now_overview_idx && this.now_overview_idx != this.totalOverview - 1) {
-        console.log('nextOverview')
+      if (now_overview != this.now_overview_idx && this.now_overview_idx != this.totalOverview - 1) { 
         this.nextOverview()
         return
       }
@@ -350,6 +349,7 @@ export const useAnimationStore = defineStore('animation', {
             dataLoaded: false,
             collage_idx: now_collage,
             onLoad: () => {
+              console.log(this.srcArray[i])
               raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
               raster.rotate(this.angleArray[i] * (180 / Math.PI))
               raster.imgLoaded = true;
@@ -388,6 +388,7 @@ export const useAnimationStore = defineStore('animation', {
             dataLoaded: false,
             collage_idx: now_collage,
             onLoad: () => {
+              console.log(this.srcArray[i])
               raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
               raster.rotate(this.angleArray[i] * (180 / Math.PI))
               raster.imgLoaded = true
@@ -456,9 +457,14 @@ export const useAnimationStore = defineStore('animation', {
     nextOverview() {
       this.now_collage_idx = 0
       this.now_start_idx = 0
-      this.collage_result_type = []
       this.removeAnimation()
       this.removeElements()
+      this.srcArray = []
+      this.posArray = []
+      this.widthArray = []
+      this.heightArray = []
+      this.angleArray = []
+      this.collage_result_type = []
       this.now_overview_idx += 1
     },
     updateReplayTimer() {
