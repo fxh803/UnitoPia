@@ -180,9 +180,9 @@ def grid_based_sampling(contour, num_points, canvas_width, canvas_height, shrink
     comparison_img[overlap] = [0, 255, 0]  # 绿色 (BGR格式)
     
     # 保存对比图像
-    cv2.imwrite('contour_comparison.png', comparison_img)
-    print(f"已保存轮廓对比图像: contour_comparison.png")
-    print(f"蓝色: 原轮廓, 红色: 收缩后轮廓, 绿色: 重叠区域") 
+    # cv2.imwrite('contour_comparison.png', comparison_img)
+    # print(f"已保存轮廓对比图像: contour_comparison.png")
+    # print(f"蓝色: 原轮廓, 红色: 收缩后轮廓, 绿色: 重叠区域") 
     
     # 找到收缩后的轮廓
     shrunk_contours, _ = cv2.findContours(shrunk_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

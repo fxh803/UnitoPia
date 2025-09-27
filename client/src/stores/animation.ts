@@ -34,7 +34,12 @@ export const useAnimationStore = defineStore('animation', {
   }),
   getters: { 
     progress: (state) => {
-      return state.progress_data[state.progress_data.length - 1]
+      if (state.replaying) {
+        return state.progress_data[state.replayIdx]
+      }
+      else{
+        return state.progress_data[state.progress_data.length - 1]
+      }
     }
   },
   actions: { 
@@ -64,6 +69,7 @@ export const useAnimationStore = defineStore('animation', {
       this.hoverData = null
       this.now_overview_idx = 0
       this.totalOverview = 0
+      this.time_interval = 2000
     },
     stopReplay() {
       clearInterval(this.replayTimer);
@@ -83,6 +89,7 @@ export const useAnimationStore = defineStore('animation', {
       this.now_collage_idx = 0
       this.now_start_idx = 0
       this.now_overview_idx = 0
+      this.time_interval = 2000
     },
     removeAnimation() {
       if (this.markerAni) {
@@ -91,6 +98,7 @@ export const useAnimationStore = defineStore('animation', {
       } 
     },
     removeElements() {
+      console.log('removeElements')
       this.elements.forEach(element => {
         element.remove();
       });
@@ -314,130 +322,135 @@ export const useAnimationStore = defineStore('animation', {
         }
       }
     },
+    // 提取replay逻辑为独立方法
+    executeReplayStep() {
+      const now_collage = this.progress_data[this.replayIdx].now_collage;
+      const now_overview = this.progress_data[this.replayIdx].now_overview_idx;
+      this.process_id = this.progress_data[this.replayIdx].process_id;
+      this.collage_result_type = this.progress_data[this.replayIdx].collage_result_type;
+      
+      if (now_overview != this.now_overview_idx && this.now_overview_idx != this.totalOverview - 1) {
+        console.log('nextOverview')
+        this.nextOverview()
+        return
+      }
+      
+      if (now_collage != this.now_collage_idx) {//进入下一个collage
+        console.log('4')
+        this.now_start_idx = this.elements.length
+        this.setReplayData(this.replayIdx, now_collage, this.now_start_idx)
+        for (let i = this.now_start_idx; i < this.posArray.length; i++) {
+          const raster = new paper.Raster({
+            source: this.srcArray[i],
+            position: this.posArray[i],
+            opacity: 0,
+            attr: this.attributesArray[i],
+            data: this.dataArray[i],
+            imgLoaded: false,
+            dataLoaded: false,
+            collage_idx: now_collage,
+            onLoad: () => {
+              raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
+              raster.rotate(this.angleArray[i] * (180 / Math.PI))
+              raster.imgLoaded = true;
+            },
+            onError: (e) => {
+              console.log('onError',e,raster)
+            }
+          });
+          raster.onMouseEnter = () => {
+            this.hoverAttr = raster.attr
+            this.hoverData = raster.data
+            let toastLeft = raster.position.x
+            let toastTop = raster.position.y
+            // markerToast.value.style.top = `${toastTop}px`
+            // markerToast.value.style.left = `${toastLeft}px`
+            // markerToast.value.classList.remove('hidden')
+          }
+          // raster.onMouseLeave = () => {
+          //   markerToast.value.classList.add('hidden')
+          // }
+          this.elements.push(raster);
+        }
+        this.now_collage_idx = now_collage
+      }
+      else if (this.elements.length === 0) {
+        console.log('5')
+        this.setReplayData(this.replayIdx, now_collage, 0)
+        for (let i = 0; i < this.posArray.length; i++) {
+          const raster = new paper.Raster({
+            source: this.srcArray[i],
+            position: this.posArray[i],
+            opacity: 0,
+            attr: this.attributesArray[i],
+            data: this.dataArray[i],
+            imgLoaded: false,
+            dataLoaded: false,
+            collage_idx: now_collage,
+            onLoad: () => {
+              raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
+              raster.rotate(this.angleArray[i] * (180 / Math.PI))
+              raster.imgLoaded = true
+            },
+            onError: (e) => {
+              console.log('onError',e,raster)
+            }
+          });
+          raster.onMouseEnter = () => {
+            this.hoverAttr = raster.attr
+            this.hoverData = raster.data
+            let toastLeft = raster.position.x
+            let toastTop = raster.position.y
+            // markerToast.value.style.top = `${toastTop}px`
+            // markerToast.value.style.left = `${toastLeft}px`
+            // markerToast.value.classList.remove('hidden')
+          }
+          // raster.onMouseLeave = () => {
+          //   markerToast.value.classList.add('hidden')
+          // }
+          this.elements.push(raster);
+        }
+      }
+      else if (this.elements.length > 0) {
+        console.log('6')
+        this.setReplayData(this.replayIdx, now_collage, this.now_start_idx)
+        for (let i = this.now_start_idx; i < this.elements.length; i++) {//这里先set好数据
+          if (this.elements[i].imgLoaded) {
+            this.elements[i].startPos = new paper.Point(this.elements[i].position);
+            this.elements[i].startRotate = this.elements[i].matrix.rotation;
+            this.elements[i].startScaleX = this.elements[i].matrix.scaling.x;
+            this.elements[i].startScaleY = this.elements[i].matrix.scaling.y;
+            this.elements[i].endPos = new paper.Point(this.posArray[i]);
+            this.elements[i].endRotate = this.angleArray[i] * (180 / Math.PI);
+            this.elements[i].endScaleX = this.widthArray[i] / this.elements[i].width;
+            this.elements[i].endScaleY = this.heightArray[i] / this.elements[i].height;
+            this.elements[i].elapsedTime = 0;
+            this.elements[i].endOpacity = 1;
+            this.elements[i].startOpacity = this.elements[i].opacity;
+            this.elements[i].dataLoaded = true;
+          }
+        }
+
+        if (!this.markerAni) {
+          this.markerAni = (event) => {
+            this.markerAnimation(event, this.now_start_idx);
+          };
+          paper.view.on('frame', this.markerAni);
+        }
+      }
+      
+      this.replayIdx += 1;
+      if (this.replayIdx >= this.result_data.length) {
+        this.stopReplay()
+      }
+    },
     replay() {
       this.replaying = true
       this.removeAnimation()
       this.removeElements()
       this.resetReplayData()
       this.replayTimer = setInterval(() => {
-        const now_collage = this.progress_data[this.replayIdx].now_collage;
-        const now_overview = this.progress_data[this.replayIdx].now_overview_idx;
-        this.process_id = this.progress_data[this.replayIdx].process_id;
-        this.collage_result_type = this.progress_data[this.replayIdx].collage_result_type;
-        if (now_overview != this.now_overview_idx && this.now_overview_idx != this.totalOverview - 1) {
-          console.log('nextOverview')
-          this.nextOverview()
-          return
-        }
-        if (now_collage != this.now_collage_idx) {//进入下一个collage
-          console.log('4')
-          this.now_start_idx = this.elements.length
-          this.setReplayData(this.replayIdx, now_collage, this.now_start_idx)
-          for (let i = this.now_start_idx; i < this.posArray.length; i++) {
-            const raster = new paper.Raster({
-              source: this.srcArray[i],
-              position: this.posArray[i],
-              opacity: 0,
-              attr: this.attributesArray[i],
-              data: this.dataArray[i],
-              imgLoaded: false,
-              dataLoaded: false,
-              collage_idx: now_collage,
-              onLoad: () => {
-                raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
-                raster.rotate(this.angleArray[i] * (180 / Math.PI))
-                raster.imgLoaded = true;
-              },
-              onError: (e) => {
-                console.log('onError',e,raster)
-              }
-            });
-            raster.onMouseEnter = () => {
-              this.hoverAttr = raster.attr
-              this.hoverData = raster.data
-              let toastLeft = raster.position.x
-              let toastTop = raster.position.y
-              // markerToast.value.style.top = `${toastTop}px`
-              // markerToast.value.style.left = `${toastLeft}px`
-              // markerToast.value.classList.remove('hidden')
-            }
-            // raster.onMouseLeave = () => {
-            //   markerToast.value.classList.add('hidden')
-            // }
-            this.elements.push(raster);
-          }
-          this.now_collage_idx = now_collage
-        }
-        else if (this.elements.length === 0) {
-          console.log('5')
-          this.setReplayData(this.replayIdx, now_collage, 0)
-          for (let i = 0; i < this.posArray.length; i++) {
-            const raster = new paper.Raster({
-              source: this.srcArray[i],
-              position: this.posArray[i],
-              opacity: 0,
-              attr: this.attributesArray[i],
-              data: this.dataArray[i],
-              imgLoaded: false,
-              dataLoaded: false,
-              collage_idx: now_collage,
-              onLoad: () => {
-                raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
-                raster.rotate(this.angleArray[i] * (180 / Math.PI))
-                raster.imgLoaded = true
-              },
-              onError: (e) => {
-                console.log('onError',e,raster)
-              }
-            });
-            raster.onMouseEnter = () => {
-              this.hoverAttr = raster.attr
-              this.hoverData = raster.data
-              let toastLeft = raster.position.x
-              let toastTop = raster.position.y
-              // markerToast.value.style.top = `${toastTop}px`
-              // markerToast.value.style.left = `${toastLeft}px`
-              // markerToast.value.classList.remove('hidden')
-            }
-            // raster.onMouseLeave = () => {
-            //   markerToast.value.classList.add('hidden')
-            // }
-            this.elements.push(raster);
-          }
-
-        }
-        else if (this.elements.length > 0) {
-          console.log('6')
-          this.setReplayData(this.replayIdx, now_collage, this.now_start_idx)
-          for (let i = this.now_start_idx; i < this.elements.length; i++) {//这里先set好数据
-            if (this.elements[i].imgLoaded) {
-              this.elements[i].startPos = new paper.Point(this.elements[i].position);
-              this.elements[i].startRotate = this.elements[i].matrix.rotation;
-              this.elements[i].startScaleX = this.elements[i].matrix.scaling.x;
-              this.elements[i].startScaleY = this.elements[i].matrix.scaling.y;
-              this.elements[i].endPos = new paper.Point(this.posArray[i]);
-              this.elements[i].endRotate = this.angleArray[i] * (180 / Math.PI);
-              this.elements[i].endScaleX = this.widthArray[i] / this.elements[i].width;
-              this.elements[i].endScaleY = this.heightArray[i] / this.elements[i].height;
-              this.elements[i].elapsedTime = 0;
-              this.elements[i].endOpacity = 1;
-              this.elements[i].startOpacity = this.elements[i].opacity;
-              this.elements[i].dataLoaded = true;
-            }
-          }
-
-          if (!this.markerAni) {
-            this.markerAni = (event) => {
-              this.markerAnimation(event, this.now_start_idx);
-            };
-            paper.view.on('frame', this.markerAni);
-          }
-
-        }
-        this.replayIdx += 1;
-        if (this.replayIdx >= this.result_data.length) {
-          this.stopReplay()
-        }
+        this.executeReplayStep()
       }, this.time_interval);
     },
     nextOverview() {
@@ -447,6 +460,15 @@ export const useAnimationStore = defineStore('animation', {
       this.removeAnimation()
       this.removeElements()
       this.now_overview_idx += 1
+    },
+    updateReplayTimer() {
+      // 如果正在replay，清除当前timer并重新设定
+      if (this.replaying && this.replayTimer) {
+        clearInterval(this.replayTimer)
+        this.replayTimer = setInterval(() => {
+          this.executeReplayStep()
+        }, this.time_interval);
+      }
     }
   },
 })

@@ -29,7 +29,7 @@ interface ProcessedData {
     dataField: string
   }>
 }
-
+const ip = 'http://localhost:5000'
 // 收集所有总览数据的函数
 export async function collectAllSlidesData(): Promise<Array<{overviewId: string, slides: ProcessedData[]}>> {
   console.log('开始收集')
@@ -297,7 +297,7 @@ async function startProgressTimer() {
   const animationStore = useAnimationStore()
   const { process_id, progress_data, result_data ,now_overview_idx, collage_result_type } = storeToRefs(animationStore)
   try {
-    const response = await fetch('http://localhost:5000/fetchProgressApi?id=' + process_id.value)
+    const response = await fetch(`${ip}/fetchProgressApi?id=` + process_id.value)
     if (response.ok) {
       // 解析 JSON 响应
       const result = await response.json()
@@ -322,7 +322,9 @@ export async function sendDataToServer(): Promise<boolean> {
   const animationStore = useAnimationStore()
   const { process_id, collage_result_type, canvas_width, canvas_height, collaging, totalOverview, now_overview_idx } = storeToRefs(animationStore)
   const selectedModeStore = useSelectedModeStore()
-  try {
+  const fetchInterval = 2000
+  try { 
+    animationStore.ip = ip
     // 设置系统为拼贴处理状态
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
@@ -358,11 +360,11 @@ export async function sendDataToServer(): Promise<boolean> {
       console.log(sendData)
       progressTimer.value = setInterval(() => {
         startProgressTimer()
-      }, 2000)
+      }, fetchInterval)
       
       try {
         // 这里实现向后端发送数据的逻辑
-        const response = await fetch('http://localhost:5000/processDataApi', {
+        const response = await fetch(`${ip}/processDataApi`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -405,7 +407,7 @@ export async function sendDataToServer(): Promise<boolean> {
 export async function sendUploadContainerToServer(stringBase64: string) {
   const canvasStore = useCanvasStore()
   const { containerColor } = storeToRefs(canvasStore)
-  const response = await fetch('http://localhost:5000/uploadContainerApi', {
+  const response = await fetch(`${ip}/uploadContainerApi`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -446,7 +448,7 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
   
  
   const data = pharseData(markerId)  
-  const response = await fetch('http://localhost:5000/markerDropApi', {
+  const response = await fetch(`${ip}/markerDropApi`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
