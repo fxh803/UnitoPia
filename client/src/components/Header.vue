@@ -29,7 +29,19 @@ watch(progress, (newProgress) => {
     const now_overview = newProgress.now_overview_idx 
     if (totalsteps > 0 && total_collage > 0 && totalOverview.value > 0) {
       const currentTypeProgress = steps / totalsteps
-      percentage.value = ((now_collage + currentTypeProgress / 2 + 1 / 2 * type) / total_collage) * 100 * (now_overview+1) / totalOverview.value
+      
+      // 计算当前overview内的进度
+      const currentOverviewProgress = (now_collage + currentTypeProgress / 2 + 1 / 2 * type) / total_collage
+      
+      // 计算前面overview的累计进度
+      const previousOverviewProgress = now_overview / totalOverview.value
+      
+      // 计算当前overview占总进度的比例
+      const currentOverviewWeight = 1 / totalOverview.value
+      
+      // 总进度 = 前面overview的进度 + 当前overview的进度
+      percentage.value = (previousOverviewProgress + currentOverviewProgress * currentOverviewWeight) * 100
+      
       // 确保百分比在0-100之间
       percentage.value = Math.min(Math.max(percentage.value, 0), 100)
     }
