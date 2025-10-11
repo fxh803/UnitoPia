@@ -14,6 +14,8 @@ interface ProcessedData {
     thumbnail: string
     markerId: string
     pos: Array<{ x: number, y: number }>
+    width: number[]
+    height: number[]
   }> // base64 字符串数组
   container: string // 整个画布的 base64（隐藏除 container 元素以外的对象）
   emitter: Array<{ x: number; y: number }>
@@ -21,12 +23,6 @@ interface ProcessedData {
     type: 'pointForce' | 'fieldForce'
     coordinates?: Array<{ x: number; y: number }> // pointForce 的坐标
     rotation?: number // fieldForce 的旋转角度
-  }>
-  dataBinding: Array<{
-    data: Array<any>
-    markerId: string
-    visualEncoding: any
-    dataField: string
   }>
 }
 const ip = 'http://localhost:5000'
@@ -48,8 +44,7 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
           markers: [],
           container: '',
           emitter: null,
-          forces: [],
-          dataBinding: []
+          forces: []
         }
         const slide = overview.collageSeries[slideIdx]
         const canvas = collageSeriesStore.canvasRef?.()
@@ -70,7 +65,6 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         result.forces = processForce(tempCanvas)
         result.emitter = processEmitter(tempCanvas)
         result.container = processContainer(tempCanvas)
-        result.dataBinding = processDataBinding(tempCanvas)
         slidesResult.push(result)
       }
       
@@ -103,16 +97,20 @@ function processMarker(tempCanvas: Canvas) {
     }
   }
   
-  // 为每个唯一的markerId收集位置信息
+  // 为每个唯一的markerId收集位置信息和尺寸
   const markers: Array<{
     thumbnail: string
     markerId: string
     pos: Array<{ x: number, y: number }>
+    widths: number[]
+    heights: number[]
   }> = []
   
   for (const markerId of uniqueMarkerIds) {
-    // 收集该markerId的所有位置
+    // 收集该markerId的所有位置和对应的尺寸
     const positions: Array<{ x: number, y: number }> = []
+    const widths: number[] = []
+    const heights: number[] = []
     let thumbnail = ''
     
     for (const obj of canvasObjects) {
@@ -123,15 +121,23 @@ function processMarker(tempCanvas: Canvas) {
           y: obj.get('top') || 0
         })
         
+        // 记录每个位置对应的宽高（包含缩放）
+        const baseWidth = obj.width || 0
+        const baseHeight = obj.height || 0 
+        const scaleX = obj.scaleX || 1
+        const scaleY = obj.scaleY || 1
+        const actualWidth = baseWidth * scaleX
+        const actualHeight = baseHeight * scaleY
+        widths.push(actualWidth)
+        heights.push(actualHeight) 
+        
         // 只生成一次thumbnail（使用第一个对象）
         if (!thumbnail) {
           obj.set('visible', true)
           obj.set('opacity', 1)
           // 根据宽高比放大，最长边为100
-          const currentWidth = obj.width || obj.getScaledWidth()
-          const currentHeight = obj.height || obj.getScaledHeight()
-          const maxSize = 100 
-          const scale = maxSize / Math.max(currentWidth, currentHeight)
+          const maxSize = 100
+          const scale = maxSize / Math.max(baseWidth, baseHeight)
           obj.set({
             scaleX: scale,
             scaleY: scale
@@ -147,7 +153,9 @@ function processMarker(tempCanvas: Canvas) {
     markers.push({
       thumbnail,
       markerId,
-      pos: positions
+      pos: positions,
+      width: widths,
+      height:heights
     })
   }
   
@@ -256,39 +264,6 @@ function processForce(tempCanvas: Canvas) {
     }
   }
   return forces
-}
-// 处理数据绑定
-function processDataBinding(tempCanvas: Canvas) {
-  const canvasObjects = tempCanvas.getObjects() 
-  
-  // 先获取所有不重复的markerId
-  const uniqueMarkerIds = new Set<string>()
-  for (const obj of canvasObjects) {
-    if (obj.get('dataType') === 'marker') {
-      const markerId = obj.get('markerId')
-      if (markerId) {
-        uniqueMarkerIds.add(markerId)
-      }
-    }
-  }
-  
-  // 再提取dataBindingList
-  const dataBindingList: Array<{ data: Array<any>, markerId: string, visualEncoding: any }> = []
-  const markerStore = useMarkerStore()
-  
-  for (const markerId of uniqueMarkerIds) {
-    const markersData = markerStore.markers.find(m => m.id === markerId)
-    if (markersData) {
-      const visualEncoding = markersData.mapping.visualEncoding
-      const data = pharseData(markerId)
-      dataBindingList.push({
-        data: data,
-        markerId: markerId,
-        visualEncoding: visualEncoding
-      })
-    }
-  }
-  return dataBindingList
 }
 
 // 发送数据到后端的函数
@@ -430,15 +405,9 @@ export function pharseData(markerId: string) {
   const tableStore = useTableStore()
   const tableData = tableStore.tableData
   const markersData = markerStore.markers.find(m => m.id === markerId)
-  const dataField = markersData.mapping.dataField
   const dataRange = markersData.mapping.dataRange
-  const visualEncoding = markersData.mapping.visualEncoding
-  const data: any[] = []
-  // 用 slice 保证顺序和 dataRange 匹配
-  const tableRow = tableData.slice(dataRange.start - 1, dataRange.end)
-  tableRow.forEach((row: any) => {
-    data.push(row[dataField])
-  })
+  // 用 slice 保证顺序和 dataRange 匹配，返回整行数据
+  const data = tableData.slice(dataRange.start - 1, dataRange.end)
   return data
 }
 export async function handleMarkerDropCanvas(markerId: string,pos: [number,number]) {

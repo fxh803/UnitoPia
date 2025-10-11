@@ -8,11 +8,11 @@ import base64
 import re
 import cairosvg
 from PIL import Image
-from unitopia import Unitopia 
+# from unitopia import Unitopia 
 from utils import *
 app = Flask(__name__, template_folder='',static_folder="")
 CORS(app)  # 启用跨域支持
-unitopia = Unitopia() 
+# unitopia = Unitopia() 
 progress_data = {}
 
 @app.route('/processDataApi', methods=['POST'])
@@ -64,7 +64,7 @@ def process_data():
             marker_id = marker_data["markerId"]
             marker_string = marker_data['thumbnail']
             init_pos = [[point["x"]/canvas_width, point["y"]/canvas_height] for point in marker_data['pos']]
-            
+            init_size = [[w/100, h/100] for w, h in zip(marker_data['width'], marker_data['height'])]
             # 完善SVG字符串
             marker_string, svg_width, svg_height = complete_svg(marker_string)
             
@@ -94,7 +94,7 @@ def process_data():
                 json_data["collage"][i]["marker_config"][j]["marker"] = [marker_path]
             json_data["collage"][i]["marker_config"][j]["init_pos"] = init_pos
             json_data["collage"][i]["marker_config"][j]["init_angle"] = [0]*len(init_pos)
-            json_data["collage"][i]["marker_config"][j]["init_size"] = [[0.4,0.4]]*len(init_pos)
+            json_data["collage"][i]["marker_config"][j]["init_size"] = init_size
             visualEncoding = None
             data = None
             attribute = None
@@ -155,7 +155,7 @@ def process_data():
         json.dump(json_data, f, indent=4)
  
     
-    unitopia.start_collage(f'./workdir/{str(id)}_{i}/collage.json',id = str(id),callback=collage_callback)
+    # unitopia.start_collage(f'./workdir/{str(id)}_{i}/collage.json',id = str(id),callback=collage_callback)
     # 返回处理结果
     return jsonify({
         "success": True,

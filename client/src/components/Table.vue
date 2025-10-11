@@ -30,7 +30,7 @@ const cellClassName = ({ rowIndex, column, columnIndex }: any) => {
    } else {
     const markerData = markerStore.markers
     for (const data of markerData) {
-       if (data.mapping.dataField === column.property && data.mapping.dataRange.start <= rowIndex + 1 && data.mapping.dataRange.end >= rowIndex + 1) {
+       if (data.mapping.dataRange.start <= rowIndex + 1 && data.mapping.dataRange.end >= rowIndex + 1) {
          // 确保 rowIndex 存在，如果不存在则创建
          if (!cellClasses.value[rowIndex]) {
            cellClasses.value[rowIndex] = {}

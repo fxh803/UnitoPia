@@ -258,12 +258,45 @@ export const useCanvasStore = defineStore('canvas', () => {
     if (!canvasInstance) return
 
     try {
-      for (const p of pos) {
+      // 获取数据并进行归一化处理
+      const data = pharseData(markerId)
+      
+      // 提取所有的 width 和 height 值
+      const widths: number[] = []
+      const heights: number[] = []
+      
+      data.forEach((row: any) => {
+        const w = parseFloat(row.width)
+        const h = parseFloat(row.height)
+        if (!isNaN(w) && w > 0) widths.push(w)
+        if (!isNaN(h) && h > 0) heights.push(h)
+      })
+      
+      // 定义归一化范围
+      const minSize = 20  // 最小尺寸
+      const maxSize = 60  // 最大尺寸
+      
+      // 计算归一化参数
+      const minWidth = widths.length > 0 ? Math.min(...widths) : 1
+      const maxWidth = widths.length > 0 ? Math.max(...widths) : 1
+      const minHeight = heights.length > 0 ? Math.min(...heights) : 1
+      const maxHeight = heights.length > 0 ? Math.max(...heights) : 1
+      
+      // 归一化函数：将原始值映射到 [minSize, maxSize] 范围
+      const normalize = (value: number, min: number, max: number): number => {
+        if (max === min) return (minSize + maxSize) / 2  // 如果所有值相同，返回中间值
+        return minSize + ((value - min) / (max - min)) * (maxSize - minSize)
+      }
+
+      for (let i = 0; i < pos.length; i++) {
+        const p = pos[i]
         const currentDropX = p.x
         const currentDropY = p.y
         const objects = await fabric.util.enlivenObjects(groupJson, 'fabric')
+        
         if (objects && objects.length > 0) {
           const group = new Group(objects)
+          
           // 先设置所有属性（包括dataType），然后再添加到画布
           group.set({
             left: currentDropX,
@@ -276,24 +309,43 @@ export const useCanvasStore = defineStore('canvas', () => {
             originY: 'center',
             markerId: markerId
           })
+          
           if (selectedModeStore.selectedMode === null) {
             group.selectable = true;
             group.evented = true;
           }
 
-          // 调节对象大小，最大高/宽为50，保持宽高比
-          const maxSize = 40
+          // 根据数据中的 width 和 height 调节对象大小
           const currentWidth = group.width || group.getScaledWidth()
           const currentHeight = group.height || group.getScaledHeight()
 
-          if (currentWidth > 0 && currentHeight > 0) {
-            const scaleX = maxSize / Math.max(currentWidth, currentHeight)
-            const scaleY = scaleX // 保持宽高比
-
-            group.set({
-              scaleX: scaleX,
-              scaleY: scaleY
-            })
+          if (currentWidth > 0 && currentHeight > 0 && i < data.length) {
+            const row = data[i]
+            const dataWidth = parseFloat(row.width)
+            const dataHeight = parseFloat(row.height)
+            
+            // 如果数据有效，使用归一化后的尺寸
+            if (!isNaN(dataWidth) && !isNaN(dataHeight) && dataWidth > 0 && dataHeight > 0) {
+              const normalizedWidth = normalize(dataWidth, minWidth, maxWidth)
+              const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
+              
+              // 根据归一化后的 width 和 height 计算缩放比例
+              const scaleX = normalizedWidth / currentWidth
+              const scaleY = normalizedHeight / currentHeight
+              
+              group.set({
+                scaleX: scaleX,
+                scaleY: scaleY
+              })
+            } else {
+              // 如果数据无效，使用默认大小（保持宽高比）
+              const defaultMaxSize = 40
+              const scale = defaultMaxSize / Math.max(currentWidth, currentHeight)
+              group.set({
+                scaleX: scale,
+                scaleY: scale
+              })
+            }
           }
 
           // 添加到主画布（此时所有属性都已设置好）
