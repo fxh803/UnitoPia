@@ -1,0 +1,30 @@
+{
+  "collage": [
+    {
+      "collage_id": 1,
+      "marker_config": [
+        {
+          "marker": [ 
+          ],
+          "visual_encoding": [
+            {
+              "attribute": "Gold",
+              "channel": "height"
+            }
+          ],
+          "range": [
+            2,
+            80
+          ],
+          "margin": 3,
+          "init_size_ratio": 0.6
+        }
+      ],
+      "container_config": {
+        "boundary": "closed",
+        "holes": null,
+        "container": ""
+      }
+    }
+  ]
+}

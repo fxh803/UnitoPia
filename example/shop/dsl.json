@@ -1,0 +1,56 @@
+{
+    "collage": [
+      {
+        "collage_id": 1,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Gold",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              2,
+              80
+            ],
+            "margin": 10,
+            "variance": 0.3,
+            "rotation": false
+          }
+        ],
+        "container_config": {
+          "boundary": "closed",
+          "holes": null,
+          "container": ""
+        }
+      },
+      {
+        "collage_id": 2,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Gold",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              2,
+              80
+            ],
+            "margin": 10,
+            "variance": 0.3,
+            "rotation": false
+          }
+        ],
+        "container_config": {
+          "boundary": "closed",
+          "holes": null,
+          "container": ""
+        }
+      }
+    ]
+  }

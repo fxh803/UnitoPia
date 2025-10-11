@@ -1,0 +1,129 @@
+{
+  "collage": [
+    {
+      "collage_id": 1,
+      "marker_config": [
+        {
+          "marker": [ 
+          ],
+          "visual_encoding": [
+            {
+              "attribute": "Country",
+              "channel": "size"
+            }
+          ],
+          "range": [
+            1,
+            20
+          ],
+          "init_size_ratio": 0.4
+        }
+      ],
+      "container_config": {
+        "container": "",
+        "boundary": "open",
+        "holes": null
+      }
+    },
+    {
+      "collage_id": 2,
+      "marker_config": [
+        {
+          "marker": [ 
+          ],
+          "visual_encoding": [
+            {
+              "attribute": "Country",
+              "channel": "size"
+            }
+          ],
+          "range": [
+            1,
+            15
+          ],
+          "init_size_ratio": 0.4
+        }
+      ],
+      "container_config": {
+        "container": "",
+        "boundary": "open",
+        "holes": 1
+      }
+    },
+    {
+      "collage_id": 3,
+      "marker_config": [
+        {
+          "marker": [ 
+          ],
+          "visual_encoding": [
+            {
+              "attribute": "Country",
+              "channel": "size"
+            }
+          ],
+          "range": [
+            1,
+            15
+          ],
+          "init_size_ratio": 0.4
+        }
+      ],
+      "container_config": {
+        "container": "",
+        "boundary": "open",
+        "holes": 2
+      }
+    },
+    {
+      "collage_id": 4,
+      "marker_config": [
+        {
+          "marker": [ 
+          ],
+          "visual_encoding": [
+            {
+              "attribute": "Country",
+              "channel": "size"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ],
+          "init_size_ratio": 0.4
+        }
+      ],
+      "container_config": {
+        "container": "",
+        "boundary": "open",
+        "holes": 3
+      }
+    },
+    {
+      "collage_id": 5,
+      "marker_config": [
+        {
+          "marker": [ 
+          ],
+          "visual_encoding": [
+            {
+              "attribute": "Country",
+              "channel": "size"
+            }
+          ],
+          "range": [
+            1,
+            10
+          ],
+          "init_size_ratio": 0.4
+        }
+      ],
+      "container_config": {
+        "container": "",
+        "boundary": "open",
+        "holes": 4
+      }
+    }
+  ]
+}

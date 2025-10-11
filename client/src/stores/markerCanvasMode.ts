@@ -98,8 +98,11 @@ export const useMarkerCanvasModeStore = defineStore('markerCanvasMode', () => {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
 
-    // marker 画布上的所有对象都是 marker，直接清除
-    canvasInstance.clear()
+    const objects = canvasInstance.getObjects() 
+    objects.forEach(obj => { 
+        canvasInstance.remove(obj) 
+    })
+    canvasInstance.discardActiveObject()
     canvasInstance.renderAll()
   }
 

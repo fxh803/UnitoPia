@@ -1,0 +1,33 @@
+{
+    "collage": [
+      {
+        "collage_id": 1,
+        "marker_config": [
+          {
+            "marker": [ 
+            ],
+            "visual_encoding": [
+              {
+                "attribute": "Total",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              60
+            ],
+            "init_size_ratio": 0.6,
+            "variance": 0.3
+          }
+        ],
+        "container_config": {
+          "container": "",
+          "boundary": "open",
+          "holes": null
+        },
+        "force_config": {
+          "force": ""
+        }
+      }
+    ]
+  }

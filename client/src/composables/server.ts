@@ -24,6 +24,7 @@ interface ProcessedData {
     coordinates?: Array<{ x: number; y: number }> // pointForce 的坐标
     rotation?: number // fieldForce 的旋转角度
   }>
+  dataBinding: Array<{ data: Array<any>, markerId: string}>
 }
 const ip = 'http://localhost:5000'
 // 收集所有总览数据的函数
@@ -65,6 +66,7 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         result.forces = processForce(tempCanvas)
         result.emitter = processEmitter(tempCanvas)
         result.container = processContainer(tempCanvas)
+        result.dataBinding = processDataBinding(tempCanvas)
         slidesResult.push(result)
       }
       
@@ -259,6 +261,31 @@ function processForce(tempCanvas: Canvas) {
   return forces
 }
 
+function processDataBinding(tempCanvas: Canvas) {
+  const canvasObjects = tempCanvas.getObjects() 
+  
+  // 先获取所有不重复的markerId
+  const uniqueMarkerIds = new Set<string>()
+  for (const obj of canvasObjects) {
+    if (obj.get('dataType') === 'marker') {
+      const markerId = obj.get('markerId')
+      if (markerId) {
+        uniqueMarkerIds.add(markerId)
+      }
+    }
+  }
+  
+  // 再提取dataBindingList
+  const dataList : Array<{ data: Array<any>, markerId: string}> = []
+  for (const markerId of uniqueMarkerIds) { 
+      const data = pharseData(markerId)
+      dataList.push({
+        data: data,
+        markerId: markerId
+      })
+  }
+  return dataList
+}
 // 发送数据到后端的函数
 // 轮询处理状态的函数
 async function startProgressTimer() {

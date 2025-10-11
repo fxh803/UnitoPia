@@ -1,0 +1,68 @@
+{
+  "collage": [
+    {
+      "collage_id": 1,
+      "iterations": 300,
+      "marker_config": [
+        {
+          "marker": [ 
+          ],
+          "range": [
+            1,
+            20
+          ],
+          "visual_encoding": [
+            {
+              "attribute": "duration (hours)",
+              "channel": "size"
+            }
+          ],
+          "init_size_ratio":0.7
+        }
+      ],
+      "container_config": {
+        "container": "",
+        "boundary": "open",
+        "holes": null
+      },
+      "emitter_config": {
+        "emitter": ""
+      },
+      "force_config": {
+        "force": ""
+      }
+    },
+    {
+      "collage_id": 2,
+      "iterations": 200,
+      "marker_config": [
+        {
+          "marker": [ 
+          ],
+          "range": [
+            30,
+            40
+          ],
+          "visual_encoding": [
+            {
+              "attribute": "duration (hours)",
+              "channel": "size"
+            }
+          ],
+          "init_size_ratio":0.7
+        }
+      ],
+      "container_config": {
+        "container": "",
+        "boundary": "open",
+        "holes": 1
+      },
+      "emitter_config": {
+        "emitter": ""
+      },
+      "force_config": {
+        "force": ""
+      }
+    }
+  ]
+}

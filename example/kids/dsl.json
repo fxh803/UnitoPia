@@ -1,0 +1,256 @@
+{
+    "collage": [
+      {
+        "collage_id": 1,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": null,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      },
+      {
+        "collage_id": 2,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": 1,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      },
+      {
+        "collage_id": 3,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": 2,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      },
+      {
+        "collage_id": 4,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": null,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      },
+      {
+        "collage_id": 5,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": 4,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      },
+      {
+        "collage_id": 6,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": 5,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      },
+      {
+        "collage_id": 7,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": null,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      },
+      {
+        "collage_id": 8,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": 7,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      },
+      {
+        "collage_id": 9,
+        "iterations": 50,
+        "marker_config": [
+          {
+            "marker": [],
+            "visual_encoding": [
+              {
+                "attribute": "Country",
+                "channel": "size"
+              }
+            ],
+            "range": [
+              1,
+              10
+            ],
+            "init_size_ratio":0.2
+          }
+        ],
+        "container_config": {
+          "boundary": "open",
+          "holes": 8,
+          "container": ""
+        },
+        "force_config": {
+          "force": ""
+        }
+      }
+    ]
+  }

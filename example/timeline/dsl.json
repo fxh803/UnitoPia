@@ -1,0 +1,33 @@
+{
+  "collage": [
+    {
+      "collage_id": 1,
+      "marker_config": [
+        {
+          "marker": [],
+          "margin":3,
+          "visual_encoding": [
+            {
+              "attribute": "favorites",
+              "channel": "size"
+            }
+          ],
+          "range": [
+            1,
+            200
+          ],
+          "variance":0.3
+        }
+      ],
+      "container_config": {
+        "container": "",
+        "boundary": "closed",
+        "holes": null
+      },
+      "emitter_config": {
+        "emitter_type": "2D",
+        "emitter": ""
+      }
+    }
+  ]
+}
