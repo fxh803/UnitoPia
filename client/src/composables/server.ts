@@ -140,6 +140,8 @@ function processMarker(tempCanvas: Canvas) {
           // 导出前将marker移到画布的左上角
           obj.set('left', obj.width/ 2)
           obj.set('top', obj.height / 2)
+          obj.set('scaleX', 1)
+          obj.set('scaleY', 1)
           thumbnail = obj.toSVG()
         }
       }
