@@ -78,18 +78,18 @@ onMounted(() => {
   <div class="relative flex h-full">
     <!-- 面板内容 -->
     <aside
-      class="py-4 bg-white flex flex-col h-full items-center transition-all duration-300 shadow-right border-r border-gray-200 overflow-x-hidden relative"
+      class="py-4 bg-white flex flex-col h-full items-center transition-all duration-300 shadow-left border-l border-gray-200 overflow-x-hidden relative"
       :class="isCollapsed ? 'w-13' : 'w-60'">
       <!-- 拼贴处理状态遮罩 -->
       <div v-if="collaging || result_data.length > 0"
         class="absolute inset-0 bg-gray-300 bg-opacity-50 z-30 flex items-center justify-center">
       </div>
-      <!-- 收起按钮 - 放在右上角 -->
+      <!-- 收起按钮 - 放在左上角 -->
       <button @click="toggleCollapse"
-        class="absolute top-3 right-3 z-20 bg-white hover:bg-gray-100 transition-all duration-200 p-1.5 rounded"
+        class="absolute top-3 left-3 z-20 bg-white hover:bg-gray-100 transition-all duration-200 p-1.5 rounded"
         :title="isCollapsed ? 'Expand' : 'Collapse'">
         <div class="w-5 h-5 text-black transition-all duration-300"
-          :class="isCollapsed ? 'i-carbon:open-panel-left' : 'i-carbon:open-panel-filled-left'"></div>
+          :class="isCollapsed ? 'i-carbon:open-panel-right' : 'i-carbon:open-panel-filled-right'"></div>
       </button>
 
       <!-- 标题 -->
@@ -153,7 +153,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.shadow-right {
-  box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.08);
+.shadow-left {
+  box-shadow: -4px 0 8px -4px rgba(0, 0, 0, 0.08);
 }
 </style>

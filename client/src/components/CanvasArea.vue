@@ -288,8 +288,6 @@ onMounted(async () => {
 
 <template>
   <section class="bg-gray-900 flex h-full min-h-0 min-w-0 w-full">
-    <!-- 拼贴系列面板 - 移动到左侧 -->
-    <CollageSeriesPanel />
     <!-- 主画布区域 -->
     <div ref="canvasAreaRef"
       class="p-2 border-r border-[#e6e6e6] bg-[#ffffff] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
@@ -313,6 +311,8 @@ onMounted(async () => {
       <!-- 画笔粗细调节面板，仅在绘制/擦除模式下显示 -->
       <BrushSizePanel v-if="mode === 'draw' || mode === 'erase'" />
     </div>
+    <!-- 拼贴系列面板 - 移动到右侧 -->
+    <CollageSeriesPanel />
   </section>
 </template>
 

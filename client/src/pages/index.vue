@@ -7,10 +7,10 @@
     <div class="flex-1 min-h-0">
       <ResizableContainer>
         <template #left>
-          <CanvasArea />
+          <DataEditor />
         </template>
         <template #right>
-          <DataEditor />
+          <CanvasArea />
         </template>
       </ResizableContainer>
     </div>
