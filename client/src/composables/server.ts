@@ -125,14 +125,13 @@ function processMarker(tempCanvas: Canvas) {
         
         // 记录每个位置对应的宽高（包含缩放）
         const baseWidth = obj.width || 0
-        const baseHeight = obj.height || 0 
+        const baseHeight = obj.height || 0  
+        const baseSize = Math.max(baseWidth, baseHeight) 
+        console.log(baseSize)
         const scaleX = obj.scaleX || 1
-        const scaleY = obj.scaleY || 1
-        const actualWidth = baseWidth * scaleX
-        const actualHeight = baseHeight * scaleY
-        console.log(actualWidth,actualHeight )
-        widths.push(actualWidth)
-        heights.push(actualHeight) 
+        const scaleY = obj.scaleY || 1 
+        widths.push(scaleX*baseSize/100) //这里传的是对于正方形bbox的缩放系数
+        heights.push(scaleY*baseSize/100) 
         
         // 只生成一次thumbnail（使用第一个对象）
         if (!thumbnail) {

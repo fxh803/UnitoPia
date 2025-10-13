@@ -320,6 +320,7 @@ export const useCanvasStore = defineStore('canvas', () => {
           // 根据数据中的 width 和 height 调节对象大小
           const currentWidth = group.width || group.getScaledWidth()
           const currentHeight = group.height || group.getScaledHeight()
+          const currentSize = Math.max(currentWidth, currentHeight)
 
           if (currentWidth > 0 && currentHeight > 0 && i < data.length) {
             const row = data[i]
@@ -329,8 +330,7 @@ export const useCanvasStore = defineStore('canvas', () => {
             // 如果数据有效，使用归一化后的尺寸
             if (!isNaN(dataWidth) && !isNaN(dataHeight) && dataWidth > 0 && dataHeight > 0) {
               const normalizedWidth = normalize(dataWidth, minWidth, maxWidth)
-              const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
-              const currentSize = Math.max(currentWidth, currentHeight)
+              const normalizedHeight = normalize(dataHeight, minHeight, maxHeight) 
               // 根据归一化后的 width 和 height 计算缩放比例
               const scaleX = normalizedWidth / currentSize * dataScaleStore.widthScale
               const scaleY = normalizedHeight / currentSize * dataScaleStore.heightScale

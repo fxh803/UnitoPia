@@ -61,7 +61,7 @@ def process_data():
             marker_id = marker_data["markerId"]
             marker_string = marker_data['thumbnail']
             init_pos = [[point["x"]/canvas_width, point["y"]/canvas_height] for point in marker_data['pos']]
-            init_size = [[w/100, h/100] for w, h in zip(marker_data['width'], marker_data['height'])]
+            init_size = [[w, h] for w, h in zip(marker_data['width'], marker_data['height'])]
             # 完善SVG字符串
             marker_string, svg_width, svg_height = complete_svg(marker_string)
             
