@@ -44,11 +44,8 @@ def process_data():
         # 首先检查是否有任何marker包含image元素
         has_image_markers = False
         for marker_data in collage_data["markers"]:
-            marker_string = marker_data['thumbnail']
-            # 完善SVG字符串
-            temp_marker_string, _, _ = complete_svg(marker_string)
-            
-            if contains_image_element(temp_marker_string):
+            marker_string = marker_data['thumbnail'] 
+            if contains_image_element(marker_string):
                 has_image_markers = True
                 break
         

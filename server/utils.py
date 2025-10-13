@@ -7,7 +7,7 @@ import numpy as np
 import cv2
 import numpy as np
 import random
-import xml.etree.ElementTree as ET
+from lxml import etree as ET
 def base64_to_image(base64_data): 
     # 检查是否为 SVG
     if base64_data.startswith('data:image/svg+xml'): 
@@ -301,8 +301,8 @@ def complete_svg(marker_string):
     svg_width = scale_x * 2
     svg_height = scale_y * 2
     
-    # 添加SVG头部和尾部
-    svg_header = f'<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 {svg_width} {svg_height}" width="{svg_width}" height="{svg_height}">\n'
+    # 添加SVG头部和尾部（移除编码声明以避免lxml解析问题）
+    svg_header = f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 {svg_width} {svg_height}" width="{svg_width}" height="{svg_height}">\n'
     svg_footer = '\n</svg>'
     
     return svg_header + marker_string + svg_footer, svg_width, svg_height
