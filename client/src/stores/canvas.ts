@@ -330,10 +330,10 @@ export const useCanvasStore = defineStore('canvas', () => {
             if (!isNaN(dataWidth) && !isNaN(dataHeight) && dataWidth > 0 && dataHeight > 0) {
               const normalizedWidth = normalize(dataWidth, minWidth, maxWidth)
               const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
-              
+              const currentSize = Math.max(currentWidth, currentHeight)
               // 根据归一化后的 width 和 height 计算缩放比例
-              const scaleX = normalizedWidth / currentWidth * dataScaleStore.widthScale
-              const scaleY = normalizedHeight / currentHeight * dataScaleStore.heightScale
+              const scaleX = normalizedWidth / currentSize * dataScaleStore.widthScale
+              const scaleY = normalizedHeight / currentSize * dataScaleStore.heightScale
               
               group.set({
                 scaleX: scaleX,
@@ -342,7 +342,7 @@ export const useCanvasStore = defineStore('canvas', () => {
             } else {
               // 如果数据无效，使用默认大小（保持宽高比）
               const defaultMaxSize = 40
-              const scale = defaultMaxSize / Math.max(currentWidth, currentHeight)
+              const scale = defaultMaxSize / currentSize
               group.set({
                 scaleX: scale,
                 scaleY: scale
