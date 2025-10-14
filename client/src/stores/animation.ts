@@ -1,480 +1,566 @@
 // src/stores/counterStore.js
 import { defineStore, storeToRefs } from 'pinia'
 import paper from "paper";
-export const useAnimationStore = defineStore('animation', {
-  state: () => ({
-    collaging: false,
-    progress_data: [],
-    collage_result_type: [],
-    canvas_width: 0,
-    canvas_height: 0,
-    srcArray: [],
-    posArray: [],
-    widthArray: [],
-    heightArray: [],
-    angleArray: [],
-    elements: [],
-    result_data: [],
-    dataArray: [],
-    attributesArray: [],
-    now_collage_idx: 0,
-    now_start_idx: 0, 
-    markerAni: null, 
-    replayIdx: 0,
-    ip: 'http://127.0.0.1:5000',
-    process_id: null,
-    replayTimer:null,
-    time_interval: 2000,
-    replaying: false,
-    hoverAttr: null,
-    hoverData: null,
-    totalOverview:0,
-    now_overview_idx:0
+import { useContainerStore } from '~/stores/container'
+import { ref, computed, watch } from 'vue';
 
-  }),
-  getters: { 
-    progress: (state) => {
-      if (state.replaying) {
-        return state.progress_data[state.replayIdx]
-      }
-      else{
-        return state.progress_data[state.progress_data.length - 1]
-      }
+export const useAnimationStore = defineStore('animation', () => {
+  // 状态
+  const collaging = ref(false)
+  const progress_data = ref([])
+  const collage_result_type = ref([])
+  const canvas_width = ref(0)
+  const canvas_height = ref(0)
+  const srcArray = ref([])
+  const posArray = ref([])
+  const widthArray = ref([])
+  const heightArray = ref([])
+  const angleArray = ref([])
+  const elements = ref([])
+  const result_data = ref([])
+  const dataArray = ref([])
+  const attributesArray = ref([])
+  const now_collage_idx = ref(0)
+  const now_start_idx = ref(0)
+  const markerAni = ref(null)
+  const containerAni = ref(null)
+  const replayIdx = ref(0)
+  const ip = ref('http://127.0.0.1:5000')
+  const process_id = ref(null)
+  const replayTimer = ref(null)
+  const time_interval = ref(2000)
+  const replaying = ref(false)
+  const hoverAttr = ref(null)
+  const hoverData = ref(null)
+  const totalOverview = ref(0)
+  const now_overview_idx = ref(0)
+
+  // 计算属性
+  const progress = computed(() => {
+    if (replaying.value) {
+      return progress_data.value[replayIdx.value]
     }
-  },
-  actions: { 
-    resetData() {
-      this.collaging = false
-      this.progress_data = []
-      this.collage_result_type = []
-      this.canvas_width = 0
-      this.canvas_height = 0
-      this.srcArray = []
-      this.posArray = []
-      this.widthArray = []
-      this.heightArray = []
-      this.angleArray = []
-      this.elements = []
-      this.result_data = []
-      this.dataArray = []
-      this.attributesArray = []
-      this.now_collage_idx = 0
-      this.now_start_idx = 0
-      this.markerAni = null
-      this.replayIdx = 0
-      this.process_id = null
-      this.replayTimer = null
-      this.replaying = false
-      this.hoverAttr = null
-      this.hoverData = null
-      this.now_overview_idx = 0
-      this.totalOverview = 0
-      this.time_interval = 2000
-    },
-    stopReplay() {
-      clearInterval(this.replayTimer);
-      paper.view.off('frame', this.markerAni);
-      this.replaying = false
-    },
-    backToEdit() { 
-      this.resetData()
-    },
-    resetReplayData() {
-      this.replayIdx = 0
-      this.srcArray = []
-      this.posArray = []
-      this.widthArray = []
-      this.heightArray = []
-      this.angleArray = []
-      this.now_collage_idx = 0
-      this.now_start_idx = 0
-      this.now_overview_idx = 0
-      this.time_interval = 2000
-    },
-    removeAnimation() {
-      if (this.markerAni) {
-        paper.view.off('frame', this.markerAni);
-        this.markerAni = null
+    else {
+      return progress_data.value[progress_data.value.length - 1]
+    }
+  })
+
+  // 监听collaging状态变化
+  watch(collaging, (newValue) => {
+    if (!newValue) {
+        removeAnimation()
+    }
+  })
+
+  // 方法
+  function resetData() {
+    collaging.value = false
+    progress_data.value = []
+    collage_result_type.value = []
+    canvas_width.value = 0
+    canvas_height.value = 0
+    srcArray.value = []
+    posArray.value = []
+    widthArray.value = []
+    heightArray.value = []
+    angleArray.value = []
+    elements.value = []
+    result_data.value = []
+    dataArray.value = []
+    attributesArray.value = []
+    now_collage_idx.value = 0
+    now_start_idx.value = 0
+    markerAni.value = null
+    replayIdx.value = 0
+    process_id.value = null
+    replayTimer.value = null
+    replaying.value = false
+    hoverAttr.value = null
+    hoverData.value = null
+    now_overview_idx.value = 0
+    totalOverview.value = 0
+    time_interval.value = 2000
+  }
+
+  function stopReplay() {
+    clearInterval(replayTimer.value);
+    paper.view.off('frame', markerAni.value);
+    replaying.value = false
+  }
+
+  function backToEdit() { 
+    resetData()
+  }
+
+  function resetReplayData() {
+    replayIdx.value = 0
+    srcArray.value = []
+    posArray.value = []
+    widthArray.value = []
+    heightArray.value = []
+    angleArray.value = []
+    now_collage_idx.value = 0
+    now_start_idx.value = 0
+    now_overview_idx.value = 0
+    time_interval.value = 2000
+  }
+
+  function removeAnimation() {
+    if (markerAni.value) {
+      paper.view.off('frame', markerAni.value);
+      markerAni.value = null
+    } 
+    if (containerAni.value) {
+      paper.view.off('frame', containerAni.value);
+      containerAni.value = null
+    }
+    // 清理container的shining paths
+    const containerStore = useContainerStore()
+    containerStore.clearShiningPaths()
+  }
+
+  function removeElements() { 
+    elements.value.forEach(element => {
+      element.remove();
+    });
+    elements.value = []
+  }
+
+  function setData(now_collage, startIndex) {//对最新的数据进行整理
+    const result = result_data.value[result_data.value.length - 1] 
+    for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
+      if (collage_result_type.value[now_collage] === 'svg')
+        srcArray.value[i] = `${ip.value}/workdir/${process_id.value}_${now_collage}/render_files/${i + 1 - startIndex}.svg`
+      else
+        srcArray.value[i] = `${ip.value}/workdir/${process_id.value}_${now_collage}/render_files/${i + 1 - startIndex}.png`
+
+      posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
+      angleArray.value[i] = result['angle'][i - startIndex];
+      dataArray.value[i] = result['data'][i - startIndex];
+      attributesArray.value[i] = result['attributes'][i - startIndex];
+      let originSize = 0
+      if (collage_result_type.value[now_collage] === 'svg') {
+        originSize = 100
+      }
+      else {
+        originSize = 500
+      }
+      widthArray.value[i] = result['size'][i - startIndex][0] * originSize * (canvas_width.value / 1000);
+      heightArray.value[i] = result['size'][i - startIndex][1] * originSize * (canvas_width.value / 1000);
+    }
+  }
+
+  function setReplayData(idx, now_collage, startIndex) {
+    const result = result_data.value[idx]
+    for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
+      if (collage_result_type.value[now_collage] === 'svg')
+        srcArray.value[i] = `${ip.value}/workdir/${process_id.value}_${now_collage}/render_files/${i + 1 - startIndex}.svg`
+      else
+        srcArray.value[i] = `${ip.value}/workdir/${process_id.value}_${now_collage}/render_files/${i + 1 - startIndex}.png`
+
+      posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
+      angleArray.value[i] = result['angle'][i - startIndex];
+      dataArray.value[i] = result['data'][i - startIndex];
+      attributesArray.value[i] = result['attributes'][i - startIndex];
+      let originSize = 0
+      if (collage_result_type.value[now_collage] === 'svg') {
+        originSize = 100
+      }
+      else {
+        originSize = 500
+      }
+      widthArray.value[i] = result['size'][i - startIndex][0] * originSize * (canvas_width.value / 1000);
+      heightArray.value[i] = result['size'][i - startIndex][1] * originSize * (canvas_width.value / 1000);
+    }
+  }
+  function startContainerAnimation() {
+    const containerStore = useContainerStore()
+    if (!containerAni.value) {  
+        containerAni.value = (event) => { 
+          containerStore.containerAnimation(event)
+        };
+        paper.view.on('frame', containerAni.value);  
+      }
+  }
+  function updateAnimation() {//每当收到进度信息，检查动画更新情况
+    const now_collage = progress.value.now_collage;
+    const type = progress.value.type;
+    if (now_collage != now_collage_idx.value && type === 1) {// 如果进行的collage变了，要绘制新的elements
+      console.log('1')
+      // paper.view.off('frame', markerAni.value); 
+      // paper.view.off('frame', containerAni.value);
+      // markerAni.value = null
+      // containerAni.value = null
+      now_start_idx.value = elements.value.length
+      setData(now_collage, now_start_idx.value)
+      for (let i = now_start_idx.value; i < posArray.value.length; i++) {
+        const raster = new paper.Raster({
+          source: srcArray.value[i],
+          position: posArray.value[i],
+          opacity: 0,
+          attr: attributesArray.value[i],
+          data: dataArray.value[i],
+          imgLoaded: false,
+          dataLoaded: false,
+          collage_idx: now_collage,
+          onLoad: () => {
+            console.log(srcArray.value[i])
+            raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
+            raster.rotate(angleArray.value[i] * (180 / Math.PI))
+            raster.imgLoaded = true;
+          },
+          //失败提示
+          onError: (e) => {
+            console.log('onError',e)
+          }
+        });
+        raster.onMouseEnter = () => {
+          hoverAttr.value = raster.attr
+          hoverData.value = raster.data
+          let toastLeft = raster.position.x
+          let toastTop = raster.position.y
+          // markerToast.value.style.top = `${toastTop}px`
+          // markerToast.value.style.left = `${toastLeft}px`
+          // markerToast.value.classList.remove('hidden')
+        }
+        // raster.onMouseLeave = () => {
+        //   markerToast.value.classList.add('hidden')
+        // }
+        elements.value.push(raster);
+      }
+      now_collage_idx.value = now_collage
+
+    }
+    else if (elements.value.length === 0) {//一开始
+      setData(now_collage, 0)
+      console.log('2')
+      for (let i = 0; i < posArray.value.length; i++) {
+        const raster = new paper.Raster({
+          source: srcArray.value[i],
+          position: posArray.value[i],
+          opacity: 0,
+          attr: attributesArray.value[i],
+          data: dataArray.value[i],
+          imgLoaded: false,
+          dataLoaded: false,
+          collage_idx: now_collage,
+          onLoad: (e) => {
+            console.log(srcArray.value[i])
+            raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
+            raster.rotate(angleArray.value[i] * (180 / Math.PI))
+            raster.imgLoaded = true
+          },
+          onError: (e) => {
+            console.log('onError',e)
+          }
+        });
+        raster.onMouseEnter = () => {
+          hoverAttr.value = raster.attr
+          hoverData.value = raster.data
+          let toastLeft = raster.position.x
+          let toastTop = raster.position.y
+          // markerToast.value.style.top = `${toastTop}px`
+          // markerToast.value.style.left = `${toastLeft}px`
+          // markerToast.value.classList.remove('hidden')
+        }
+        // raster.onMouseLeave = () => {
+        //   markerToast.value.classList.add('hidden')
+        // }
+        elements.value.push(raster);
       } 
-    },
-    removeElements() { 
-      this.elements.forEach(element => {
-        element.remove();
-      });
-      this.elements = []
-    },
-    setData(now_collage, startIndex) {//对最新的数据进行整理
-      const result = this.result_data[this.result_data.length - 1] 
-      for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
-        if (this.collage_result_type[now_collage] === 'svg')
-          this.srcArray[i] = `${this.ip}/workdir/${this.process_id}_${now_collage}/render_files/${i + 1 - startIndex}.svg`
-        else
-          this.srcArray[i] = `${this.ip}/workdir/${this.process_id}_${now_collage}/render_files/${i + 1 - startIndex}.png`
-
-        this.posArray[i] = [result['pos'][i - startIndex][0] * this.canvas_width, result['pos'][i - startIndex][1] * this.canvas_height];
-        this.angleArray[i] = result['angle'][i - startIndex];
-        this.dataArray[i] = result['data'][i - startIndex];
-        this.attributesArray[i] = result['attributes'][i - startIndex];
-        let originSize = 0
-        if (this.collage_result_type[now_collage] === 'svg') {
-          originSize = 100
+    }
+    else if (elements.value.length > 0) {
+      console.log('3')
+      setData(now_collage, now_start_idx.value)
+      for (let i = now_start_idx.value; i < elements.value.length; i++) {//这里先set好数据
+        if (elements.value[i].imgLoaded) {
+          elements.value[i].startPos = new paper.Point(elements.value[i].position);
+          elements.value[i].startRotate = elements.value[i].matrix.rotation;
+          elements.value[i].startScaleX = elements.value[i].matrix.scaling.x;
+          elements.value[i].startScaleY = elements.value[i].matrix.scaling.y;
+          elements.value[i].endPos = new paper.Point(posArray.value[i]);
+          elements.value[i].endRotate = angleArray.value[i] * (180 / Math.PI);
+          elements.value[i].endScaleX = widthArray.value[i] / elements.value[i].width;
+          elements.value[i].endScaleY = heightArray.value[i] / elements.value[i].height;
+          elements.value[i].elapsedTime = 0;
+          elements.value[i].endOpacity = 1;
+          elements.value[i].startOpacity = elements.value[i].opacity;
+          elements.value[i].dataLoaded = true;
         }
-        else {
-          originSize = 500
-        }
-        this.widthArray[i] = result['size'][i - startIndex][0] * originSize * (this.canvas_width / 1000);
-        this.heightArray[i] = result['size'][i - startIndex][1] * originSize * (this.canvas_width / 1000);
-
-
       }
-    },
-    setReplayData(idx, now_collage, startIndex) {
-      const result = this.result_data[idx]
-      for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
-        if (this.collage_result_type[now_collage] === 'svg')
-          this.srcArray[i] = `${this.ip}/workdir/${this.process_id}_${now_collage}/render_files/${i + 1 - startIndex}.svg`
-        else
-          this.srcArray[i] = `${this.ip}/workdir/${this.process_id}_${now_collage}/render_files/${i + 1 - startIndex}.png`
 
-        this.posArray[i] = [result['pos'][i - startIndex][0] * this.canvas_width, result['pos'][i - startIndex][1] * this.canvas_height];
-        this.angleArray[i] = result['angle'][i - startIndex];
-        this.dataArray[i] = result['data'][i - startIndex];
-        this.attributesArray[i] = result['attributes'][i - startIndex];
-        let originSize = 0
-        if (this.collage_result_type[now_collage] === 'svg') {
-          originSize = 100
-        }
-        else {
-          originSize = 500
-        }
-        this.widthArray[i] = result['size'][i - startIndex][0] * originSize * (this.canvas_width / 1000);
-        this.heightArray[i] = result['size'][i - startIndex][1] * originSize * (this.canvas_width / 1000);
+      if (!markerAni.value) {
+        markerAni.value = (event) => {
+          markerAnimation(event, now_start_idx.value);
+        };
+        paper.view.on('frame', markerAni.value);
       }
-    },
-    updateAnimation() {//每当收到进度信息，检查动画更新情况
-      const now_collage = this.progress.now_collage;
-      const type = this.progress.type;
-      if (now_collage != this.now_collage_idx && type === 1) {// 如果进行的collage变了，要绘制新的elements
-        console.log('1')
-        paper.view.off('frame', this.markerAni); 
-        this.markerAni = null
 
-        this.now_start_idx = this.elements.length
-        this.setData(now_collage, this.now_start_idx)
-        for (let i = this.now_start_idx; i < this.posArray.length; i++) {
-          const raster = new paper.Raster({
-            source: this.srcArray[i],
-            position: this.posArray[i],
-            opacity: 0,
-            attr: this.attributesArray[i],
-            data: this.dataArray[i],
-            imgLoaded: false,
-            dataLoaded: false,
-            collage_idx: now_collage,
-            onLoad: () => {
-              console.log(this.srcArray[i])
-              raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
-              raster.rotate(this.angleArray[i] * (180 / Math.PI))
-              raster.imgLoaded = true;
-            },
-            //失败提示
-            onError: (e) => {
-              console.log('onError',e)
+    }
+  }
+
+  function markerAnimation(event, startIndex) {
+    for (let i = startIndex; i < elements.value.length; i++) {
+      if (elements.value[i].imgLoaded && elements.value[i].dataLoaded) { 
+        const epsilon = 0.0001; // 允许的误差范围
+        const pos = new paper.Point(elements.value[i].position);
+        const startPos = elements.value[i].startPos;
+        const endPos = elements.value[i].endPos;
+        const rotate = elements.value[i].matrix.rotation;
+        const opacity = elements.value[i].opacity;
+        const startOpacity = elements.value[i].startOpacity;
+        const endOpacity = elements.value[i].endOpacity;
+        const startRotate = elements.value[i].startRotate;
+        const endRotate = elements.value[i].endRotate;
+        const scaleX = elements.value[i].matrix.scaling.x;
+        const startScaleX = elements.value[i].startScaleX;
+        const endScaleX = elements.value[i].endScaleX;
+        const scaleY = elements.value[i].matrix.scaling.y;
+        const startScaleY = elements.value[i].startScaleY;
+        const endScaleY = elements.value[i].endScaleY;
+
+        elements.value[i].elapsedTime += event.delta; // 更新经过的时间
+        const t = Math.min(elements.value[i].elapsedTime / (time_interval.value / 1000), 1); // 插值比例，限制在 [0, 1]
+
+        if (Math.abs(opacity - endOpacity) > epsilon) {
+          const newOpacity = opacity + (endOpacity - startOpacity) / 200
+          elements.value[i].opacity = newOpacity;
+        }
+        if (Math.abs(scaleX - endScaleX) > epsilon || Math.abs(scaleY - endScaleY) > epsilon) {
+          const newScaleX = startScaleX + (endScaleX - startScaleX) * t;
+          const newScaleY = startScaleY + (endScaleY - startScaleY) * t;
+          elements.value[i].scaling = new paper.Point(newScaleX, newScaleY);
+        }
+        if (Math.abs(rotate - endRotate) > epsilon) {
+          if (Math.abs(endRotate - startRotate) > 180) {
+            // 调整差值，使其在 -180 到 180 的范围内
+            let delta = endRotate - startRotate;
+            if (delta > 180) {
+              delta -= 360;
+            } else if (delta < -180) {
+              delta += 360;
             }
-          });
-          raster.onMouseEnter = () => {
-            this.hoverAttr = raster.attr
-            this.hoverData = raster.data
-            let toastLeft = raster.position.x
-            let toastTop = raster.position.y
-            // markerToast.value.style.top = `${toastTop}px`
-            // markerToast.value.style.left = `${toastLeft}px`
-            // markerToast.value.classList.remove('hidden')
+            const newRotate = startRotate + delta * t;
+            elements.value[i].rotate(newRotate - rotate);
+          } else {
+            const newRotate = startRotate + (endRotate - startRotate) * t;
+            elements.value[i].rotate(newRotate - rotate);
           }
-          // raster.onMouseLeave = () => {
-          //   markerToast.value.classList.add('hidden')
-          // }
-          this.elements.push(raster);
-        }
-        this.now_collage_idx = now_collage
 
-      }
-      else if (this.elements.length === 0) {//一开始
-        this.setData(now_collage, 0)
-        console.log('2')
-        for (let i = 0; i < this.posArray.length; i++) {
-          const raster = new paper.Raster({
-            source: this.srcArray[i],
-            position: this.posArray[i],
-            opacity: 0,
-            attr: this.attributesArray[i],
-            data: this.dataArray[i],
-            imgLoaded: false,
-            dataLoaded: false,
-            collage_idx: now_collage,
-            onLoad: (e) => {
-              console.log(this.srcArray[i])
-              raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
-              raster.rotate(this.angleArray[i] * (180 / Math.PI))
-              raster.imgLoaded = true
-            },
-            onError: (e) => {
-              console.log('onError',e)
-            }
-          });
-          raster.onMouseEnter = () => {
-            this.hoverAttr = raster.attr
-            this.hoverData = raster.data
-            let toastLeft = raster.position.x
-            let toastTop = raster.position.y
-            // markerToast.value.style.top = `${toastTop}px`
-            // markerToast.value.style.left = `${toastLeft}px`
-            // markerToast.value.classList.remove('hidden')
-          }
-          // raster.onMouseLeave = () => {
-          //   markerToast.value.classList.add('hidden')
-          // }
-          this.elements.push(raster);
-        } 
-      }
-      else if (this.elements.length > 0) {
-        console.log('3')
-        this.setData(now_collage, this.now_start_idx)
-        for (let i = this.now_start_idx; i < this.elements.length; i++) {//这里先set好数据
-          if (this.elements[i].imgLoaded) {
-            this.elements[i].startPos = new paper.Point(this.elements[i].position);
-            this.elements[i].startRotate = this.elements[i].matrix.rotation;
-            this.elements[i].startScaleX = this.elements[i].matrix.scaling.x;
-            this.elements[i].startScaleY = this.elements[i].matrix.scaling.y;
-            this.elements[i].endPos = new paper.Point(this.posArray[i]);
-            this.elements[i].endRotate = this.angleArray[i] * (180 / Math.PI);
-            this.elements[i].endScaleX = this.widthArray[i] / this.elements[i].width;
-            this.elements[i].endScaleY = this.heightArray[i] / this.elements[i].height;
-            this.elements[i].elapsedTime = 0;
-            this.elements[i].endOpacity = 1;
-            this.elements[i].startOpacity = this.elements[i].opacity;
-            this.elements[i].dataLoaded = true;
-          }
         }
-
-        if (!this.markerAni) {
-          this.markerAni = (event) => {
-            this.markerAnimation(event, this.now_start_idx);
-          };
-          paper.view.on('frame', this.markerAni);
+        if (Math.abs(pos.x - endPos.x) > epsilon || Math.abs(pos.y - endPos.y) > epsilon) {
+          const newPosition = [startPos.x + (endPos.x - startPos.x) * t, startPos.y + (endPos.y - startPos.y) * t]
+          elements.value[i].position = newPosition;
         }
-
-      }
-    },
-    markerAnimation(event, startIndex) {
-      for (let i = startIndex; i < this.elements.length; i++) {
-        if (this.elements[i].imgLoaded && this.elements[i].dataLoaded) { 
-          const epsilon = 0.0001; // 允许的误差范围
-          const pos = new paper.Point(this.elements[i].position);
-          const startPos = this.elements[i].startPos;
-          const endPos = this.elements[i].endPos;
-          const rotate = this.elements[i].matrix.rotation;
-          const opacity = this.elements[i].opacity;
-          const startOpacity = this.elements[i].startOpacity;
-          const endOpacity = this.elements[i].endOpacity;
-          const startRotate = this.elements[i].startRotate;
-          const endRotate = this.elements[i].endRotate;
-          const scaleX = this.elements[i].matrix.scaling.x;
-          const startScaleX = this.elements[i].startScaleX;
-          const endScaleX = this.elements[i].endScaleX;
-          const scaleY = this.elements[i].matrix.scaling.y;
-          const startScaleY = this.elements[i].startScaleY;
-          const endScaleY = this.elements[i].endScaleY;
-
-          this.elements[i].elapsedTime += event.delta; // 更新经过的时间
-          const t = Math.min(this.elements[i].elapsedTime / (this.time_interval / 1000), 1); // 插值比例，限制在 [0, 1]
-
-          if (Math.abs(opacity - endOpacity) > epsilon) {
-            const newOpacity = opacity + (endOpacity - startOpacity) / 200
-            this.elements[i].opacity = newOpacity;
-          }
-          if (Math.abs(scaleX - endScaleX) > epsilon || Math.abs(scaleY - endScaleY) > epsilon) {
-            const newScaleX = startScaleX + (endScaleX - startScaleX) * t;
-            const newScaleY = startScaleY + (endScaleY - startScaleY) * t;
-            this.elements[i].scaling = new paper.Point(newScaleX, newScaleY);
-          }
-          if (Math.abs(rotate - endRotate) > epsilon) {
-            if (Math.abs(endRotate - startRotate) > 180) {
-              // 调整差值，使其在 -180 到 180 的范围内
-              let delta = endRotate - startRotate;
-              if (delta > 180) {
-                delta -= 360;
-              } else if (delta < -180) {
-                delta += 360;
-              }
-              const newRotate = startRotate + delta * t;
-              this.elements[i].rotate(newRotate - rotate);
-            } else {
-              const newRotate = startRotate + (endRotate - startRotate) * t;
-              this.elements[i].rotate(newRotate - rotate);
-            }
-
-          }
-          if (Math.abs(pos.x - endPos.x) > epsilon || Math.abs(pos.y - endPos.y) > epsilon) {
-            const newPosition = [startPos.x + (endPos.x - startPos.x) * t, startPos.y + (endPos.y - startPos.y) * t]
-            this.elements[i].position = newPosition;
-          }
-        }
-      }
-    },
-    // 提取replay逻辑为独立方法
-    executeReplayStep() {
-      const now_collage = this.progress_data[this.replayIdx].now_collage;
-      const now_overview = this.progress_data[this.replayIdx].now_overview_idx;
-      this.process_id = this.progress_data[this.replayIdx].process_id;
-      this.collage_result_type = this.progress_data[this.replayIdx].collage_result_type;
-      
-      if (now_overview != this.now_overview_idx && this.now_overview_idx != this.totalOverview - 1) { 
-        this.nextOverview()
-        return
-      }
-      
-      if (now_collage != this.now_collage_idx) {//进入下一个collage
-        console.log('4')
-        this.now_start_idx = this.elements.length
-        this.setReplayData(this.replayIdx, now_collage, this.now_start_idx)
-        for (let i = this.now_start_idx; i < this.posArray.length; i++) {
-          const raster = new paper.Raster({
-            source: this.srcArray[i],
-            position: this.posArray[i],
-            opacity: 0,
-            attr: this.attributesArray[i],
-            data: this.dataArray[i],
-            imgLoaded: false,
-            dataLoaded: false,
-            collage_idx: now_collage,
-            onLoad: () => {
-              console.log(this.srcArray[i])
-              raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
-              raster.rotate(this.angleArray[i] * (180 / Math.PI))
-              raster.imgLoaded = true;
-            },
-            onError: (e) => {
-              console.log('onError',e,raster)
-            }
-          });
-          raster.onMouseEnter = () => {
-            this.hoverAttr = raster.attr
-            this.hoverData = raster.data
-            let toastLeft = raster.position.x
-            let toastTop = raster.position.y
-            // markerToast.value.style.top = `${toastTop}px`
-            // markerToast.value.style.left = `${toastLeft}px`
-            // markerToast.value.classList.remove('hidden')
-          }
-          // raster.onMouseLeave = () => {
-          //   markerToast.value.classList.add('hidden')
-          // }
-          this.elements.push(raster);
-        }
-        this.now_collage_idx = now_collage
-      }
-      else if (this.elements.length === 0) {
-        console.log('5')
-        this.setReplayData(this.replayIdx, now_collage, 0)
-        for (let i = 0; i < this.posArray.length; i++) {
-          const raster = new paper.Raster({
-            source: this.srcArray[i],
-            position: this.posArray[i],
-            opacity: 0,
-            attr: this.attributesArray[i],
-            data: this.dataArray[i],
-            imgLoaded: false,
-            dataLoaded: false,
-            collage_idx: now_collage,
-            onLoad: () => {
-              console.log(this.srcArray[i])
-              raster.scale(new paper.Point(this.widthArray[i] / raster.width, this.heightArray[i] / raster.height));
-              raster.rotate(this.angleArray[i] * (180 / Math.PI))
-              raster.imgLoaded = true
-            },
-            onError: (e) => {
-              console.log('onError',e,raster)
-            }
-          });
-          raster.onMouseEnter = () => {
-            this.hoverAttr = raster.attr
-            this.hoverData = raster.data
-            let toastLeft = raster.position.x
-            let toastTop = raster.position.y
-            // markerToast.value.style.top = `${toastTop}px`
-            // markerToast.value.style.left = `${toastLeft}px`
-            // markerToast.value.classList.remove('hidden')
-          }
-          // raster.onMouseLeave = () => {
-          //   markerToast.value.classList.add('hidden')
-          // }
-          this.elements.push(raster);
-        }
-      }
-      else if (this.elements.length > 0) {
-        console.log('6')
-        this.setReplayData(this.replayIdx, now_collage, this.now_start_idx)
-        for (let i = this.now_start_idx; i < this.elements.length; i++) {//这里先set好数据
-          if (this.elements[i].imgLoaded) {
-            this.elements[i].startPos = new paper.Point(this.elements[i].position);
-            this.elements[i].startRotate = this.elements[i].matrix.rotation;
-            this.elements[i].startScaleX = this.elements[i].matrix.scaling.x;
-            this.elements[i].startScaleY = this.elements[i].matrix.scaling.y;
-            this.elements[i].endPos = new paper.Point(this.posArray[i]);
-            this.elements[i].endRotate = this.angleArray[i] * (180 / Math.PI);
-            this.elements[i].endScaleX = this.widthArray[i] / this.elements[i].width;
-            this.elements[i].endScaleY = this.heightArray[i] / this.elements[i].height;
-            this.elements[i].elapsedTime = 0;
-            this.elements[i].endOpacity = 1;
-            this.elements[i].startOpacity = this.elements[i].opacity;
-            this.elements[i].dataLoaded = true;
-          }
-        }
-
-        if (!this.markerAni) {
-          this.markerAni = (event) => {
-            this.markerAnimation(event, this.now_start_idx);
-          };
-          paper.view.on('frame', this.markerAni);
-        }
-      }
-      
-      this.replayIdx += 1;
-      if (this.replayIdx >= this.result_data.length) {
-        this.stopReplay()
-      }
-    },
-    replay() {
-      this.replaying = true
-      this.removeAnimation()
-      this.removeElements()
-      this.resetReplayData()
-      this.replayTimer = setInterval(() => {
-        this.executeReplayStep()
-      }, this.time_interval);
-    },
-    nextOverview() {
-      this.now_collage_idx = 0
-      this.now_start_idx = 0
-      this.removeAnimation()
-      this.removeElements()
-      this.srcArray = []
-      this.posArray = []
-      this.widthArray = []
-      this.heightArray = []
-      this.angleArray = []
-      this.collage_result_type = []
-      this.now_overview_idx += 1
-    },
-    updateReplayTimer() {
-      // 如果正在replay，清除当前timer并重新设定
-      if (this.replaying && this.replayTimer) {
-        clearInterval(this.replayTimer)
-        this.replayTimer = setInterval(() => {
-          this.executeReplayStep()
-        }, this.time_interval);
       }
     }
-  },
+  }
+
+  // 提取replay逻辑为独立方法
+  function executeReplayStep() {
+    const now_collage = progress_data.value[replayIdx.value].now_collage;
+    const now_overview = progress_data.value[replayIdx.value].now_overview_idx;
+    process_id.value = progress_data.value[replayIdx.value].process_id;
+    collage_result_type.value = progress_data.value[replayIdx.value].collage_result_type;
+    
+    if (now_overview != now_overview_idx.value && now_overview_idx.value != totalOverview.value - 1) { 
+      nextOverview()
+      return
+    }
+    
+    if (now_collage != now_collage_idx.value) {//进入下一个collage
+      console.log('4')
+      now_start_idx.value = elements.value.length
+      setReplayData(replayIdx.value, now_collage, now_start_idx.value)
+      for (let i = now_start_idx.value; i < posArray.value.length; i++) {
+        const raster = new paper.Raster({
+          source: srcArray.value[i],
+          position: posArray.value[i],
+          opacity: 0,
+          attr: attributesArray.value[i],
+          data: dataArray.value[i],
+          imgLoaded: false,
+          dataLoaded: false,
+          collage_idx: now_collage,
+          onLoad: () => {
+            console.log(srcArray.value[i])
+            raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
+            raster.rotate(angleArray.value[i] * (180 / Math.PI))
+            raster.imgLoaded = true;
+          },
+          onError: (e) => {
+            console.log('onError',e,raster)
+          }
+        });
+        raster.onMouseEnter = () => {
+          hoverAttr.value = raster.attr
+          hoverData.value = raster.data
+          let toastLeft = raster.position.x
+          let toastTop = raster.position.y
+          // markerToast.value.style.top = `${toastTop}px`
+          // markerToast.value.style.left = `${toastLeft}px`
+          // markerToast.value.classList.remove('hidden')
+        }
+        // raster.onMouseLeave = () => {
+        //   markerToast.value.classList.add('hidden')
+        // }
+        elements.value.push(raster);
+      }
+      now_collage_idx.value = now_collage
+    }
+    else if (elements.value.length === 0) {
+      console.log('5')
+      setReplayData(replayIdx.value, now_collage, 0)
+      for (let i = 0; i < posArray.value.length; i++) {
+        const raster = new paper.Raster({
+          source: srcArray.value[i],
+          position: posArray.value[i],
+          opacity: 0,
+          attr: attributesArray.value[i],
+          data: dataArray.value[i],
+          imgLoaded: false,
+          dataLoaded: false,
+          collage_idx: now_collage,
+          onLoad: () => {
+            console.log(srcArray.value[i])
+            raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
+            raster.rotate(angleArray.value[i] * (180 / Math.PI))
+            raster.imgLoaded = true
+          },
+          onError: (e) => {
+            console.log('onError',e,raster)
+          }
+        });
+        raster.onMouseEnter = () => {
+          hoverAttr.value = raster.attr
+          hoverData.value = raster.data
+          let toastLeft = raster.position.x
+          let toastTop = raster.position.y
+          // markerToast.value.style.top = `${toastTop}px`
+          // markerToast.value.style.left = `${toastLeft}px`
+          // markerToast.value.classList.remove('hidden')
+        }
+        // raster.onMouseLeave = () => {
+        //   markerToast.value.classList.add('hidden')
+        // }
+        elements.value.push(raster);
+      }
+    }
+    else if (elements.value.length > 0) {
+      console.log('6')
+      setReplayData(replayIdx.value, now_collage, now_start_idx.value)
+      for (let i = now_start_idx.value; i < elements.value.length; i++) {//这里先set好数据
+        if (elements.value[i].imgLoaded) {
+          elements.value[i].startPos = new paper.Point(elements.value[i].position);
+          elements.value[i].startRotate = elements.value[i].matrix.rotation;
+          elements.value[i].startScaleX = elements.value[i].matrix.scaling.x;
+          elements.value[i].startScaleY = elements.value[i].matrix.scaling.y;
+          elements.value[i].endPos = new paper.Point(posArray.value[i]);
+          elements.value[i].endRotate = angleArray.value[i] * (180 / Math.PI);
+          elements.value[i].endScaleX = widthArray.value[i] / elements.value[i].width;
+          elements.value[i].endScaleY = heightArray.value[i] / elements.value[i].height;
+          elements.value[i].elapsedTime = 0;
+          elements.value[i].endOpacity = 1;
+          elements.value[i].startOpacity = elements.value[i].opacity;
+          elements.value[i].dataLoaded = true;
+        }
+      }
+
+      if (!markerAni.value) {
+        markerAni.value = (event) => {
+          markerAnimation(event, now_start_idx.value);
+        };
+        paper.view.on('frame', markerAni.value);
+      }
+    }
+    
+    replayIdx.value += 1;
+    if (replayIdx.value >= result_data.value.length) {
+      stopReplay()
+    }
+  }
+
+  function replay() {
+    replaying.value = true
+    removeAnimation()
+    removeElements()
+    resetReplayData()
+    replayTimer.value = setInterval(() => {
+      executeReplayStep()
+    }, time_interval.value);
+  }
+
+  function nextOverview() {
+    now_collage_idx.value = 0
+    now_start_idx.value = 0
+    removeAnimation()
+    removeElements()
+    srcArray.value = []
+    posArray.value = []
+    widthArray.value = []
+    heightArray.value = []
+    angleArray.value = []
+    collage_result_type.value = []
+    now_overview_idx.value += 1
+  }
+
+  function updateReplayTimer() {
+    // 如果正在replay，清除当前timer并重新设定
+    if (replaying.value && replayTimer.value) {
+      clearInterval(replayTimer.value)
+      replayTimer.value = setInterval(() => {
+        executeReplayStep()
+      }, time_interval.value);
+    }
+  }
+
+  return {
+    // 状态
+    collaging,
+    progress_data,
+    collage_result_type,
+    canvas_width,
+    canvas_height,
+    srcArray,
+    posArray,
+    widthArray,
+    heightArray,
+    angleArray,
+    elements,
+    result_data,
+    dataArray,
+    attributesArray,
+    now_collage_idx,
+    now_start_idx,
+    markerAni,
+    containerAni,
+    replayIdx,
+    ip,
+    process_id,
+    replayTimer,
+    time_interval,
+    replaying,
+    hoverAttr,
+    hoverData,
+    totalOverview,
+    now_overview_idx,
+    // 计算属性
+    progress,
+    // 方法
+    resetData,
+    stopReplay,
+    backToEdit,
+    resetReplayData,
+    removeAnimation,
+    removeElements,
+    setData,
+    setReplayData,
+    updateAnimation,
+    markerAnimation,
+    executeReplayStep,
+    replay,
+    nextOverview,
+    updateReplayTimer,
+    startContainerAnimation
+  }
 })

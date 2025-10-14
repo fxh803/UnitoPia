@@ -8,6 +8,7 @@ import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useMarkerStore } from '~/stores/marker'
 import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useCanvasStore } from '~/stores/canvas'
+import { useContainerStore } from '~/stores/container'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -31,7 +32,9 @@ const ip = 'http://localhost:5000'
 export async function collectAllSlidesData(): Promise<Array<{overviewId: string, slides: ProcessedData[]}>> {
   console.log('开始收集')
   const collageSeriesStore = useCollageSeriesStore()
-
+  const containerStore = useContainerStore()
+  //清空container记录
+  containerStore.clearAllRecords()
   const overviewsResult = []
   try {
     // 遍历所有总览
@@ -67,6 +70,18 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         result.emitter = processEmitter(tempCanvas)
         result.container = processContainer(tempCanvas)
         result.dataBinding = processDataBinding(tempCanvas)
+        
+        // 将container信息记录到store中
+        if (result.container) {
+          containerStore.addContainerRecord(
+            overview.overviewId,
+            overviewIdx,
+            slide.slideId,
+            slideIdx,
+            result.container
+          )
+        }
+        
         slidesResult.push(result)
       }
       
@@ -326,6 +341,9 @@ export async function sendDataToServer(): Promise<boolean> {
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
     const data = await collectAllSlidesData()  
+    const containerStore = useContainerStore()
+    containerStore.createShiningPaths()
+    animationStore.startContainerAnimation()
     totalOverview.value = data.length
     now_overview_idx.value = 0
     for (const overview of data) {//对于每一个总览
