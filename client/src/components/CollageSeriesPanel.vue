@@ -17,7 +17,8 @@ const {
   addNewSlide,
   handleDuplicateSlide,
   addNewOverview,
-  selectOverview
+  selectOverview,
+  handleDeleteOverview
 } = collageSeriesStore
 
 // 折叠状态
@@ -66,6 +67,10 @@ function handleAddNewOverview() {
   addNewOverview()
 }
 
+function handleDeleteOverviewClick(overviewIdx: number) {
+  handleDeleteOverview(overviewIdx)
+}
+
 function toggleCollapse() {
   isCollapsed.value = !isCollapsed.value
 }
@@ -99,12 +104,16 @@ onMounted(() => {
       <div v-if="!isCollapsed" class="w-full px-2 flex flex-col h-full overflow-y-auto">
         <!-- 总览列表 -->
         <div v-for="(overview, overviewIdx) in overviews" :key="overview.overviewId"
-          class="border rounded bg-gray-100 p-2 flex flex-col mb-4">
+          class="border rounded bg-gray-100 p-2 flex flex-col mb-4 group">
           <!-- 总览区域 - 更大的slide -->
-          <div class="mb-4">
+          <div class="mb-4 relative">
             <div class="border rounded flex h-32 items-center justify-center bg-gray-50">
               <img :src="overview.preview" class="max-h-full max-w-full object-contain" alt="总览预览" />
             </div>
+            <!-- 删除总览按钮 -->
+            <button v-if="overviews.length > 1"
+              class="absolute top-1 right-1 z-10 hidden group-hover:block bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--delete-color)] hover:text-white transition-colors"
+              @click.stop="handleDeleteOverviewClick(overviewIdx)" title="删除总览">×</button>
           </div>
 
           <!-- 拼贴系列列表区域 -->

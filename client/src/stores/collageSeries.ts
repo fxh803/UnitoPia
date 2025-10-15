@@ -394,14 +394,20 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         if (jsonObj.objects.length > 0) {
             canvasInstance.loadFromJSON(json, () => {
                 setTimeout(() => {
+                    // 确保背景色为白色
+                    canvasInstance.backgroundColor = '#ffffff'
                     canvasInstance.renderAll()
                     // 恢复自定义属性 
                     console.log(dataTypeArray, markerIdArray, forceTypeArray)
                     restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray)
+                    updateCurrentSlide()
                     stopListen.value = false
-                }, 200)
+                }, 0)
             })
         } else {
+            // 确保空白画布也有白色背景
+            canvasInstance.backgroundColor = '#ffffff'
+            canvasInstance.renderAll()
             stopListen.value = false
         }
 
@@ -708,6 +714,49 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         }
     }
 
+    // 删除总览
+    function handleDeleteOverview(overviewIdx: number) {
+        if (overviews.value.length <= 1) return // 至少保留一个总览
+        
+        stopListen.value = true
+        
+        // 获取要删除的总览ID，用于清理背景数据
+        const overviewToDelete = overviews.value[overviewIdx]
+        const overviewIdToDelete = overviewToDelete?.overviewId
+        
+        // 计算删除后的新当前总览索引
+        let newCurrentOverviewIndex = currentOverviewIndex.value
+        
+        if (overviewIdx === currentOverviewIndex.value) {
+            // 删除的是当前总览
+            if (overviewIdx < overviews.value.length - 1) {
+                // 不是最后一个，保持当前索引不变（下一个总览会自动成为当前索引）
+                newCurrentOverviewIndex = overviewIdx
+            } else {
+                // 是最后一个，切换到前一个总览
+                newCurrentOverviewIndex = overviewIdx - 1
+            }
+        } else if (overviewIdx < currentOverviewIndex.value) {
+            // 删除的总览在当前总览之前，当前索引需要减1
+            newCurrentOverviewIndex = currentOverviewIndex.value - 1
+        } 
+        // 先删除总览
+        overviews.value.splice(overviewIdx, 1)
+        
+        // 清理被删除总览的背景数据
+        if (overviewIdToDelete) {
+            const backgroundStore = useBackgroundStore()
+            backgroundStore.clearCurrentOverviewBackground(overviewIdToDelete)
+        }
+        
+        // 切换到新的当前总览
+        currentOverviewIndex.value = newCurrentOverviewIndex
+        currentSlideIndex.value = 0
+        handleCollageSeriesSelect(0)
+        
+        stopListen.value = false
+    }
+
     return {
         collageSeries,
         overviews,
@@ -728,6 +777,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         regenerateSlidePreview,
         addNewOverview,
         selectOverview,
+        handleDeleteOverview,
         generateOverviewPreview
     }
 }) 
