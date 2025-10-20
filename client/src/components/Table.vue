@@ -10,7 +10,7 @@ const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
 const tableStore = useTableStore()
 const markerStore = useMarkerStore()
 const dataScaleStore = useDataScaleStore()
-const { widthScale, heightScale } = storeToRefs(dataScaleStore)
+const { widthScale, heightScale, sizeScale, currentMappingChannel } = storeToRefs(dataScaleStore)
 const isDragOver = ref(false)
 const isScrolling = ref(false)
 const cellClasses = ref<Record<number, Record<number, string>>>({})
@@ -133,7 +133,17 @@ const handleClearData = () => {
             <!-- 自定义 width 列的标题 -->
             <template v-if="item === 'width'" #header>
               <div class="flex flex-col items-center w-full gap-1 py-1">
-                <div class="text-xs font-semibold">Width</div>
+                <div class="flex items-center justify-center gap-2 w-full">
+                  <div class="text-xs font-semibold">Width</div>
+                  <input 
+                    type="radio" 
+                    name="mappingChannel"
+                    :checked="currentMappingChannel === 'width'"
+                    @change="dataScaleStore.setCurrentMappingChannel('width')"
+                    @click.stop
+                    class="w-3 h-3"
+                  />
+                </div>
                 <div class="flex items-center justify-center gap-2 w-full transform translate-x-2">
                   <input 
                     type="range" 
@@ -151,7 +161,17 @@ const handleClearData = () => {
             <!-- 自定义 height 列的标题 -->
             <template v-else-if="item === 'height'" #header>
               <div class="flex flex-col items-center w-full gap-1 py-1">
-                <div class="text-xs font-semibold">Height</div>
+                <div class="flex items-center justify-center gap-2 w-full">
+                  <div class="text-xs font-semibold">Height</div>
+                  <input 
+                    type="radio" 
+                    name="mappingChannel"
+                    :checked="currentMappingChannel === 'height'"
+                    @change="dataScaleStore.setCurrentMappingChannel('height')"
+                    @click.stop
+                    class="w-3 h-3"
+                  />
+                </div>
                 <div class="flex items-center justify-center gap-2 w-full transform translate-x-2">
                   <input 
                     type="range" 
@@ -163,6 +183,34 @@ const handleClearData = () => {
                     @click.stop
                   />
                   <span class="text-xs text-gray-600 min-w-8">{{ heightScale.toFixed(1) }}</span>
+                </div>
+              </div>
+            </template>
+            <!-- 自定义 size 列的标题 -->
+            <template v-else-if="item === 'size'" #header>
+              <div class="flex flex-col items-center w-full gap-1 py-1">
+                <div class="flex items-center justify-center gap-2 w-full">
+                  <div class="text-xs font-semibold">Size</div>
+                  <input 
+                    type="radio" 
+                    name="mappingChannel"
+                    :checked="currentMappingChannel === 'size'"
+                    @change="dataScaleStore.setCurrentMappingChannel('size')"
+                    @click.stop
+                    class="w-3 h-3"
+                  />
+                </div>
+                <div class="flex items-center justify-center gap-2 w-full transform translate-x-2">
+                  <input 
+                    type="range" 
+                    v-model.number="sizeScale" 
+                    min="0.1" 
+                    max="5" 
+                    step="0.1"
+                    class="scale-slider w-20"
+                    @click.stop
+                  />
+                  <span class="text-xs text-gray-600 min-w-8">{{ sizeScale.toFixed(1) }}</span>
                 </div>
               </div>
             </template>

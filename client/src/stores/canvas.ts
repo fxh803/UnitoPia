@@ -260,35 +260,8 @@ export const useCanvasStore = defineStore('canvas', () => {
     if (!canvasInstance) return
 
     try {
-      // 获取数据并进行归一化处理
-      const data = pharseData(markerId)
-      
-      // 提取所有的 width 和 height 值
-      const widths: number[] = []
-      const heights: number[] = []
-      
-      data.forEach((row: any) => {
-        const w = parseFloat(row.width)
-        const h = parseFloat(row.height)
-        if (!isNaN(w) && w > 0) widths.push(w)
-        if (!isNaN(h) && h > 0) heights.push(h)
-      })
-      
-      // 定义归一化范围
-      const minSize = 20  // 最小尺寸
-      const maxSize = 60  // 最大尺寸
-      
-      // 计算归一化参数
-      const minWidth = widths.length > 0 ? Math.min(...widths) : 1
-      const maxWidth = widths.length > 0 ? Math.max(...widths) : 1
-      const minHeight = heights.length > 0 ? Math.min(...heights) : 1
-      const maxHeight = heights.length > 0 ? Math.max(...heights) : 1
-      
-      // 归一化函数：将原始值映射到 [minSize, maxSize] 范围
-      const normalize = (value: number, min: number, max: number): number => {
-        if (max === min) return (minSize + maxSize) / 2  // 如果所有值相同，返回中间值
-        return minSize + ((value - min) / (max - min)) * (maxSize - minSize)
-      }
+      // 获取归一化参数
+      const { data, normalize, minWidth, maxWidth, minHeight, maxHeight, minSizeValue, maxSizeValue } = dataScaleStore.getNormalizationParams(markerId)
 
       for (let i = 0; i < pos.length; i++) {
         const p = pos[i]
@@ -326,14 +299,29 @@ export const useCanvasStore = defineStore('canvas', () => {
             const row = data[i]
             const dataWidth = parseFloat(row.width)
             const dataHeight = parseFloat(row.height)
+            const dataSize = parseFloat(row.size)
             
             // 如果数据有效，使用归一化后的尺寸
             if (!isNaN(dataWidth) && !isNaN(dataHeight) && dataWidth > 0 && dataHeight > 0) {
               const normalizedWidth = normalize(dataWidth, minWidth, maxWidth)
-              const normalizedHeight = normalize(dataHeight, minHeight, maxHeight) 
-              // 根据归一化后的 width 和 height 计算缩放比例
-              const scaleX = normalizedWidth / currentSize * dataScaleStore.widthScale
-              const scaleY = normalizedHeight / currentSize * dataScaleStore.heightScale
+              const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
+              const normalizedSize = !isNaN(dataSize) && dataSize > 0 ? normalize(dataSize, minSizeValue, maxSizeValue) : null
+              console.log(normalizedWidth,normalizedHeight,normalizedSize,currentSize)
+              let scaleX = 1
+              let scaleY = 1
+              
+              // 根据当前映射通道状态应用不同的缩放逻辑
+              if (dataScaleStore.currentMappingChannel === 'size' && normalizedSize !== null) {
+                // 如果是 size 通道，x 和 y 都使用 size 的归一化值
+                scaleX = normalizedSize / currentSize * dataScaleStore.sizeScale
+                scaleY = normalizedSize / currentSize * dataScaleStore.sizeScale
+              } else if (dataScaleStore.currentMappingChannel === 'width') {
+                // 如果是 width 通道，只使用 width 的归一化值
+                scaleX = normalizedWidth / currentSize * dataScaleStore.widthScale 
+              } else if (dataScaleStore.currentMappingChannel === 'height') {
+                // 如果是 height 通道，只使用 height 的归一化值 
+                scaleY = normalizedHeight / currentSize * dataScaleStore.heightScale
+              }  
               
               group.set({
                 scaleX: scaleX,

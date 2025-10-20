@@ -155,7 +155,7 @@ onMounted(() => {
           <transition name="slide-fade">
             <div v-show="!collapsedOverviews.has(overviewIdx)" class="flex-1 overflow-y-auto">
             <div v-for="(item, slideIdx) in overview.collageSeries" :key="item.slideId"
-              class="relative mb-3 m-l-2 m-r-2 border rounded flex h-32 items-center justify-center cursor-pointer"
+              class="relative mb-3 m-l-4 m-r-4 border rounded flex h-32 items-center justify-center cursor-pointer"
               :class="[
                 overviewIdx === currentOverviewIndex && slideIdx === currentSlideIndex
                   ? 'border-blue-500 bg-blue-50'
@@ -182,7 +182,7 @@ onMounted(() => {
 
             <!-- 添加新拼贴按钮 -->
             <button @click="handleAddNew(overviewIdx)"
-              class="w-[calc(100%-16px)] mb-3 m-l-2 m-r-2 border-2 border-dashed border-gray-300 rounded bg-gray-50 flex h-32 items-center justify-center hover:bg-gray-100 transition-colors"
+              class="w-[calc(100%-32px)] mb-3 m-l-4 m-r-4 border-2 border-dashed border-gray-300 rounded bg-gray-50 flex h-32 items-center justify-center hover:bg-gray-100 transition-colors"
               title="Add New Collage">
               <div class="text-gray-400 text-2xl">+</div>
             </button>
