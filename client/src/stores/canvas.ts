@@ -307,8 +307,8 @@ export const useCanvasStore = defineStore('canvas', () => {
               const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
               const normalizedSize = !isNaN(dataSize) && dataSize > 0 ? normalize(dataSize, minSizeValue, maxSizeValue) : null
               console.log(normalizedWidth,normalizedHeight,normalizedSize,currentSize)
-              let scaleX = 1
-              let scaleY = 1
+              let scaleX = normalizedSize / currentSize  
+              let scaleY = normalizedSize / currentSize 
               
               // 根据当前映射通道状态应用不同的缩放逻辑
               if (dataScaleStore.currentMappingChannel === 'size' && normalizedSize !== null) {
@@ -327,15 +327,7 @@ export const useCanvasStore = defineStore('canvas', () => {
                 scaleX: scaleX,
                 scaleY: scaleY
               })
-            } else {
-              // 如果数据无效，使用默认大小（保持宽高比）
-              const defaultMaxSize = 40
-              const scale = defaultMaxSize / currentSize
-              group.set({
-                scaleX: scale,
-                scaleY: scale
-              })
-            }
+            } 
           }
 
           // 添加到主画布（此时所有属性都已设置好）

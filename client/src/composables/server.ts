@@ -145,8 +145,8 @@ function processMarker(tempCanvas: Canvas) {
         console.log(baseSize)
         const scaleX = obj.scaleX || 1
         const scaleY = obj.scaleY || 1 
-        widths.push(scaleX*baseSize/100) //这里传的是对于正方形bbox的缩放系数
-        heights.push(scaleY*baseSize/100) 
+        widths.push(scaleX*baseSize/80) //这里传的是对于正方形bbox的缩放系数
+        heights.push(scaleY*baseSize/80) 
         
         // 只生成一次thumbnail（使用第一个对象）
         if (!thumbnail) {
@@ -334,7 +334,7 @@ export async function sendDataToServer(): Promise<boolean> {
   const animationStore = useAnimationStore()
   const { process_id, collage_result_type, canvas_width, canvas_height, collaging, totalOverview, now_overview_idx } = storeToRefs(animationStore)
   const selectedModeStore = useSelectedModeStore()
-  const fetchInterval = 2000
+  const fetchInterval = 500
   try { 
     animationStore.ip = ip
     // 设置系统为拼贴处理状态

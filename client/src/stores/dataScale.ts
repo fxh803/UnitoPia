@@ -98,8 +98,8 @@ export const useDataScaleStore = defineStore('dataScale', () => {
           const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
           const normalizedSize = !isNaN(dataSize) && dataSize > 0 ? normalize(dataSize, minSizeValue, maxSizeValue) : null
           console.log(normalizedWidth,normalizedHeight,normalizedSize,currentSize)
-          let scaleX = 1
-          let scaleY = 1
+          let scaleX = normalizedSize / currentSize  
+          let scaleY = normalizedSize / currentSize  
 
           // 根据当前映射通道状态应用不同的缩放逻辑
           if (currentMappingChannel.value === 'size' && normalizedSize !== null) {
