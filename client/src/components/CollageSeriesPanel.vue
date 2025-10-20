@@ -153,8 +153,8 @@ onMounted(() => {
 
           <!-- 拼贴系列列表区域 -->
           <div 
-            class="overflow-hidden transition-all duration-300 ease-in-out"
-            :class="collapsedOverviews.has(overviewIdx) ? 'max-h-0 opacity-0' : 'max-h-[500px] opacity-100'">
+            class="transition-all duration-300 ease-in-out"
+            :class="collapsedOverviews.has(overviewIdx) ? 'max-h-0 opacity-0' : 'opacity-100'">
             <div class="flex-1 overflow-y-auto">
             <div v-for="(item, slideIdx) in overview.collageSeries" :key="item.slideId"
               class="relative mb-3 m-l-2 m-r-2 border rounded flex h-32 items-center justify-center cursor-pointer"
