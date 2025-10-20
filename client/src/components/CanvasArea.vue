@@ -296,7 +296,7 @@ onMounted(async () => {
   <section class="bg-gray-900 flex h-full min-h-0 min-w-0 w-full">
     <!-- 主画布区域 -->
     <div ref="canvasAreaRef"
-      class="p-2 border-r border-[#e6e6e6] bg-[#ffffff] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
+      class="p-2 border-r border-[#e6e6e6] bg-[#f5f5f5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
       @dragover="handleDragOver" @drop="(e) => handleDrop(e, canvasEl)">
       <!-- 一级工具栏：模式选择 - 放在头部 -->
       <FirstToolbar />
