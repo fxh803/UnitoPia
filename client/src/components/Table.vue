@@ -90,13 +90,14 @@ const handleClearData = () => {
     <!-- 上传区域 - 只在没有数据时显示 -->
     <div v-if="tableStore.tableData.length === 0 && !tableStore.isLoading" class="h-full w-full p-5">
       <div
-        class="border-2 h-full w-full border-dashed border-gray-300 rounded-lg  transition-colors cursor-pointer flex justify-center items-center"
+        class="border-2 h-full w-full border-dashed border-gray-300 rounded-lg  transition-colors cursor-pointer flex flex-col justify-center items-center gap-4"
         :class="{
           'border-blue-500 bg-blue-50': isDragOver,
           'hover:border-gray-400': !isDragOver
         }" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop" @click="$refs.fileInput.click()">
         <input ref="fileInput" type="file" class="hidden" accept=".csv" @change="handleFileSelect" />
         <span class="i-carbon-add-alt text-4xl text-gray-400"></span>
+        <div class="text-sm font-medium text-gray-400">Upload Data</div>
       </div>
 
     </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useAnimationStore } from '~/stores/animation'
@@ -28,7 +28,7 @@ const isCollapsed = ref(false)
 const hoveredOverviewIdx = ref<number | null>(null)
 const hoveredSlideIdx = ref<number | null>(null)
 
-// 总览收起状态
+// 总览收起状态 - 初始时所有总览都是收起的
 const collapsedOverviews = ref<Set<number>>(new Set())
 
 // 当前总览
@@ -103,6 +103,20 @@ function toggleOverviewCollapse(overviewIdx: number) {
 }
 onMounted(() => {
   isCollapsed.value = window.innerWidth < 1440
+  // 初始时将所有总览设置为收起状态
+  overviews.value.forEach((_, index) => {
+    collapsedOverviews.value.add(index)
+  })
+})
+
+// 监听总览数量变化，新添加的总览默认收起
+watch(() => overviews.value.length, (newLength, oldLength) => {
+  if (newLength > oldLength) {
+    // 有新总览添加时，将新总览设置为收起状态
+    for (let i = oldLength; i < newLength; i++) {
+      collapsedOverviews.value.add(i)
+    }
+  }
 })
 </script>
 
@@ -131,7 +145,7 @@ onMounted(() => {
       <div v-if="!isCollapsed" class="w-full px-2 flex flex-col h-full overflow-y-auto">
         <!-- 总览列表 -->
         <div v-for="(overview, overviewIdx) in overviews" :key="overview.overviewId"
-          class="border rounded bg-gray-100 p-2 flex flex-col mb-4 group">
+          class="border rounded p-2 flex flex-col mb-4 group">
           <!-- 总览区域 - 更大的slide -->
           <div class="mb-4 relative">
             <div class="border rounded flex h-32 items-center justify-center bg-gray-50">
