@@ -16,6 +16,18 @@ import { useBackgroundStore } from '~/stores/background'
 import { useDataScaleStore } from '~/stores/dataScale'
 const animationStore = useAnimationStore()
 const { collaging, result_data } = storeToRefs(animationStore)
+
+// paperCanvas重新挂载的key
+const paperCanvasKey = ref(0)
+
+// 监听collaging状态变化，在rerun时重新挂载paperCanvas
+watch(collaging, (newVal, oldVal) => {
+  // 当从false变为true时（开始rerun），重新挂载paperCanvas
+  if (!oldVal && newVal) {
+    paperCanvasKey.value++
+  }
+})
+
 const selectedModeStore = useSelectedModeStore()
 const { selectedMode, isContainerMode } = storeToRefs(selectedModeStore)
 const dataScaleStore = useDataScaleStore()
@@ -304,7 +316,7 @@ onMounted(async () => {
       <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
         <!-- 画布本体 -->
         <canvas ref="canvasEl" class="border border-[#e6e6e6] rounded-2xl" />
-        <paperCanvas v-if="collaging || result_data.length > 0" />
+        <paperCanvas v-if="collaging || result_data.length > 0" :key="paperCanvasKey" />
         <!-- 对象操作按钮 -->
         <ObjectActionButtons />
       </div>

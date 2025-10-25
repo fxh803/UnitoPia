@@ -64,6 +64,11 @@ const handleRun = () => {
   if (collaging.value) {
     return
   }else{
+    if (result_data.value.length>0) {
+      animationStore.resetData()
+      animationStore.removeElements()
+      animationStore.removeAnimation() 
+    }
     sendDataToServer()
   }
 }
@@ -103,7 +108,7 @@ const currentSpeedMultiplier = computed(() => {
       </h1>
       
       <!-- 播放按钮 -->
-      <button v-show="showRunButton"
+      <button 
         class="ml-50px flex items-center gap-2 px-6 h-full bg-white  text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
         :class="[
           collaging ? 'hover:bg-[var(--delete-color)]' : 'hover:bg-gray-100',
@@ -120,7 +125,8 @@ const currentSpeedMultiplier = computed(() => {
           v-else
           class="i-carbon:renew animate-spin text-lg"
         ></div>
-        <span>{{ collaging ?  'Running...' : 'Run' }}</span>
+        <span>{{ collaging ?  'Running...' : result_data.length>0 ? 'reRun' : 'Run' }}</span>
+       
       </button>
       
       <!-- Replay 按钮 - 当result_data不为空时显示 -->
@@ -138,7 +144,7 @@ const currentSpeedMultiplier = computed(() => {
           v-else
           class="i-carbon:renew animate-spin text-lg"
         ></div>
-        <span>{{ replaying ? 'replaying...' : 'replay' }}</span>
+        <span>{{ replaying ? 'replaying...' : 'play' }}</span>
       </button>
       
       <!-- Export 按钮 -->
