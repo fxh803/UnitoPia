@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Canvas, PencilBrush } from 'fabric'
-import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { useSelectedModeStore } from '~/stores/selectedMode'
@@ -29,7 +29,7 @@ watch(collaging, (newVal, oldVal) => {
 })
 
 const selectedModeStore = useSelectedModeStore()
-const { selectedMode, isContainerMode } = storeToRefs(selectedModeStore)
+const { selectedMode } = storeToRefs(selectedModeStore)
 const dataScaleStore = useDataScaleStore()
 
 const brushSizeStore = useBrushSizeStore()
@@ -52,7 +52,6 @@ const { setMode } = canvasModeStore
 const { 
   setDrawedObjectDataType, 
   adjustLayer, 
-  containerColor,
   removeObjectsByMarkerId,
   isDropOnEmitter,
   getBezierApproxLength,
@@ -62,16 +61,13 @@ const {
   handleEmitterDrop,
   handleMarkerDrop,
   handleDragOver,
-  handleDrop
+  handleDrop,
+  addCanvasEventListeners,
+  removeCanvasEventListeners
 } = canvasStore
 
 const objectActionsStore = useObjectActionsStore()
-const {
-  updateActionBtnPosition,
-  updateActionBtnVisble,
-  hideBtns,
-  setCurrentPathObj,
-} = objectActionsStore
+
 
 const shapeDrawingStore = useShapeDrawingStore()
 const { isDrawingShape, shapeStart, previewShape } = storeToRefs(shapeDrawingStore)
@@ -120,81 +116,6 @@ function updateCanvasSize() {
   }
 }
 
-function addCanvasEventListeners() {
-  canvas.on({
-    'selection:created': () => {
-      setCurrentPathObj()
-      updateActionBtnVisble()
-      updateActionBtnPosition()
-
-    },
-    'selection:updated': () => {
-      setCurrentPathObj()
-      updateActionBtnVisble()
-      updateActionBtnPosition()
-
-    },
-    'selection:cleared': hideBtns,
-    'object:moving': hideBtns,
-    'object:scaling': hideBtns,
-    'object:rotating': hideBtns,
-    'object:modified': () => {
-      setCurrentPathObj()
-      updateActionBtnVisble()
-      updateActionBtnPosition()
-      updateCurrentSlide()
-    },
-    'object:added': (e) => {
-      setDrawedObjectDataType(e)
-      updateCurrentSlide()
-      adjustLayer()
-    },
-    'object:removed': () => {
-      updateCurrentSlide()
-    },
-    'mouse:over': (e) => {
-      // 鼠标悬停在对象上时添加偏透明蓝色效果
-      if (e.target && e.target.get('dataType') === 'container') {
-        e.target.set('opacity', 0.7)
-        canvas.renderAll()
-      } 
-      if (e.target && e.target.get('dataType') === 'emitter') {
-        // emitter是group，需要遍历其中的子对象设置透明度
-        e.target.getObjects().forEach((childObj: any) => {
-          childObj.set('opacity', 0.5)
-        })
-        canvas.renderAll()
-      }
-    },
-    'mouse:out': (e) => {
-      // 鼠标离开对象时恢复原始透明度
-      if (e.target && e.target.get('dataType') === 'container') {
-        e.target.set('opacity', 1)      
-        canvas.renderAll()
-      }
-      if (e.target && e.target.get('dataType') === 'emitter') {
-        // emitter是group，需要遍历其中的子对象恢复透明度
-        e.target.getObjects().forEach((childObj: any) => {
-          childObj.set('opacity', 1)
-        })
-        canvas.renderAll()
-      }
-    }
-  })
-}
-function removeCanvasEventListeners() {
-  canvas.off('selection:created')
-  canvas.off('selection:updated')
-  canvas.off('selection:cleared')
-  canvas.off('object:moving')
-  canvas.off('object:scaling')
-  canvas.off('object:rotating')
-  canvas.off('object:modified')
-  canvas.off('object:added')
-  canvas.off('object:removed')
-  canvas.off('mouse:over')
-  canvas.off('mouse:out')
-}
 watch(collaging, (newVal) => {
   if (newVal) {
     removeCanvasEventListeners()
@@ -294,6 +215,7 @@ onMounted(async () => {
     backgroundStore.setCanvas(() => canvas)
     canvasStore.setCanvas(() => canvas)
     dataScaleStore.setCanvas(() => canvas)
+    
     // 初始化空白幻灯片
     initializeEmptySlide()
     addCanvasEventListeners()

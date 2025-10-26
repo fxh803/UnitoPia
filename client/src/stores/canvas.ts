@@ -5,6 +5,8 @@ import { useBezierDrawingStore } from '~/stores/bezierDrawing'
 import { useBackgroundStore } from '~/stores/background'
 import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useDataScaleStore } from '~/stores/dataScale'
+import { useCollageSeriesStore } from '~/stores/collageSeries'
+import { useObjectActionsStore } from '~/stores/objectActions'
 import { Group } from 'fabric'
 import { handleMarkerDropCanvas, pharseData } from '~/composables/server'
 import * as fabric from 'fabric'
@@ -18,10 +20,103 @@ export const useCanvasStore = defineStore('canvas', () => {
   const backgroundStore = useBackgroundStore()
   const canvasModeStore = useCanvasModeStore()
   const dataScaleStore = useDataScaleStore()
+  const collageSeriesStore = useCollageSeriesStore()
+  const objectActionsStore = useObjectActionsStore()
 
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
     canvasRef.value = canvas
+  }
+
+  // 添加画布事件监听器
+  function addCanvasEventListeners() {
+    const canvasInstance = canvasRef.value?.()
+    if (!canvasInstance) return
+
+    canvasInstance.on({
+      'selection:created': () => {
+        objectActionsStore.setCurrentPathObj()
+        objectActionsStore.updateActionBtnVisble()
+        objectActionsStore.updateActionBtnPosition()
+      },
+      'selection:updated': () => {
+        objectActionsStore.setCurrentPathObj()
+        objectActionsStore.updateActionBtnVisble()
+        objectActionsStore.updateActionBtnPosition()
+      },
+      'selection:cleared': () => {
+        objectActionsStore.hideBtns()
+      },
+      'object:moving': () => {
+        objectActionsStore.hideBtns()
+      },
+      'object:scaling': () => {
+        objectActionsStore.hideBtns()
+      },
+      'object:rotating': () => {
+        objectActionsStore.hideBtns()
+      },
+      'object:modified': () => {
+        objectActionsStore.setCurrentPathObj()
+        objectActionsStore.updateActionBtnVisble()
+        objectActionsStore.updateActionBtnPosition()
+        collageSeriesStore.updateCurrentSlide()
+      },
+      'object:added': (e) => {
+        setDrawedObjectDataType(e)
+        collageSeriesStore.updateCurrentSlide()
+        adjustLayer()
+      },
+      'object:removed': () => {
+        collageSeriesStore.updateCurrentSlide()
+      },
+      'mouse:over': (e) => {
+        // 鼠标悬停在对象上时添加偏透明蓝色效果
+        if (e.target && e.target.get('dataType') === 'container') {
+          e.target.set('opacity', 0.7)
+          canvasInstance.renderAll()
+        } 
+        if (e.target && e.target.get('dataType') === 'emitter') {
+          // emitter是group，需要遍历其中的子对象设置透明度
+          e.target.getObjects().forEach((childObj: any) => {
+            childObj.set('opacity', 0.5)
+          })
+          canvasInstance.renderAll()
+        }
+      },
+      'mouse:out': (e) => {
+        // 鼠标离开对象时恢复原始透明度
+        if (e.target && e.target.get('dataType') === 'container') {
+          e.target.set('opacity', 1)      
+          canvasInstance.renderAll()
+        }
+        if (e.target && e.target.get('dataType') === 'emitter') {
+          // emitter是group，需要遍历其中的子对象恢复透明度
+          e.target.getObjects().forEach((childObj: any) => {
+            childObj.set('opacity', 1)
+          })
+          canvasInstance.renderAll()
+        }
+      }
+    })
+  }
+
+  // 移除画布事件监听器
+  function removeCanvasEventListeners() {
+    const canvasInstance = canvasRef.value?.()
+    if (!canvasInstance) return
+
+    canvasInstance.off('selection:created')
+    canvasInstance.off('selection:updated')
+    canvasInstance.off('selection:cleared')
+    canvasInstance.off('object:moving')
+    canvasInstance.off('object:scaling')
+    canvasInstance.off('object:rotating')
+    canvasInstance.off('object:modified')
+    canvasInstance.off('object:added')
+    canvasInstance.off('object:removed')
+    canvasInstance.off('mouse:over')
+    canvasInstance.off('mouse:out')
   }
 
   function setDrawedObjectDataType(e) {
@@ -400,6 +495,8 @@ export const useCanvasStore = defineStore('canvas', () => {
     canvasRef,
     containerColor,
     setCanvas,
+    addCanvasEventListeners,
+    removeCanvasEventListeners,
     setDrawedObjectDataType,
     adjustLayer,
     removeObjectsByMarkerId,
