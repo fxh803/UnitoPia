@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useAnimationStore } from '~/stores/animation'
+import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { storeToRefs } from 'pinia'
 import paper from 'paper'
 // 定义container记录的数据结构
@@ -16,6 +17,7 @@ export const useContainerStore = defineStore('container', () => {
     // 存储所有container记录
     const containerRecords = ref<ContainerRecord[]>([])
     const shining_paths = ref<paper.Raster[]>([])
+    const collageSeriesStore = useCollageSeriesStore()
 
     // 添加container记录
     function addContainerRecord(overviewId: string, overviewIdx: number, slideId: string, slideIndex: number, container: string) {
@@ -74,12 +76,18 @@ export const useContainerStore = defineStore('container', () => {
     }
 
     function createShiningPaths() {
-        containerRecords.value.forEach(item => {
+        const { currentOverviewIndex } = storeToRefs(collageSeriesStore)
+        let index = 0
+        for (let i = 0; i < containerRecords.value.length; i++) {
+            if (containerRecords.value[i].overviewIdx !== currentOverviewIndex.value) {
+                continue
+            }
+            const item = containerRecords.value[i]
             const raster = new paper.Raster({
                 source: item.container,
                 position: paper.view.center,
                 slideIndex: item.slideIndex,
-                overviewIdx: item.overviewIdx,
+                overviewIdx: index,
                 opacity: 0,
                 initialized:false,
                 changeRate: 0.2,
@@ -88,7 +96,8 @@ export const useContainerStore = defineStore('container', () => {
                 }
             })
             shining_paths.value.push(raster)
-        })
+            index++
+        }
         console.log(shining_paths.value)
     }
 

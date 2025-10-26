@@ -32,6 +32,7 @@ const ip = 'http://localhost:5000'
 export async function collectAllSlidesData(): Promise<Array<{overviewId: string, slides: ProcessedData[]}>> {
   console.log('开始收集')
   const collageSeriesStore = useCollageSeriesStore()
+  const { currentOverviewIndex } = storeToRefs(collageSeriesStore)
   const containerStore = useContainerStore()
   //清空container记录
   containerStore.clearAllRecords()
@@ -39,6 +40,9 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
   try {
     // 遍历所有总览
     for (let overviewIdx = 0; overviewIdx < collageSeriesStore.overviews.length; overviewIdx++) {
+      if (overviewIdx !== currentOverviewIndex.value) {
+        continue
+      }
       const overview = collageSeriesStore.overviews[overviewIdx]
       const slidesResult = []
       
