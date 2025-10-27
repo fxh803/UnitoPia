@@ -54,7 +54,7 @@ const handleColorChange = (event: Event) => {
       :value="objectColor"
       @change="handleColorChange"
       class="absolute opacity-0 pointer-events-none"
-      style="position: absolute; top: -200px; left: -250px;"
+      style="position: absolute; top: -250px; left: 50px;"
     />
   </div>
 </template>

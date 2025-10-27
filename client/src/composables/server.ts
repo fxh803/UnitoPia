@@ -27,7 +27,7 @@ interface ProcessedData {
   }>
   dataBinding: Array<{ data: Array<any>, markerId: string}>
 }
-const ip = 'http://localhost:5000'
+const ip = 'http://localhost:4444'
 // 收集所有总览数据的函数
 export async function collectAllSlidesData(): Promise<Array<{overviewId: string, slides: ProcessedData[]}>> {
   console.log('开始收集')
