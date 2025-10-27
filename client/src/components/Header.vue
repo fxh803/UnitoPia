@@ -107,7 +107,7 @@ const currentSpeedMultiplier = computed(() => {
   <div class="relative">
     <header class="px-6 border-b border-gray-200 bg-white flex h-14 w-full shadow items-center z-20">
       <h1 class="text-xl text-gray-800 font-bold ">
-        Unitopia
+        UnitoPia
       </h1>
       
       <!-- 播放按钮 -->
