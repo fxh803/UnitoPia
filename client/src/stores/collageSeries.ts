@@ -74,7 +74,12 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     preview,
                     dataTypeArray: [],
                     markerIdArray: [],
-                    forceTypeArray: []
+                    forceTypeArray: [],
+                    // 每个 slide 的个性化设置
+                    iterations: 150,
+                    render_size: 1000,
+                    rotation: true,
+                    orientation: 'free'
                 }]
         }]
         currentOverviewIndex.value = 0
@@ -367,7 +372,12 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             preview,
             dataTypeArray,
             markerIdArray,
-            forceTypeArray
+            forceTypeArray,
+            // 初始化个性化设置默认值
+            iterations: 150,
+            render_size: 1000,
+            rotation: true,
+            orientation: 'free'
         })
 
         currentSlideIndex.value = currentOverview.collageSeries.length - 1
@@ -438,7 +448,12 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             preview: originalSlide.preview,
             dataTypeArray: [...originalSlide.dataTypeArray],
             markerIdArray: [...originalSlide.markerIdArray],
-            forceTypeArray: [...originalSlide.forceTypeArray]
+            forceTypeArray: [...originalSlide.forceTypeArray],
+            // 复制个性化设置
+            iterations: (originalSlide as any).iterations ?? 150,
+            render_size: (originalSlide as any).render_size ?? 1000,
+            rotation: (originalSlide as any).rotation ?? true,
+            orientation: (originalSlide as any).orientation ?? 'free'
         }
 
         // 在复制目标后面插入新幻灯片

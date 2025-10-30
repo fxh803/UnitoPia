@@ -27,6 +27,28 @@ const isCollapsed = ref(false)
 // 悬停状态
 const hoveredOverviewIdx = ref<number | null>(null)
 const hoveredSlideIdx = ref<number | null>(null)
+// 面板本地状态
+const isSettingsOpen = ref(false)
+const settingsOverviewIdx = ref<number | null>(null)
+const settingsSlideIdx = ref<number | null>(null)
+const panelCoords = ref<{ left: number, top: number } | null>(null)
+
+
+function toggleSettings(overviewIdx: number, slideIdx: number, e?: MouseEvent) {
+  if (isSettingsOpen.value && settingsOverviewIdx.value === overviewIdx && settingsSlideIdx.value === slideIdx) {
+    isSettingsOpen.value = false
+    return
+  }
+  settingsOverviewIdx.value = overviewIdx
+  settingsSlideIdx.value = slideIdx
+  if (e && e.currentTarget) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    panelCoords.value = { left: rect.right + window.scrollX, top: rect.top + window.scrollY + 8 }
+  } else {
+    panelCoords.value = { left: window.innerWidth / 2, top: window.innerHeight / 2 }
+  }
+  isSettingsOpen.value = true
+}
 
 // 总览收起状态 - 初始时所有总览都是收起的
 const collapsedOverviews = ref<Set<number>>(new Set())
@@ -190,6 +212,22 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
                 @click.stop="handleDuplicate(overviewIdx, slideIdx)" title="Duplicate">
                 <div class="i-carbon:copy text-xs"></div>
               </button>
+
+              <!-- 设置按钮 -->
+              <button v-if="hoveredOverviewIdx === overviewIdx && hoveredSlideIdx === slideIdx"
+                class="absolute top-1 right-14 z-10 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--primary-color)] hover:text-white transition-colors"
+                @click.stop="(e)=>toggleSettings(overviewIdx, slideIdx, e)" title="Settings">
+                <div class="i-carbon:settings text-xs"></div>
+              </button>
+
+              <!-- 设置面板（锚定到当前卡片） -->
+              <SettingsPanel
+                v-if="isSettingsOpen && settingsOverviewIdx === overviewIdx && settingsSlideIdx === slideIdx"
+                :overview-idx="overviewIdx"
+                :slide-idx="slideIdx"
+                :coords="panelCoords || undefined"
+                @close="() => { isSettingsOpen = false }"
+              />
 
               <img :src="item.preview" class="max-h-full max-w-full object-contain">
             </div>

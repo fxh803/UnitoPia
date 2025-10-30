@@ -26,6 +26,11 @@ interface ProcessedData {
     rotation?: number // fieldForce 的旋转角度
   }>
   dataBinding: Array<{ data: Array<any>, markerId: string}>
+  // 每个 slide 的个性化设置
+  iterations?: number
+  render_size?: number
+  rotation?: boolean
+  orientation?: 'free' | 'center'
 }
 const ip = 'http://localhost:4444'
 // 收集所有总览数据的函数
@@ -74,6 +79,12 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         result.emitter = processEmitter(tempCanvas)
         result.container = processContainer(tempCanvas)
         result.dataBinding = processDataBinding(tempCanvas)
+        // 注入当前 slide 的个性化设置
+        const slideSettings = slide as any
+        result.iterations = slideSettings.iterations ?? 150
+        result.render_size = slideSettings.render_size ?? 1000
+        result.rotation = slideSettings.rotation ?? true
+        result.orientation = slideSettings.orientation ?? 'free'
         
         // 将container信息记录到store中
         if (result.container) {
