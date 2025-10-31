@@ -50,10 +50,10 @@ const handleClose = () => emit('close')
       @click.stop
     >
       <div class="w-96 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 bg-gray-50">
+        <div class="flex items-center justify-between px-4 py-1 border-b border-gray-200 bg-gray-50">
           <h3 class="text-sm font-medium text-gray-800">Settings</h3>
           <button
-            class="text-gray-600 hover:text-gray-800"
+            class="text-gray-600 hover:text-gray-800 hover:bg-gray-100 active:bg-gray-200 rounded-md p-1 transition-colors cursor-pointer inline-flex items-center justify-center h-8 w-8"
             aria-label="Close"
             @click="handleClose"
           >
@@ -67,7 +67,7 @@ const handleClose = () => emit('close')
           <label class="text-gray-700 font-medium select-none">orientation</label>
           <el-radio-group
             :model-value="currentSlide?.orientation ?? 'free'"
-            size="medium"
+            size="default"
             @update:model-value="(v: Orientation) => { if (currentSlide) currentSlide.orientation = v }"
           >
             <el-radio value="free">free</el-radio>
@@ -112,9 +112,17 @@ const handleClose = () => emit('close')
           <el-switch
             :model-value="currentSlide?.rotation ?? true"
             size="small"
-            active-text="Open"
-            inactive-text="Close"
             @update:model-value="(v:boolean) => { if (currentSlide) currentSlide.rotation = v }"
+          />
+        </div>
+
+        <!-- hole: Element Plus Switch -->
+        <div class="flex items-center justify-between">
+          <label class="text-gray-700 font-medium select-none">hole</label>
+          <el-switch
+            :model-value="currentSlide?.hole ?? false"
+            size="small"
+            @update:model-value="(v:boolean) => { if (currentSlide) (currentSlide as any).hole = v }"
           />
         </div>
           </div>

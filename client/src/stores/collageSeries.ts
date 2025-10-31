@@ -79,6 +79,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     iterations: 150,
                     render_size: 1000,
                     rotation: true,
+                    hole: false,
                     orientation: 'free'
                 }]
         }]
@@ -377,6 +378,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             iterations: 150,
             render_size: 1000,
             rotation: true,
+            hole: false,
             orientation: 'free'
         })
 
@@ -453,6 +455,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             iterations: (originalSlide as any).iterations ?? 150,
             render_size: (originalSlide as any).render_size ?? 1000,
             rotation: (originalSlide as any).rotation ?? true,
+            hole: (originalSlide as any).hole ?? false,
             orientation: (originalSlide as any).orientation ?? 'free'
         }
 

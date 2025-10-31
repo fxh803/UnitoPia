@@ -216,6 +216,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
               <!-- 设置按钮 -->
               <button v-if="hoveredOverviewIdx === overviewIdx && hoveredSlideIdx === slideIdx"
                 class="absolute top-1 right-14 z-10 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--primary-color)] hover:text-white transition-colors"
+                :class="overview.collageSeries.length > 1 ? 'right-14' : 'right-8'"
                 @click.stop="(e)=>toggleSettings(overviewIdx, slideIdx, e)" title="Settings">
                 <div class="i-carbon:settings text-xs"></div>
               </button>

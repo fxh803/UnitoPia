@@ -31,6 +31,7 @@ interface ProcessedData {
   render_size?: number
   rotation?: boolean
   orientation?: 'free' | 'center'
+  hole?: boolean
 }
 const ip = 'http://localhost:4444'
 // 收集所有总览数据的函数
@@ -85,6 +86,7 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         result.render_size = slideSettings.render_size ?? 1000
         result.rotation = slideSettings.rotation ?? true
         result.orientation = slideSettings.orientation ?? 'free'
+        result.hole = slideSettings.hole ?? false
         
         // 将container信息记录到store中
         if (result.container) {

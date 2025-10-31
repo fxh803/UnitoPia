@@ -8,11 +8,11 @@ import base64
 import re
 import cairosvg
 from PIL import Image
-# from unitopia import Unitopia 
+from unitopia import Unitopia 
 from utils import *
 app = Flask(__name__, template_folder='',static_folder="")
 CORS(app)  # 启用跨域支持
-# unitopia = Unitopia() 
+unitopia = Unitopia() 
 progress_data = {}
 
 @app.route('/processDataApi', methods=['POST'])
@@ -89,9 +89,11 @@ def process_data():
                 with open(marker_path, "w", encoding="utf-8") as f_marker:
                     f_marker.write(marker_string)
                 json_data["collage"][i]["marker_config"][j]["marker"] = [marker_path]
+
             json_data["collage"][i]["marker_config"][j]["init_pos"] = init_pos
             json_data["collage"][i]["marker_config"][j]["init_angle"] = [0]*len(init_pos)
             json_data["collage"][i]["marker_config"][j]["init_size"] = init_size
+
             visualEncoding = None
             data = None
             attribute = None
@@ -108,6 +110,10 @@ def process_data():
             json_data["collage"][i]["marker_config"][j]["visual_encoding"][0]["attribute"] = attribute
             json_data["collage"][i]["marker_config"][j]["data"] = [1]*len(data)
 
+            json_data["collage"][i]["marker_config"][j]["rotation"] = collage_data["rotation"]
+            if collage_data["orientation"] == "center":
+                json_data["collage"][i]["marker_config"][j]["orientation"] = collage_data["orientation"]
+
         
         ##########################   container ######################## 
         if collage_data["container"] and collage_data["container"] != '': 
@@ -121,6 +127,11 @@ def process_data():
             container_path = f"./workdir/{str(id)}_{i}/container.png"
             binary_image.save(container_path)
             json_data["collage"][i]["container_config"]["container"] = container_path 
+            
+            if collage_data["hole"]:
+                json_data["collage"][i]["container_config"]["holes"] = collage_data["hole"]
+            else:
+                json_data["collage"][i]["container_config"]["holes"] = None
         ##########################   emitter ########################
         if collage_data["emitter"] and len(collage_data["emitter"]) > 0:
             json_data["collage"][i]["emitter_config"]["control_points"] = [
@@ -143,14 +154,15 @@ def process_data():
                 y = math.sin(rotation_rad)
                 json_data["collage"][i]["force_config"]["force_points"] = [x, y]
                 json_data["collage"][i]["force_config"]["force_type"] = "indicate_direction"
-        json_data["collage"][i]['marker_config'][0]['init_size_ratio'] = 0.6
-        json_data["collage"][i]['iterations'] = 150
+        # json_data["collage"][i]['marker_config'][0]['init_size_ratio'] = 0.6
+        json_data["collage"][i]['iterations'] = collage_data["iterations"]
+        json_data["collage"][i]['render_size'] = collage_data["render_size"]
  
     with open(f'./workdir/{str(id)}_{i}/collage.json', 'w') as f:
         json.dump(json_data, f, indent=4)
  
     
-    # unitopia.start_collage(f'./workdir/{str(id)}_{i}/collage.json',id = str(id),callback=collage_callback)
+    unitopia.start_collage(f'./workdir/{str(id)}_{i}/collage.json',id = str(id),callback=collage_callback)
     # 返回处理结果
     return jsonify({
         "success": True,
