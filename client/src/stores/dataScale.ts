@@ -59,8 +59,7 @@ export const useDataScaleStore = defineStore('dataScale', () => {
           scaleX: newScaleX,
           scaleY: newScaleY
         })
-
-        console.log('更新:', baseWidth * newScaleX, baseHeight * newScaleY, 'id:', obj.get('markerId'), 'channel:', currentMappingChannel.value)
+ 
       }
     })
 
@@ -90,14 +89,14 @@ export const useDataScaleStore = defineStore('dataScale', () => {
         const row = data[i-1]//从1开始的
         const dataWidth = parseFloat(row.width)
         const dataHeight = parseFloat(row.height)
-        const dataSize = parseFloat(row.size)
-        console.log('dataWidth', dataWidth, 'dataHeight', dataHeight, 'dataSize', dataSize)
+        const dataSize = parseFloat(row.size) 
+
         // 如果数据有效，使用归一化后的尺寸
         if (!isNaN(dataWidth) && !isNaN(dataHeight) && dataWidth > 0 && dataHeight > 0) {
           const normalizedWidth = normalize(dataWidth, minWidth, maxWidth)
           const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
           const normalizedSize = !isNaN(dataSize) && dataSize > 0 ? normalize(dataSize, minSizeValue, maxSizeValue) : null
-          console.log(normalizedWidth,normalizedHeight,normalizedSize,currentSize)
+          
           // 默认使用平均值/现有值
           let scaleX = avgWidth / currentSize  
           let scaleY = avgHeight / currentSize  
@@ -113,8 +112,7 @@ export const useDataScaleStore = defineStore('dataScale', () => {
           } else if (currentMappingChannel.value === 'height') {
             // 如果是 height 通道，只使用 height 的归一化值 
             scaleY = normalizedHeight / currentSize * heightScale.value
-          }
-          console.log(scaleX,scaleY)
+          } 
           obj.set({
             scaleX: scaleX,
             scaleY: scaleY

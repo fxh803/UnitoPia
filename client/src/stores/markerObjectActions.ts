@@ -40,8 +40,7 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
     function setCurrentPathObj() {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
-        currentPathObj.value = obj
-        console.log('subCanvas activateobj', obj?.get('type'))
+        currentPathObj.value = obj 
     }
 
     function updateActionBtnVisble() {
@@ -69,14 +68,7 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
 
         if (!isGroupMode.value && !isMultipleSelection.value) {
             showGroupBtn.value = false
-        }
-
-        console.log(showDeleteBtn.value)
-        console.log(showClosePathBtn.value)
-        console.log(showGroupBtn.value)
-        console.log(showColorBtn.value)
-        console.log(showLayerUpBtn.value)
-        console.log(showLayerDownBtn.value)
+        } 
     }
 
     function updateActionBtnPosition() {

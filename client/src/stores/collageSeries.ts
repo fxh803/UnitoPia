@@ -129,7 +129,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const markerIdArray = objects.map((obj: any) => obj.get('markerId'))
         const forceTypeArray = objects.map((obj: any) => obj.get('forceType'))
         const dataArray = objects.map((obj: any) => obj.get('data'))
-        console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
+        // console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
         
         currentSlide.json = json
         currentSlide.preview = preview
@@ -178,8 +178,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         // 如果有总览背景，添加到合并对象的最前面（最底层）
         const backgroundStore = useBackgroundStore()
-        const overviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
-        console.log(overviewBackground)
+        const overviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId) 
         if (overviewBackground) {
             try {
                 // 使用fabric.js的Promise方式加载背景图片
@@ -418,7 +417,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     canvasInstance.backgroundColor = '#ffffff'
                     canvasInstance.renderAll()
                     // 恢复自定义属性 
-                    console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
+                    // console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
                     restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, dataArray)
                     updateCurrentSlide()
                     stopListen.value = false
@@ -477,8 +476,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         }
 
         stopListen.value = false
-
-        console.log(`Slide ${idx} duplicated successfully`)
+ 
     }
 
     // 删除幻灯片
@@ -576,8 +574,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 // 检查是否已经存在背景对象
                 const existingBackgroundIndex = slide.dataTypeArray.findIndex((dataType: any) =>
                     dataType === 'background'
-                )
-                console.log('existingBackgroundIndex', existingBackgroundIndex)
+                ) 
                 // 如果存在背景对象，替换它；如果不存在，添加到最前面（最底层）
                 if (existingBackgroundIndex !== -1) {
                     slideData.objects[existingBackgroundIndex] = backgroundObject

@@ -23,8 +23,7 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
 
     try {
       // 获取路径上的点
-      const points = path.path
-      console.log(points)
+      const points = path.path 
       const sampledPoints = samplePathPoints(points, 20)
 
       if (sampledPoints.length < 4) {

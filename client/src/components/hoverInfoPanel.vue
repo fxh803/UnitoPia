@@ -20,6 +20,11 @@ const formattedData = computed(() => {
     
     // 根据 currentMappingChannel 过滤字段
     const filteredEntries = entries.filter(([key]) => {
+      // 过滤的内部属性（如 _X_ROW_KEY）
+      if (key.startsWith('_X_ROW_KEY')) {
+        return false
+      }
+      
       const lowerKey = key.toLowerCase()
       
       // 如果当前映射通道是 width，只显示 width，隐藏 height 和 size

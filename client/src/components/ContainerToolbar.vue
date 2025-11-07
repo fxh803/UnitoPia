@@ -35,8 +35,7 @@ const handleFileUpload = (event: Event) => {
     // 创建文件读取器
     const reader = new FileReader()
     reader.onload = async (e) => {
-      const result = e.target?.result as string
-      console.log('PNG文件已上传:', file.name)
+      const result = e.target?.result as string 
       const processedImg = await sendUploadContainerToServer(result) 
       // 将图片添加到画布作为container对象
       addImageToCanvas(processedImg, file.name)
@@ -52,8 +51,7 @@ const handleFileUpload = (event: Event) => {
   }
 }
 
-const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
-  console.log('开始添加图片到画布:', imageDataUrl, fileName)
+const addImageToCanvas = (imageDataUrl: string, fileName: string) => { 
   
   // 获取canvas实例
   const canvasInstance = canvasModeStore.canvasRef?.()
@@ -61,12 +59,10 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
     console.error('Canvas实例未找到')
     return
   }
-  
-  console.log('Canvas实例获取成功:', canvasInstance)
+   
 
   // 使用fabric.js的Promise方式加载图片
-  FabricImage.fromURL(imageDataUrl).then((fabricImg) => {
-    console.log('Fabric Image创建成功:', fabricImg)
+  FabricImage.fromURL(imageDataUrl).then((fabricImg) => { 
     
     // 设置图片属性
     fabricImg.set({
@@ -102,8 +98,7 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
     
     // 重新渲染画布
     canvasInstance.renderAll()
-    
-    console.log('图片已成功添加到画布作为container对象:', fileName)
+     
     
   }).catch((error) => {
     console.error('图片加载失败:', error)

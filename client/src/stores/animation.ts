@@ -214,8 +214,7 @@ export const useAnimationStore = defineStore('animation', () => {
           imgLoaded: false,
           dataLoaded: false,
           collage_idx: now_collage,
-          onLoad: () => {
-            console.log(srcArray.value[i])
+          onLoad: () => { 
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true;
@@ -255,8 +254,7 @@ export const useAnimationStore = defineStore('animation', () => {
           imgLoaded: false,
           dataLoaded: false,
           collage_idx: now_collage,
-          onLoad: (e) => {
-            console.log(srcArray.value[i])
+          onLoad: (e) => { 
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true
@@ -393,8 +391,7 @@ export const useAnimationStore = defineStore('animation', () => {
           imgLoaded: false,
           dataLoaded: false,
           collage_idx: now_collage,
-          onLoad: () => {
-            console.log(srcArray.value[i])
+          onLoad: () => { 
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true;
@@ -432,8 +429,7 @@ export const useAnimationStore = defineStore('animation', () => {
           imgLoaded: false,
           dataLoaded: false,
           collage_idx: now_collage,
-          onLoad: () => {
-            console.log(srcArray.value[i])
+          onLoad: () => { 
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true

@@ -6,6 +6,14 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
   const showPanel = ref(false)
   const panelPosition = ref({ x: 0, y: 0 })
   const markerData = ref<any>(null)
+  // 存储所有 overview 中每个 slide 的 dataBinding 数据
+  const allData = ref<Array<{
+    overviewId: string
+    slides: Array<{
+      slideId?: string
+      dataBinding: Array<{ data: Array<any>, markerId: string }>
+    }>
+  }>>([])
   
   // 当前悬浮的 marker 对象
   let currentMarker: any = null
@@ -88,6 +96,7 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
     showPanel,
     panelPosition,
     markerData,
+    allData,
     updatePanelPosition,
     handleMarkerHover,
     handleMarkerOut,

@@ -32,9 +32,7 @@ const handleFileUpload = (event: Event) => {
     // 创建文件读取器
     const reader = new FileReader()
     reader.onload = (e) => {
-      const result = e.target?.result as string
-      console.log('背景图片已上传:', file.name)
-      console.log('图片',result)
+      const result = e.target?.result as string 
       // 将图片保存到backgroundStore
     
       setBackgroundImage(result, file.name)
@@ -49,19 +47,16 @@ const handleFileUpload = (event: Event) => {
     fileInputRef.value.value = ''
   }
 }
-const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
-  console.log('开始设置背景图片:', fileName)
+const setBackgroundImage = async (imageDataUrl: string, fileName: string) => { 
   const currentOverview = overviews.value[currentOverviewIndex.value]
   
   // 获取canvas实例
-  const canvasInstance = canvasRef.value?.()
-  console.log('canvasInstance',canvasInstance)
+  const canvasInstance = canvasRef.value?.() 
   if (!canvasInstance) {
     console.error('Canvas实例未找到')
     return
   }
-  
-  console.log('Canvas实例获取成功:', canvasInstance)
+   
   
   // 先清空之前的背景
   backgroundStore.clearBackground(currentOverview.overviewId)
@@ -71,8 +66,7 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
   
   try {
     // 使用fabric.js的Promise方式加载图片
-    const fabricImg = await FabricImage.fromURL(imageDataUrl)
-    console.log('背景图片创建成功:', fabricImg)
+    const fabricImg = await FabricImage.fromURL(imageDataUrl) 
     
     // 设置图片属性
     fabricImg.set({
@@ -107,8 +101,7 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
     updateCurrentSlide()
     // 重新渲染画布
     canvasInstance.renderAll()
-    creatingBackground.value = false
-    console.log('背景图片已成功设置:', fileName)
+    creatingBackground.value = false 
     
     // 为当前总览的所有slide添加背景对象
     await addBackgroundToAllSlides(fabricImg.toObject())

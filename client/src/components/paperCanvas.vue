@@ -18,8 +18,7 @@ function updateBackground() {
         }
     })
     const currentOverview = collageSeriesStore.overviews[animationStore.now_overview_idx]
-    const overviewId = currentOverview?.overviewId
-    console.log(overviewId)
+    const overviewId = currentOverview?.overviewId 
     // 如果background存在，绘制到画布上
     if (backgroundStore.getCurrentOverviewBackground(overviewId)) {
         const backgroundImage = new paper.Raster(backgroundStore.getCurrentOverviewBackground(overviewId));

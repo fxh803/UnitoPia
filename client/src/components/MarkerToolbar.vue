@@ -54,8 +54,7 @@ const handleFileUpload = (event: Event) => {
         // 处理PNG文件
         const reader = new FileReader()
         reader.onload = (e) => {
-          const result = e.target?.result as string
-          console.log('PNG文件已上传:', file.name)
+          const result = e.target?.result as string 
           
           // 将图片添加到画布作为marker对象
           addImageToCanvas(result, file.name)
@@ -65,8 +64,7 @@ const handleFileUpload = (event: Event) => {
         // 处理SVG文件
         const reader = new FileReader()
         reader.onload = async (e) => {
-          const svgString = e.target?.result as string
-          console.log('SVG文件已上传:', file.name)
+          const svgString = e.target?.result as string 
           
           // 将SVG添加到画布作为marker对象
           await addSVGToCanvas(svgString, file.name)
@@ -84,20 +82,17 @@ const handleFileUpload = (event: Event) => {
   }
 }
 
-const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
-  console.log('开始添加图片到画布:', fileName)
+const addImageToCanvas = (imageDataUrl: string, fileName: string) => { 
   
   const canvasInstance = markerCanvasModeStore.getCanvas()
   if (!canvasInstance) {
     console.error('Canvas实例未找到')
     return
   }
-  
-  console.log('Canvas实例获取成功:', canvasInstance)
+   
 
   // 使用fabric.js的Promise方式加载图片
-  fabric.FabricImage.fromURL(imageDataUrl).then((fabricImg) => {
-    console.log('Fabric Image创建成功:', fabricImg)
+  fabric.FabricImage.fromURL(imageDataUrl).then((fabricImg) => { 
     
     // 设置图片属性
     fabricImg.set({
@@ -132,8 +127,7 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
   })
 }
 
-const addSVGToCanvas = async (svgString: string, fileName: string) => {
-  console.log('开始添加SVG到画布:', fileName)
+const addSVGToCanvas = async (svgString: string, fileName: string) => { 
   
   try {
     const canvasInstance = markerCanvasModeStore.getCanvas()
@@ -141,8 +135,7 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
       console.error('Canvas实例未找到')
       return
     }
-    
-    console.log('Canvas实例获取成功:', canvasInstance)
+     
 
     // 使用 Fabric.js 加载 SVG
     const loadedSVG = await fabric.loadSVGFromString(svgString)
@@ -176,8 +169,7 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
     
     // 重新渲染画布
     canvasInstance.renderAll()
-    
-    console.log('SVG已成功添加到画布作为marker对象:', fileName)
+     
     
   } catch (error) {
     console.error('SVG加载失败:', error)
@@ -234,8 +226,7 @@ const saveMarkers = async () => {
       jsonData
     }
     
-    const savedMarker = markerStore.addMarker(markerData)
-    console.log('Canvas 已保存:', savedMarker)
+    const savedMarker = markerStore.addMarker(markerData) 
     
     // 清理临时画布
     tempFabricCanvas.dispose()

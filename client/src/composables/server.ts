@@ -9,6 +9,7 @@ import { useMarkerStore } from '~/stores/marker'
 import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useCanvasStore } from '~/stores/canvas'
 import { useContainerStore } from '~/stores/container'
+import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -46,7 +47,7 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
   try {
     // 遍历所有总览
     for (let overviewIdx = 0; overviewIdx < collageSeriesStore.overviews.length; overviewIdx++) {
-      if (overviewIdx !== currentOverviewIndex.value) {
+      if (overviewIdx !== currentOverviewIndex.value) {//这个是只进行当前overview的代码段，注意
         continue
       }
       const overview = collageSeriesStore.overviews[overviewIdx]
@@ -158,8 +159,7 @@ function processMarker(tempCanvas: Canvas) {
         // 记录每个位置对应的宽高（包含缩放）
         const baseWidth = obj.width || 0
         const baseHeight = obj.height || 0  
-        const baseSize = Math.max(baseWidth, baseHeight) 
-        console.log(baseSize)
+        const baseSize = Math.max(baseWidth, baseHeight)  
         const scaleX = obj.scaleX || 1
         const scaleY = obj.scaleY || 1 
         widths.push(scaleX*baseSize/80) //这里传的是对于正方形bbox的缩放系数
@@ -309,14 +309,26 @@ function processDataBinding(tempCanvas: Canvas) {
     }
   }
   
-  // 再提取dataBindingList
+  // 再提取dataBindingList，从画布对象一个一个取data
   const dataList : Array<{ data: Array<any>, markerId: string}> = []
-  for (const markerId of uniqueMarkerIds) { 
-      const data = pharseData(markerId)
-      dataList.push({
-        data: data,
-        markerId: markerId
-      })
+  for (const markerId of uniqueMarkerIds) {
+    // 收集该markerId的所有data
+    const dataArray: Array<any> = []
+    
+    for (const obj of canvasObjects) {
+      if (obj.get('dataType') === 'marker' && obj.get('markerId') === markerId) {
+        // 从对象中提取data
+        const data = obj.get('data')
+        if (data) {
+          dataArray.push(data)
+        }
+      }
+    }
+    
+    dataList.push({
+      data: dataArray,
+      markerId: markerId
+    })
   }
   return dataList
 }
@@ -357,7 +369,23 @@ export async function sendDataToServer(): Promise<boolean> {
     // 设置系统为拼贴处理状态
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
-    const data = await collectAllSlidesData()  
+    const data = await collectAllSlidesData()
+    
+    // 将 dataBinding 数据存储到 hoverInfoPanel store
+    const hoverInfoPanelStore = useHoverInfoPanelStore()
+    const collageSeriesStore = useCollageSeriesStore()
+    
+    hoverInfoPanelStore.allData = data.map((overview) => {
+      // 根据 overviewId 找到对应的 overview
+      const overviewObj = collageSeriesStore.overviews.find(ov => ov.overviewId === overview.overviewId)
+      return {
+        overviewId: overview.overviewId,
+        slides: overview.slides.map((slide, slideIdx) => ({
+          slideId: overviewObj?.collageSeries[slideIdx]?.slideId,
+          dataBinding: slide.dataBinding || []
+        }))
+      }
+    }) 
     const containerStore = useContainerStore()
     containerStore.createShiningPaths()
     animationStore.startContainerAnimation()
@@ -388,8 +416,7 @@ export async function sendDataToServer(): Promise<boolean> {
         "id": time,
         "canvasWidth": originalWidth,
         "canvasHeight": originalHeight
-      }
-      console.log(sendData)
+      } 
       progressTimer.value = setInterval(() => {
         startProgressTimer()
       }, fetchInterval)
@@ -402,8 +429,7 @@ export async function sendDataToServer(): Promise<boolean> {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(sendData)
-        })
-        console.log(response)
+        }) 
 
         if (!response.ok) {
           clearInterval(progressTimer.value)
@@ -489,8 +515,7 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
     )
   })
   if (response.ok) {
-    const result = await response.json()
-    console.log(result)
+    const result = await response.json() 
     if (result.init_pos) {
       return result
       
@@ -587,9 +612,7 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
       })
       
       // 重新渲染画布
-      canvasInstance.renderAll()
-      
-      console.log('SVG 结果已成功加载到画布')
+      canvasInstance.renderAll() 
       
     } catch (error) {
       console.error('加载 SVG 结果失败:', error)

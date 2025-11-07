@@ -79,7 +79,7 @@ export const useContainerStore = defineStore('container', () => {
         const { currentOverviewIndex } = storeToRefs(collageSeriesStore)
         let index = 0
         for (let i = 0; i < containerRecords.value.length; i++) {
-            if (containerRecords.value[i].overviewIdx !== currentOverviewIndex.value) {
+            if (containerRecords.value[i].overviewIdx !== currentOverviewIndex.value) {//这个是只进行当前overview的代码段，注意
                 continue
             }
             const item = containerRecords.value[i]
@@ -97,8 +97,7 @@ export const useContainerStore = defineStore('container', () => {
             })
             shining_paths.value.push(raster)
             index++
-        }
-        console.log(shining_paths.value)
+        } 
     }
 
     // 清空所有记录

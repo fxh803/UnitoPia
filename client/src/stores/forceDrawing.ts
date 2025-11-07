@@ -66,8 +66,7 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
 
     // 启动闪烁动画
     startBlinkAnimation()
-
-    console.log('Force point added at:', x, y)
+ 
     forceType.value = 'pointForce'
   }
 
@@ -133,8 +132,7 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
       canvasInstance.add(svgObject)
       canvasInstance.centerObject(svgObject)
       canvasInstance.renderAll()
-
-      console.log('Field force added successfully')
+ 
       forceType.value = 'fieldForce'
     } catch (error) {
       console.error('Failed to load SVG:', error)
@@ -154,8 +152,7 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
       }
     })
 
-    canvasInstance.renderAll()
-    console.log('Field force cleared')
+    canvasInstance.renderAll() 
     forceType.value = null
   }
 
@@ -175,8 +172,7 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
     })
 
     canvasInstance.renderAll()
-    forceType.value = null
-    console.log('All force points cleared')
+    forceType.value = null 
   }
 
   // 启动闪烁动画

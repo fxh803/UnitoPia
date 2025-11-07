@@ -37,8 +37,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     function setCurrentPathObj() {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
-        currentPathObj.value = obj
-        console.log('activateobj',obj.get('type'))
+        currentPathObj.value = obj 
     }
     function updateActionBtnVisble() {
         const canvasInstance = canvasRef.value?.()

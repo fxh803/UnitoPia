@@ -28,14 +28,12 @@ const handleMarkerDragStart = (markerId: string, e: DragEvent) => {
       e.dataTransfer.setData('text/plain', markerId)
     }
   }
-  isDragging.value = true
-  console.log('开始拖拽 marker:', markerId)
+  isDragging.value = true 
 }
 
 // 处理 marker 拖拽结束
 const handleMarkerDragEnd = () => {
-  isDragging.value = false
-  console.log('拖拽 marker 结束')
+  isDragging.value = false 
 }
 
 // 防止拖拽时触发输入事件

@@ -181,8 +181,7 @@ export const useCanvasStore = defineStore('canvas', () => {
       } else {
         otherObjects.push(obj)
       }
-    })
-    console.log(backgroundObjects,containerObjects,otherObjects)
+    }) 
     // 将 background 对象移动到最底层
     backgroundObjects.forEach(obj => {
       canvasInstance.sendObjectToBack(obj, true)
@@ -207,12 +206,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     
     // 重新渲染画布
     canvasInstance.renderAll()
-    
-    console.log('层级调整完成:', {
-      background: backgroundObjects.length,
-      container: containerObjects.length,
-      other: otherObjects.length
-    })
+     
   }
 
   // 删除指定markerId的所有对象
@@ -414,8 +408,7 @@ export const useCanvasStore = defineStore('canvas', () => {
             if (!isNaN(dataWidth) && !isNaN(dataHeight) && dataWidth > 0 && dataHeight > 0) {
               const normalizedWidth = normalize(dataWidth, minWidth, maxWidth)
               const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
-              const normalizedSize = !isNaN(dataSize) && dataSize > 0 ? normalize(dataSize, minSizeValue, maxSizeValue) : null
-              console.log(normalizedWidth,normalizedHeight,normalizedSize,currentSize)
+              const normalizedSize = !isNaN(dataSize) && dataSize > 0 ? normalize(dataSize, minSizeValue, maxSizeValue) : null 
               let scaleX = avgWidth / currentSize  
               let scaleY = avgHeight / currentSize 
               
@@ -459,8 +452,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     const data = pharseData(markerId)  
     const groupJson = JSON.parse(groupJsonData)
     const n = data.length  
-    const emitterSampledPoints = getEmitterSampledPoints(n)
-    console.log(`Emitter 采样 ${n} 个点:`, emitterSampledPoints) 
+    const emitterSampledPoints = getEmitterSampledPoints(n) 
     addMarkers(groupJson, emitterSampledPoints, markerId)
   }
 
