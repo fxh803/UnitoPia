@@ -3,6 +3,7 @@ import { defineStore, storeToRefs } from 'pinia'
 import paper from "paper";
 import { useContainerStore } from '~/stores/container'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
+import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 import { ref, computed, watch } from 'vue';
 
 export const useAnimationStore = defineStore('animation', () => {
@@ -19,8 +20,7 @@ export const useAnimationStore = defineStore('animation', () => {
   const angleArray = ref([])
   const elements = ref([])
   const result_data = ref([])
-  const dataArray = ref([])
-  const attributesArray = ref([])
+  const dataBindingArray = ref([])
   const now_collage_idx = ref(0)
   const now_start_idx = ref(0)
   const markerAni = ref(null)
@@ -30,9 +30,8 @@ export const useAnimationStore = defineStore('animation', () => {
   const process_id = ref(null)
   const replayTimer = ref(null)
   const time_interval = ref(2000)
-  const replaying = ref(false)
-  const hoverAttr = ref(null)
-  const hoverData = ref(null)
+  const replaying = ref(false) 
+  const hoverDataBinding = ref(null)
   const totalOverview = ref(0)
   const now_overview_idx = ref(0)
 
@@ -67,17 +66,15 @@ export const useAnimationStore = defineStore('animation', () => {
     angleArray.value = []
     elements.value = []
     result_data.value = []
-    dataArray.value = []
-    attributesArray.value = []
+    dataBindingArray.value = []
     now_collage_idx.value = 0
     now_start_idx.value = 0
     markerAni.value = null
     replayIdx.value = 0
     process_id.value = null
     replayTimer.value = null
-    replaying.value = false
-    hoverAttr.value = null
-    hoverData.value = null
+    replaying.value = false 
+    hoverDataBinding.value = null
     now_overview_idx.value = 0
     totalOverview.value = 0
     time_interval.value = 2000
@@ -129,6 +126,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function setData(now_collage, startIndex) {//对最新的数据进行整理
     const result = result_data.value[result_data.value.length - 1]
+    const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
     // 获取当前幻灯片的 render_size
     const collageSeriesStore = useCollageSeriesStore()
     const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
@@ -142,8 +140,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
       angleArray.value[i] = result['angle'][i - startIndex];
-      dataArray.value[i] = result['data'][i - startIndex];
-      attributesArray.value[i] = result['attributes'][i - startIndex];
+      dataBindingArray.value[i] = dataBinding[i - startIndex];
       let originSize = 0
       if (collage_result_type.value[now_collage] === 'svg') {
         originSize = 100
@@ -158,6 +155,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function setReplayData(idx, now_collage, startIndex) {
     const result = result_data.value[idx]
+    const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
     // 获取当前幻灯片的 render_size
     const collageSeriesStore = useCollageSeriesStore()
     const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
@@ -171,8 +169,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
       angleArray.value[i] = result['angle'][i - startIndex];
-      dataArray.value[i] = result['data'][i - startIndex];
-      attributesArray.value[i] = result['attributes'][i - startIndex];
+      dataBindingArray.value[i] = dataBinding[i - startIndex];
       let originSize = 0
       if (collage_result_type.value[now_collage] === 'svg') {
         originSize = 100
@@ -184,6 +181,24 @@ export const useAnimationStore = defineStore('animation', () => {
       heightArray.value[i] = result['size'][i - startIndex][1] * originSize * (canvas_width.value / renderSize);
     }
   }
+  // 根据 overview_idx 和 collage_idx 获取对应的 dataBinding，打平成一维数组
+  function getDataBinding(overview_idx: number, collage_idx: number): Array<any> | null {
+    const hoverInfoPanelStore = useHoverInfoPanelStore()
+    const allData = hoverInfoPanelStore.allData 
+    const overview = allData[overview_idx] 
+    const slide = overview.slides[collage_idx] 
+    
+    // 遍历所有 dataBinding，将每个 data 数组打平合并成一维数组
+    const flattenedData: Array<any> = []
+    for (const binding of slide.dataBinding) {
+      if (binding.data && Array.isArray(binding.data)) {
+        flattenedData.push(...binding.data)
+      }
+    }
+    
+    return flattenedData.length > 0 ? flattenedData : null
+  }
+
   function startContainerAnimation() {
     const containerStore = useContainerStore()
     if (!containerAni.value) {  
@@ -209,8 +224,7 @@ export const useAnimationStore = defineStore('animation', () => {
           source: srcArray.value[i],
           position: posArray.value[i],
           opacity: 0,
-          attr: attributesArray.value[i],
-          data: dataArray.value[i],
+          dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
           collage_idx: now_collage,
@@ -224,14 +238,8 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e)
           }
         });
-        raster.onMouseEnter = () => {
-          hoverAttr.value = raster.attr
-          hoverData.value = raster.data
-          let toastLeft = raster.position.x
-          let toastTop = raster.position.y
-          // markerToast.value.style.top = `${toastTop}px`
-          // markerToast.value.style.left = `${toastLeft}px`
-          // markerToast.value.classList.remove('hidden')
+        raster.onMouseEnter = () => {  
+          hoverDataBinding.value = raster.dataBinding
         }
         // raster.onMouseLeave = () => {
         //   markerToast.value.classList.add('hidden')
@@ -249,8 +257,7 @@ export const useAnimationStore = defineStore('animation', () => {
           source: srcArray.value[i],
           position: posArray.value[i],
           opacity: 0,
-          attr: attributesArray.value[i],
-          data: dataArray.value[i],
+          dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
           collage_idx: now_collage,
@@ -264,13 +271,7 @@ export const useAnimationStore = defineStore('animation', () => {
           }
         });
         raster.onMouseEnter = () => {
-          hoverAttr.value = raster.attr
-          hoverData.value = raster.data
-          let toastLeft = raster.position.x
-          let toastTop = raster.position.y
-          // markerToast.value.style.top = `${toastTop}px`
-          // markerToast.value.style.left = `${toastLeft}px`
-          // markerToast.value.classList.remove('hidden')
+          hoverDataBinding.value = raster.dataBinding
         }
         // raster.onMouseLeave = () => {
         //   markerToast.value.classList.add('hidden')
@@ -386,8 +387,7 @@ export const useAnimationStore = defineStore('animation', () => {
           source: srcArray.value[i],
           position: posArray.value[i],
           opacity: 0,
-          attr: attributesArray.value[i],
-          data: dataArray.value[i],
+          dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
           collage_idx: now_collage,
@@ -400,14 +400,8 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e,raster)
           }
         });
-        raster.onMouseEnter = () => {
-          hoverAttr.value = raster.attr
-          hoverData.value = raster.data
-          let toastLeft = raster.position.x
-          let toastTop = raster.position.y
-          // markerToast.value.style.top = `${toastTop}px`
-          // markerToast.value.style.left = `${toastLeft}px`
-          // markerToast.value.classList.remove('hidden')
+        raster.onMouseEnter = () => { 
+          hoverDataBinding.value = raster.dataBinding
         }
         // raster.onMouseLeave = () => {
         //   markerToast.value.classList.add('hidden')
@@ -424,8 +418,7 @@ export const useAnimationStore = defineStore('animation', () => {
           source: srcArray.value[i],
           position: posArray.value[i],
           opacity: 0,
-          attr: attributesArray.value[i],
-          data: dataArray.value[i],
+          dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
           collage_idx: now_collage,
@@ -438,14 +431,8 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e,raster)
           }
         });
-        raster.onMouseEnter = () => {
-          hoverAttr.value = raster.attr
-          hoverData.value = raster.data
-          let toastLeft = raster.position.x
-          let toastTop = raster.position.y
-          // markerToast.value.style.top = `${toastTop}px`
-          // markerToast.value.style.left = `${toastLeft}px`
-          // markerToast.value.classList.remove('hidden')
+        raster.onMouseEnter = () => { 
+          hoverDataBinding.value = raster.dataBinding
         }
         // raster.onMouseLeave = () => {
         //   markerToast.value.classList.add('hidden')
@@ -535,8 +522,6 @@ export const useAnimationStore = defineStore('animation', () => {
     angleArray,
     elements,
     result_data,
-    dataArray,
-    attributesArray,
     now_collage_idx,
     now_start_idx,
     markerAni,
@@ -547,8 +532,7 @@ export const useAnimationStore = defineStore('animation', () => {
     replayTimer,
     time_interval,
     replaying,
-    hoverAttr,
-    hoverData,
+    hoverDataBinding,
     totalOverview,
     now_overview_idx,
     // 计算属性
