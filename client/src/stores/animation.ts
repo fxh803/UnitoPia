@@ -238,8 +238,14 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e)
           }
         });
-        raster.onMouseEnter = () => {  
+        raster.onMouseEnter = (event: any) => {  
           hoverDataBinding.value = raster.dataBinding
+          const hoverInfoPanelStore = useHoverInfoPanelStore()
+          hoverInfoPanelStore.handleRasterHover(event, raster)
+        }
+        raster.onMouseLeave = (event: any) => {
+          const hoverInfoPanelStore = useHoverInfoPanelStore()
+          hoverInfoPanelStore.handleRasterOut(event, raster)
         }
         // raster.onMouseLeave = () => {
         //   markerToast.value.classList.add('hidden')
@@ -270,8 +276,14 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e)
           }
         });
-        raster.onMouseEnter = () => {
+        raster.onMouseEnter = (event: any) => {
           hoverDataBinding.value = raster.dataBinding
+          const hoverInfoPanelStore = useHoverInfoPanelStore()
+          hoverInfoPanelStore.handleRasterHover(event, raster)
+        }
+        raster.onMouseLeave = (event: any) => {
+          const hoverInfoPanelStore = useHoverInfoPanelStore()
+          hoverInfoPanelStore.handleRasterOut(event, raster)
         }
         // raster.onMouseLeave = () => {
         //   markerToast.value.classList.add('hidden')
@@ -400,8 +412,14 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e,raster)
           }
         });
-        raster.onMouseEnter = () => { 
+        raster.onMouseEnter = (event: any) => { 
           hoverDataBinding.value = raster.dataBinding
+          const hoverInfoPanelStore = useHoverInfoPanelStore()
+          hoverInfoPanelStore.handleRasterHover(event, raster)
+        }
+        raster.onMouseLeave = (event: any) => {
+          const hoverInfoPanelStore = useHoverInfoPanelStore()
+          hoverInfoPanelStore.handleRasterOut(event, raster)
         }
         // raster.onMouseLeave = () => {
         //   markerToast.value.classList.add('hidden')
@@ -431,8 +449,14 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e,raster)
           }
         });
-        raster.onMouseEnter = () => { 
+        raster.onMouseEnter = (event: any) => { 
           hoverDataBinding.value = raster.dataBinding
+          const hoverInfoPanelStore = useHoverInfoPanelStore()
+          hoverInfoPanelStore.handleRasterHover(event, raster)
+        }
+        raster.onMouseLeave = (event: any) => {
+          const hoverInfoPanelStore = useHoverInfoPanelStore()
+          hoverInfoPanelStore.handleRasterOut(event, raster)
         }
         // raster.onMouseLeave = () => {
         //   markerToast.value.classList.add('hidden')
