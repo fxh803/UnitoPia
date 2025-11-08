@@ -524,7 +524,29 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
     console.error('获取处理状态失败:', response.statusText)
   }
 }
-
+function getDataBinding (){
+  const hoverInfoPanelStore = useHoverInfoPanelStore()
+  const allData = hoverInfoPanelStore.allData 
+  
+  // 将所有 data 拍平成一维数组
+  const flattenedData: Array<any> = []
+  
+  // 遍历所有 overview
+  for (const overview of allData) {
+    // 遍历每个 overview 的所有 slides
+    for (const slide of overview.slides) {
+      // 遍历每个 slide 的所有 dataBinding
+      for (const binding of slide.dataBinding) {
+        // 将每个 dataBinding 中的 data 数组拍平合并
+        if (binding.data && Array.isArray(binding.data)) {
+          flattenedData.push(...binding.data)
+        }
+      }
+    }
+  }
+  
+  return flattenedData
+}
  async function renderResult (){
   const collageSeriesStore = useCollageSeriesStore()
   collageSeriesStore.addNewSlide()
@@ -590,8 +612,11 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
       const scaleY = canvasHeight / svgHeight
       const scale = Math.min(scaleX, scaleY, 1) // 确保不放大，只缩小
       
+      // 获取拍平的 data
+      const flattenedData = getDataBinding()
+      
       // 将所有 SVG 对象添加到画布，并应用统一的缩放比例，保持它们的原始相对位置
-      loadedSVG.objects.forEach((obj: any) => {
+      loadedSVG.objects.forEach((obj: any, index: number) => {
         // 对每个对象的位置和尺寸应用缩放
         if (obj.left !== undefined) {
           obj.set('left', obj.left * scale)
@@ -602,11 +627,17 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
         // 应用缩放
         const currentScaleX = (obj.scaleX || 1) * scale
         const currentScaleY = (obj.scaleY || 1) * scale
+        
+        // 按索引分配拍平的 data
+        const data = flattenedData[index] || null
+        
         obj.set({
           scaleX: currentScaleX,
           scaleY: currentScaleY,
-          selectable: false,
-          evented: false
+          selectable: true,
+          evented: true,
+          dataType: 'marker',
+          data: data
         })
         canvasInstance.add(obj)
       })
