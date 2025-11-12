@@ -182,6 +182,14 @@ onMounted(async () => {
       // 其他事件监听
       canvas.on('object:added', (e) => {
         updatePreview()
+        
+        // 确保新添加的对象不可选（除非当前模式是 move）
+        // 如果当前模式是 move，会根据对象类型在 markerCanvasModeStore.setMode 中设置
+        if (markerCanvasModeStore.mode !== 'move') {
+          e.target.set('selectable', false)
+          e.target.set('evented', false)
+        }
+        
         // 询问是否闭合路径
         askToClosePath(e.target)
       })
@@ -218,6 +226,9 @@ onMounted(async () => {
 // 询问是否闭合路径
 function askToClosePath(path: any) {
   if (!canvas || !path) return
+  
+  // 跳过预览形状
+  if (path.get('isPreview')) return
   
   // 获取对象在画布上的位置
   const zoom = canvas.getZoom()

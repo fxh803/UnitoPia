@@ -52,6 +52,8 @@ export const useShapeDrawingStore = defineStore('shapeDrawing', () => {
         })
       }
       if (previewShape.value) {
+        // 标记为预览形状，避免触发 askToClosePath
+        previewShape.value.set('isPreview', true)
         canvasInstance.add(previewShape.value)
       }
     }

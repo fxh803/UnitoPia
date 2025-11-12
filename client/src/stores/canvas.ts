@@ -157,8 +157,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
         return
       }
-      if (backgroundStore.creatingBackground) {
-        path.set('dataType', 'background')
+      if(path.get('dataType') === 'background'){ 
         return
       }
       if(path.get('dataType') === 'marker'){ 
@@ -166,6 +165,13 @@ export const useCanvasStore = defineStore('canvas', () => {
       }
       // 根据当前选择的模式设置dataType
       path.set('dataType', selectedModeStore.selectedMode);
+
+      // 确保新添加的对象不可选（除非当前模式是 move）
+      // 如果当前模式是 move，会根据对象类型在 canvasModeStore.setMode 中设置
+      if (canvasModeStore.mode !== 'move') {
+        path.set('selectable', false)
+        path.set('evented', false)
+      }
 
       // 应用当前模式的透明度规则
       selectedModeStore.handleModeSwitch(selectedModeStore.selectedMode);
@@ -513,6 +519,9 @@ export const useCanvasStore = defineStore('canvas', () => {
   function askToClosePath(path: any) {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance || !path) return
+    
+    // 跳过预览形状
+    if (path.get('isPreview')) return
     
     // 只有当对象是 container 类型时才触发
     if (path.get('dataType') !== 'container') return
