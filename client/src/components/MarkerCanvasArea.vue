@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Canvas, PencilBrush, Group } from 'fabric'
+import { Canvas, PencilBrush } from 'fabric'
 import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useResizeHandleStore } from '~/stores/resizeHandle'
@@ -8,84 +8,28 @@ import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
 import { useColorPickerStore } from '~/stores/colorpicker'
+import { useMarkerCanvasStore } from '~/stores/markerCanvas'
 
 const colorPickerStore = useColorPickerStore()
 const { isColorPickerOpen } = storeToRefs(colorPickerStore)
 const resizeHandleStore = useResizeHandleStore()
 const markerCanvasModeStore = useMarkerCanvasModeStore()
 const markerObjectActionsStore = useMarkerObjectActionsStore()
-const {
-  updateActionBtnPosition,
-  updateActionBtnVisble,
-  hideBtns,
-  setCurrentPathObj
-} = markerObjectActionsStore
 const brushSizeStore = useBrushSizeStore()
 
 // 形状绘制store
 const markerShapeDrawingStore = useMarkerShapeDrawingStore()
+
+// Marker Canvas store
+const markerCanvasStore = useMarkerCanvasStore()
+const { closePathConfirm, previewDataUrl } = storeToRefs(markerCanvasStore)
+const { askToClosePath, handleClosePathConfirm, addMarkerCanvasEventListeners, removeMarkerCanvasEventListeners } = markerCanvasStore
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasContainerRef = ref<HTMLDivElement | null>(null)
 const canvasWidth = ref(0)
 const canvasHeight = ref(0)
 let canvas: Canvas | null = null
-
-// 路径闭合确认对话框状态
-const closePathConfirm = ref<{
-  show: boolean
-  path: any
-  position: { x: number; y: number }
-}>({
-  show: false,
-  path: null,
-  position: { x: 0, y: 0 }
-})
-
-// 实时预览图
-const previewDataUrl = ref<string>('')
-const previewGroup = ref<Group | null>(null)
-
-async function updatePreview() {
-  // 获取当前画布的所有对象
-  if (!canvas) return
-
-  // 获取画布上的所有对象
-  const allObjects = canvas.getObjects()
-  //新建一个fabricjs的group，将所有objectsgroup一起
-  const cloneObjects = await Promise.all(allObjects.map(async (obj) => {
-    return obj.clone()
-  }))
-  previewGroup.value = new Group(cloneObjects)
-  const tempCanvas = document.createElement('canvas')
-  tempCanvas.width = 60
-  tempCanvas.height = 60
-
-  const tempFabricCanvas = new Canvas(tempCanvas, {
-    width: 60,
-    height: 60,
-    backgroundColor: '#ffffff'
-  })
-  const originWidth = previewGroup.value.width
-  const originHeight = previewGroup.value.height
-  // 计算缩放比例，确保对象适合缩略图 
-  const scaleX = 50 / Math.max(originWidth, 1)
-  const scaleY = 50 / Math.max(originHeight, 1)
-  const scale = Math.min(scaleX, scaleY, 1) // 不超过原始大小
-  //把克隆对象放到画布正中央，做好缩放，并导出给previewDataUrl
-  previewGroup.value.set('left', 30)
-  previewGroup.value.set('top', 30)
-  previewGroup.value.set('scaleX', scale)
-  previewGroup.value.set('scaleY', scale)
-  previewGroup.value.set('originX', 'center')
-  previewGroup.value.set('originY', 'center')
-  previewGroup.value.set('opacity', 1)
-  tempFabricCanvas.add(previewGroup.value)
-  tempFabricCanvas.renderAll()
-  previewDataUrl.value = tempFabricCanvas.toDataURL({ format: 'png', multiplier: 1, enableRetinaScaling: false as any })
-
-
-}
 
 // 更新画布尺寸
 function updateCanvasSize() {
@@ -174,46 +118,13 @@ onMounted(async () => {
       canvas.freeDrawingBrush = brush
       markerCanvasModeStore.setCanvas(() => canvas)
       markerObjectActionsStore.setCanvas(() => canvas)
+      markerCanvasStore.setCanvas(() => canvas)
 
       // 设置形状绘制store的canvas引用
       markerShapeDrawingStore.setMarkerCanvas(() => canvas)
 
-
-      // 其他事件监听
-      canvas.on('object:added', (e) => {
-        updatePreview()
-        
-        // 确保新添加的对象不可选（除非当前模式是 move）
-        // 如果当前模式是 move，会根据对象类型在 markerCanvasModeStore.setMode 中设置
-        if (markerCanvasModeStore.mode !== 'move') {
-          e.target.set('selectable', false)
-          e.target.set('evented', false)
-        }
-        
-        // 询问是否闭合路径
-        askToClosePath(e.target)
-      })
-      canvas.on('selection:created', () => {
-        setCurrentPathObj()
-        updateActionBtnVisble()
-        updateActionBtnPosition()
-      })
-      canvas.on('selection:updated', () => {
-        setCurrentPathObj()
-        updateActionBtnVisble()
-        updateActionBtnPosition()
-      })
-      canvas.on('selection:cleared', hideBtns)
-      canvas.on('object:moving', hideBtns)
-      canvas.on('object:scaling', hideBtns)
-      canvas.on('object:rotating', hideBtns)
-      canvas.on('object:modified', () => {
-        setCurrentPathObj()
-        updateActionBtnVisble()
-        updateActionBtnPosition()
-        updatePreview()
-      })
-      canvas.on('object:removed', updatePreview)
+      // 添加画布事件监听器
+      addMarkerCanvasEventListeners()
 
       // 添加形状绘制事件监听器
       markerShapeDrawingStore.addMarkerShapeEventListeners()
@@ -223,71 +134,15 @@ onMounted(async () => {
   }, 200)
 })
 
-// 询问是否闭合路径
-function askToClosePath(path: any) {
-  if (!canvas || !path) return
-  
-  // 跳过预览形状
-  if (path.get('isPreview')) return
-  
-  // 获取对象在画布上的位置
-  const zoom = canvas.getZoom()
-  const vpt = canvas.viewportTransform
-  const pathBounds = path.getBoundingRect()
-  
-  // 计算对象在页面中的位置
-  const canvasEl = canvas.getElement()
-  if (!canvasEl) return
-  
-  const canvasRect = canvasEl.getBoundingClientRect()
-  const x = (pathBounds.left * zoom) + (vpt[4] || 0) + canvasRect.left
-  const y = (pathBounds.top * zoom) + (vpt[5] || 0) + canvasRect.top
-  
-  // 设置确认对话框状态
-  closePathConfirm.value = {
-    show: true,
-    path: path,
-    position: { x, y }
-  }
-}
-
-// 处理路径闭合确认
-function handleClosePathConfirm(confirmed: boolean) {
-  const { path } = closePathConfirm.value
-  if (!path) return
-  
-  if (!canvas) return
-  
-  if (confirmed) {
-    // 闭合路径：设置 fill 为 stroke 颜色
-    const strokeColor = path.stroke || '#000'
-    path.set('fill', strokeColor)
-    path.set('stroke', 'rgba(0,0,0,0)')
-    canvas.requestRenderAll()
-  }
-  
-  // 关闭确认对话框
-  closePathConfirm.value = {
-    show: false,
-    path: null,
-    position: { x: 0, y: 0 }
-  }
-}
 
 onBeforeUnmount(() => {
   // 移除形状绘制事件监听器
   markerShapeDrawingStore.removeMarkerShapeEventListeners()
+  
+  // 移除画布事件监听器
+  removeMarkerCanvasEventListeners()
 
   if (canvas) {
-    canvas.off('object:added')
-    canvas.off('selection:created')
-    canvas.off('selection:updated')
-    canvas.off('selection:cleared')
-    canvas.off('object:moving')
-    canvas.off('object:scaling')
-    canvas.off('object:rotating')
-    canvas.off('object:modified')
-    canvas.off('object:removed')
     canvas.dispose()
   }
 })

@@ -58,8 +58,7 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
   }
   
   // 处理 marker 悬浮
-  function handleMarkerHover(e: any, canvasInstance: Canvas | null) {
-    console.log('handleMarkerHover')
+  function handleMarkerHover(e: any, canvasInstance: Canvas | null) { 
     const target = e.target
     if (target && target.get('data')) {
       const data = target.get('data')
@@ -77,7 +76,6 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
   
   // 处理鼠标离开 marker
   function handleMarkerOut(e: any) {
-    console.log('handleMarkerOut')
     const target = e.target
     if (target &&target.get('data')) {
       // 如果离开的是当前悬浮的 marker，隐藏面板
