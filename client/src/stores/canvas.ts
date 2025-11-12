@@ -514,6 +514,9 @@ export const useCanvasStore = defineStore('canvas', () => {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance || !path) return
     
+    // 只有当对象是 container 类型时才触发
+    if (path.get('dataType') !== 'container') return
+    
     // 获取对象在画布上的位置
     const zoom = canvasInstance.getZoom()
     const vpt = canvasInstance.viewportTransform

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useColorPickerStore } from '~/stores/colorpicker'
 
 const colorPickerStore = useColorPickerStore()
@@ -12,7 +12,37 @@ const selectColor = (color: string) => {
 
 // 打开颜色选择器
 const openColorPicker = () => {
+  colorPickerStore.setColorPickerOpen(true)
   colorPickerRef.value?.click()
+
+  // 检查颜色选择器是否仍然打开
+  const checkColorPickerClosed = () => {
+    // 如果 document.activeElement 不是颜色选择器，说明已关闭
+    if (document.activeElement !== colorPickerRef.value) {
+      // 延迟一点时间再检查，确保颜色选择器确实关闭了
+      setTimeout(() => {
+        if (document.activeElement !== colorPickerRef.value) {
+          colorPickerStore.setColorPickerOpen(false)
+        }
+      }, 100)
+    }
+  }
+  
+  // 监听点击事件，检测颜色选择器是否关闭
+  const handleClick = () => {
+    checkColorPickerClosed()
+  }
+  
+  // 监听窗口焦点变化
+  const handleFocus = () => {
+    checkColorPickerClosed()
+  }
+  
+  // 添加事件监听器
+  setTimeout(() => {
+    document.addEventListener('click', handleClick, { once: true, capture: true })
+    window.addEventListener('focus', handleFocus, { once: true })
+  }, 100)
 }
 
 // 处理颜色变化

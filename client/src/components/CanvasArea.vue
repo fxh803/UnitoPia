@@ -48,6 +48,7 @@ const {
 const canvasModeStore = useCanvasModeStore()
 const canvasStore = useCanvasStore()
 const { mode } = storeToRefs(canvasModeStore)
+const { closePathConfirm } = storeToRefs(canvasStore)
 const { setMode } = canvasModeStore
 const { 
   setDrawedObjectDataType, 
@@ -176,6 +177,26 @@ watch(brushWidth, (val) => {
     const dpr = getDpr()
     if (canvas.freeDrawingBrush) {
       canvas.freeDrawingBrush.width = val * dpr
+    }
+  }
+})
+
+// 监听路径闭合确认对话框状态，临时禁用绘制
+watch(() => closePathConfirm.value.show, (pathConfirmOpen) => {
+  if (!canvas) return
+  
+  if (pathConfirmOpen) {
+    // 保存当前的绘制模式状态
+    const wasDrawingMode = canvas.isDrawingMode
+    canvas.set('wasDrawingMode', wasDrawingMode)
+    // 临时禁用绘制
+    canvas.isDrawingMode = false
+  } else {
+    // 恢复之前的绘制模式状态
+    const wasDrawingMode = canvas.get('wasDrawingMode')
+    if (wasDrawingMode !== undefined) {
+      canvas.isDrawingMode = wasDrawingMode
+      canvas.set('wasDrawingMode', undefined)
     }
   }
 })

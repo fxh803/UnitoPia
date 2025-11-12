@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Canvas, PencilBrush, Group } from 'fabric'
 import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useResizeHandleStore } from '~/stores/resizeHandle'
 import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
@@ -9,6 +10,7 @@ import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
 import { useColorPickerStore } from '~/stores/colorpicker'
 
 const colorPickerStore = useColorPickerStore()
+const { isColorPickerOpen } = storeToRefs(colorPickerStore)
 const resizeHandleStore = useResizeHandleStore()
 const markerCanvasModeStore = useMarkerCanvasModeStore()
 const markerObjectActionsStore = useMarkerObjectActionsStore()
@@ -124,6 +126,28 @@ watch(() => brushSizeStore.brushWidth, (newWidth) => {
     const dpr = window.devicePixelRatio || 1
     if (canvas.freeDrawingBrush) {
       canvas.freeDrawingBrush.width = newWidth * dpr
+    }
+  }
+})
+
+// 监听颜色选择器和路径闭合确认对话框状态，临时禁用绘制
+watch([isColorPickerOpen, () => closePathConfirm.value.show], ([colorPickerOpen, pathConfirmOpen]) => {
+  if (!canvas) return
+  
+  const shouldStopDrawing = colorPickerOpen || pathConfirmOpen
+  
+  if (shouldStopDrawing) {
+    // 保存当前的绘制模式状态
+    const wasDrawingMode = canvas.isDrawingMode
+    canvas.set('wasDrawingMode', wasDrawingMode)
+    // 临时禁用绘制
+    canvas.isDrawingMode = false
+  } else {
+    // 恢复之前的绘制模式状态
+    const wasDrawingMode = canvas.get('wasDrawingMode')
+    if (wasDrawingMode !== undefined) {
+      canvas.isDrawingMode = wasDrawingMode
+      canvas.set('wasDrawingMode', undefined)
     }
   }
 })

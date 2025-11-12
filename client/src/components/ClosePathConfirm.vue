@@ -53,9 +53,9 @@ watch(() => props.confirmState.show, async (show) => {
       }"
     >
       <el-popconfirm
-        title="是否闭合路径？"
-        confirm-button-text="是"
-        cancel-button-text="否"
+        title="Close path?"
+        confirm-button-text="Yes"
+        cancel-button-text="No"
         @confirm="handleConfirm"
         @cancel="handleCancel"
         @hide="handleHide"
