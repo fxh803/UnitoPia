@@ -203,11 +203,11 @@ onBeforeUnmount(() => {
     <canvas ref="canvasEl" class="w-full h-full border border-gray-300 rounded-lg shadow-sm" />
 
     <!-- 实时预览图 - 左上角 -->
-    <div v-if="previewDataUrl"
+    <!-- <div v-if="previewDataUrl"
       draggable="false"
       class="absolute top-5 left-5 z-10 bg-white/80 border border-gray-300 rounded shadow-sm p-1">
       <img :src="previewDataUrl" alt="" class="block w-30px h-30px h-auto rounded" />
-    </div>
+    </div> -->
 
     <!-- 工具栏 - 底部居中，卡片样式 -->
     <div class="absolute left-1/2 bottom-5 -translate-x-1/2 z-10">

@@ -8,7 +8,24 @@ const canvasModeStore = useCanvasModeStore()
 const { mode } = storeToRefs(canvasModeStore)
 const { setMode } = canvasModeStore
 
-const selectedModeStore = useSelectedModeStore() 
+const selectedModeStore = useSelectedModeStore()
+
+// 形状绘制菜单控制
+const showShapeMenu = ref(false)
+
+const toggleShapeMenu = () => {
+  showShapeMenu.value = !showShapeMenu.value
+}
+
+// 点击外部关闭菜单
+onMounted(() => {
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement
+    if (!target.closest('.shape-tool-menu')) {
+      showShapeMenu.value = false
+    }
+  })
+}) 
 
 const clearCanvas = () => { 
     const canvasInstance = canvasModeStore.canvasRef?.()
@@ -154,30 +171,50 @@ const triggerFileUpload = () => {
     >
       <span class="i-carbon-erase" />
     </button>
-    <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
-      :class="[
-        mode === 'rect'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
-      ]"
-      title="Rectangle"
-      @click="() => setMode('rect')"
-    >
-      <span class="i-carbon:checkbox" />
-    </button>
-    <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
-      :class="[
-        mode === 'ellipse'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
-      ]"
-      title="Ellipse"
-      @click="() => setMode('ellipse')"
-    >
-      <span class="i-carbon-circle-outline" />
-    </button>
+    <!-- 形状绘制工具聚合按钮 -->
+    <div class="relative shape-tool-menu">
+      <button
+        class="rounded flex h-10 w-10 items-center justify-center cursor-pointer relative"
+        :class="[
+          (mode === 'rect' || mode === 'ellipse')
+            ? 'bg-[var(--primary-color)] text-white'
+            : 'bg-white text-black hover:bg-[#f5f5f5]'
+        ]"
+        title="形状工具"
+        @click="toggleShapeMenu"
+      >
+        <span v-if="mode === 'ellipse'" class="i-carbon-circle-outline" />
+        <span v-else class="i-carbon:checkbox" />
+        <!-- 右下角黑三角 -->
+        <div class="absolute bottom-0 right-0 w-0 h-0 border-l-[5px] border-t-[5px] border-l-transparent border-t-black transform rotate-90"></div>
+      </button>
+      
+      <!-- 形状绘制工具上拉菜单 -->
+      <div 
+        v-if="showShapeMenu"
+        class="absolute right-full top-0 mr-5 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px] shape-tool-menu"
+      >
+        <!-- 圆形 -->
+        <button
+          class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-t-lg"
+          :class="mode === 'ellipse' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'"
+          @click="() => { setMode('ellipse'); showShapeMenu = false; }"
+        >
+          <span class="i-carbon-circle-outline text-sm" />
+          <span class="text-xs">ellipse</span>
+        </button>
+        
+        <!-- 矩形 -->
+        <button
+          class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-b-lg"
+          :class="mode === 'rect' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'"
+          @click="() => { setMode('rect'); showShapeMenu = false; }"
+        >
+          <span class="i-carbon:checkbox text-sm" />
+          <span class="text-xs">rect</span>
+        </button>
+      </div>
+    </div>
     
     <!-- PNG上传按钮 -->
     <button
@@ -211,3 +248,27 @@ const triggerFileUpload = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* 形状工具菜单样式 */
+.shape-tool-menu {
+  /* 确保菜单在正确的层级显示 */
+  z-index: 1000;
+}
+
+/* 上拉菜单动画 */
+.shape-tool-menu > div {
+  animation: slideUp 0.2s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>

@@ -86,44 +86,42 @@ const handleClearData = () => {
 </script>
 
 <template>
-  <div class="h-full border-b border-gray-200 relative">
+  <div class="h-full border-b border-gray-200 relative flex flex-col">
+    <!-- 工具栏 - 始终显示在顶部 -->
+    <div 
+      class="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-50 h-12 flex-shrink-0 shadow-sm z-10"
+    >
+      <span class="text-sm text-gray-600">Data Table</span>
+      <div class="flex h-full gap-1">
+        <button
+          v-if="tableStore.tableData.length > 0"
+          @click="handleClearData"
+          class="h-full w-8 rounded transition-colors flex items-center justify-center bg-white hover:bg-[var(--delete-color)] text-gray-600 hover:text-white"
+          style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);"
+          title="Clear data"
+        >
+          <span class="i-carbon:close-large text-sm"></span>
+        </button>
+      </div>
+      <input ref="fileInput" type="file" class="hidden" accept=".csv" @change="handleFileSelect" />
+    </div>
+
     <!-- 上传区域 - 只在没有数据时显示 -->
-    <div v-if="tableStore.tableData.length === 0 && !tableStore.isLoading" class="h-full w-full p-5">
+    <div v-if="tableStore.tableData.length === 0 && !tableStore.isLoading" class="flex-1 w-full p-5">
       <div
         class="border-2 h-full w-full border-dashed border-gray-300 rounded-lg  transition-colors cursor-pointer flex flex-col justify-center items-center gap-4"
         :class="{
           'border-blue-500 bg-blue-50': isDragOver,
           'hover:border-gray-400': !isDragOver
         }" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop" @click="$refs.fileInput.click()">
-        <input ref="fileInput" type="file" class="hidden" accept=".csv" @change="handleFileSelect" />
         <span class="i-carbon-add-alt text-4xl text-gray-400"></span>
         <div class="text-sm font-medium text-gray-400">Upload Data</div>
       </div>
-
     </div>
 
     <!-- 数据表格区域 - 只在有数据时显示 -->
-    <div v-else-if="tableStore.tableData.length > 0" class="h-full w-full overflow-hidden flex flex-col"
+    <div v-else-if="tableStore.tableData.length > 0" class="flex-1 w-full overflow-hidden flex flex-col"
       style="min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; contain: layout size;">
-      <!-- 工具栏 -->
-      <div class="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-50 h-12">
-        <span class="text-sm text-gray-600">Data Table</span>
-        <div class="flex h-full gap-1">
-          <button
-            @click="handleClearData"
-            class="h-full w-8 text-white rounded transition-colors flex items-center justify-center"
-            :class="[
-              'bg-[var(--delete-color)] hover:bg-[var(--delete-hover-color)]'
-            ]"
-            title="Clear data"
-          >
-            <span class="i-carbon:close-large text-sm"></span>
-          </button>
-          
-        </div>
-        <input ref="fileInput" type="file" class="hidden" accept=".csv" @change="handleFileSelect" />
-      </div>
-      
       <!-- 表格内容 -->
       <div class="flex-1 overflow-hidden">
         <vxe-table :data="tableStore.tableData" :scroll-y="{ enabled: true }" :scroll-x="{ enabled: true }" height="100%"

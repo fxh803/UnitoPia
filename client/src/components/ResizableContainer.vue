@@ -62,7 +62,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="container" class="flex h-full w-full select-none relative overflow-hidden">
-    <!-- 左侧画布区 + 滑动条 -->
+    <!-- 左侧数据区 + 滑动条 -->
     <div :style="{ width: `${resizeHandleStore.leftWidth}px` }" class="h-full border-r border-gray-300 relative">
       <slot name="left" />
       <!-- 滑动条，绝对定位在右侧 -->
@@ -73,9 +73,15 @@ onBeforeUnmount(() => {
         @mousedown="startDrag"
       />
     </div>
-    <!-- 右侧数据编辑器 -->
-    <div class="flex-1 h-full">
-      <slot name="right" />
+    <!-- 右侧画布区 -->
+    <div class="flex-1 h-full flex flex-col">
+      <!-- 工具栏 -->
+      <div class="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-50 h-12 flex-shrink-0 shadow-sm z-10">
+        <span class="text-sm text-gray-600">Canvas Editor</span>
+      </div>
+      <div class="flex-1 min-h-0">
+        <slot name="right" />
+      </div>
     </div>
   </div>
 </template>

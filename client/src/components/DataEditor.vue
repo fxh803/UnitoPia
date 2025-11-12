@@ -29,14 +29,22 @@ const { collaging ,result_data} = storeToRefs(animationStore)
       <div class="border-t border-gray-200"></div>
       
       <!-- 下半部分：左右两等边 -->
-      <div class="flex-1 min-h-0 flex">
-        <!-- 左半边 -->
-        <div class="w-1/2 border-r border-gray-200">
-          <MarkerCanvasArea />
+      <div class="flex-1 min-h-0 flex flex-col">
+        <!-- 工具栏 -->
+        <div class="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-50 h-12 z-10 flex-shrink-0 shadow-sm">
+          <span class="text-sm text-gray-600">DataEditor</span>
         </div>
-        <!-- 右半边 -->
-        <div class="w-1/2"> 
-          <MarkerMappingPanel />
+        
+        <!-- 内容区域 -->
+        <div class="flex-1 min-h-0 flex">
+          <!-- 左半边 -->
+          <div class="w-1/2 border-r border-gray-200">
+            <MarkerCanvasArea />
+          </div>
+          <!-- 右半边 -->
+          <div class="w-1/2"> 
+            <MarkerMappingPanel />
+          </div>
         </div>
       </div>
     </div>

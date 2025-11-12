@@ -238,24 +238,39 @@ const saveMarkers = async () => {
   <div class="flex items-center gap-2 p-1">
     <!-- 颜色选择器 -->
     <ColorPicker />
-    <!-- 绘制工具聚合按钮 -->
+    <!-- 自由绘制按钮 -->
+    <button
+      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
+      :class="[
+        mode === 'draw'
+          ? 'bg-[var(--primary-color)] text-white'
+          : 'bg-white text-black hover:bg-[#f5f5f5]'
+      ]"
+      title="自由绘制"
+      @click="() => setMode('draw')"
+    >
+      <span class="i-carbon-pen" />
+    </button>
+    
+    <!-- 形状绘制工具聚合按钮 -->
     <div class="relative draw-tool-menu">
       <button
         class="rounded flex h-7 w-7 items-center justify-center cursor-pointer relative"
         :class="[
-          (mode === 'draw' || mode === 'rect' || mode === 'ellipse')
+          (mode === 'rect' || mode === 'ellipse')
             ? 'bg-[var(--primary-color)] text-white'
             : 'bg-white text-black hover:bg-[#f5f5f5]'
         ]"
-        title="绘制工具"
+        title="形状工具"
         @click="toggleDrawMenu"
       >
-        <span class="i-carbon-pen" />
+        <span v-if="mode === 'ellipse'" class="i-carbon-circle-outline" />
+        <span v-else class="i-carbon:checkbox" />
         <!-- 右下角黑三角 -->
         <div class="absolute bottom-0 right-0 w-0 h-0 border-l-[5px] border-t-[5px] border-l-transparent border-t-black transform rotate-90"></div>
       </button>
       
-      <!-- 绘制工具上拉菜单 -->
+      <!-- 形状绘制工具上拉菜单 -->
       <div 
         v-if="showDrawMenu"
         class="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px] draw-tool-menu"
@@ -272,22 +287,12 @@ const saveMarkers = async () => {
         
         <!-- 矩形 -->
         <button
-          class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50"
+          class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-b-lg"
           :class="mode === 'rect' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'"
           @click="() => { setMode('rect'); showDrawMenu = false; }"
         >
           <span class="i-carbon-checkbox text-sm" />
           <span class="text-xs">rect</span>
-        </button>
-        
-        <!-- 自由绘制 -->
-        <button
-          class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-b-lg"
-          :class="mode === 'draw' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'"
-          @click="() => { setMode('draw'); showDrawMenu = false; }"
-        >
-          <span class="i-carbon-pen text-sm" />
-          <span class="text-xs">pen</span>
         </button>
       </div>
     </div>
