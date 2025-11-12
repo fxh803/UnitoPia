@@ -26,6 +26,12 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
   function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force') {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
+
+    // 检查闭合路径确认面板是否打开
+    const canvasStore = useCanvasStore()
+    if (canvasStore.closePathConfirm.show) {
+      return
+    }
     // 再次点击同模式，取消激活
     if (mode.value === m) {
       mode.value = null;

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useBrushSizeStore } from '~/stores/brushsize'
-
+import { useMarkerCanvasStore } from '~/stores/markerCanvas'
 export const useMarkerCanvasModeStore = defineStore('markerCanvasMode', () => {
   const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null>(null)
   const canvasRef = ref<(() => Canvas | null) | null>(null)
@@ -20,6 +20,17 @@ export const useMarkerCanvasModeStore = defineStore('markerCanvasMode', () => {
   function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | null) {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
+
+    // 如果取色器或闭合路径确认面板打开，不允许切换模式
+    if (colorPickerStore.isColorPickerOpen) {
+      return
+    }
+    
+    // 检查闭合路径确认面板是否打开
+    const markerCanvasStore = useMarkerCanvasStore()
+    if (markerCanvasStore.closePathConfirm.show) {
+      return
+    }
 
     // 再次点击同模式，取消激活
     if (mode.value === m) {
