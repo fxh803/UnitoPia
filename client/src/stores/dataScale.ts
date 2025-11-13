@@ -12,8 +12,12 @@ export const useDataScaleStore = defineStore('dataScale', () => {
   const prevHeightScale = ref(1)
   const prevSizeScale = ref(1)
 
-  // 当前映射通道：'width' | 'height' | 'size'
-  const currentMappingChannel = ref<'width' | 'height' | 'size'>('size')
+  // 列到通道的映射关系：由于 width、height、size 三者互斥，只需要存储一个键值对
+  const columnMapping = ref<{ column: string | null; channel: 'width' | 'height' | 'size' | null }>({
+    column: null,
+    channel: null
+  })
+  
   const canvasRef = ref<(() => Canvas | null) | null>(null)
   const collageSeriesStore = useCollageSeriesStore()
 
@@ -43,14 +47,14 @@ export const useDataScaleStore = defineStore('dataScale', () => {
         let newScaleY = currentScaleY
 
         // 根据当前映射通道状态应用不同的缩放逻辑
-        if (currentMappingChannel.value === 'size') {
+        if (columnMapping.value.channel === 'size') {
           // 如果是 size 通道，x 和 y 都乘以 sizeRatio
           newScaleX = currentScaleX * sizeRatio
           newScaleY = currentScaleY * sizeRatio
-        } else if (currentMappingChannel.value === 'width') {
+        } else if (columnMapping.value.channel === 'width') {
           // 如果是 width 通道，只乘 widthRatio
           newScaleX = currentScaleX * widthRatio
-        } else if (currentMappingChannel.value === 'height') {
+        } else if (columnMapping.value.channel === 'height') {
           // 如果是 height 通道，只乘 heightRatio
           newScaleY = currentScaleY * heightRatio
         }
@@ -79,45 +83,26 @@ export const useDataScaleStore = defineStore('dataScale', () => {
     const objects = canvas.getObjects()
     objects.forEach((obj: any, i) => {
       if (obj.get('dataType') === 'marker') {
-        // 获取归一化参数
-        const { data, normalize, minWidth, maxWidth, avgWidth, minHeight, maxHeight, avgHeight, minSizeValue, maxSizeValue } = getNormalizationParams(obj.get('markerId'))
+        // 获取归一化参数和处理好的数据
+        const { processedData } = getNormalizationParams(obj.get('markerId'))
+         
+        // 获取映射的通道
+        const mappedChannel = columnMapping.value.channel
          
         // 根据数据中的 width 和 height 调节对象大小
         const currentWidth = obj.width
-        const currentHeight = obj.height
-        const currentSize = Math.max(currentWidth, currentHeight)
-        const row = data[i-1]//从1开始的
-        const dataWidth = parseFloat(row.width)
-        const dataHeight = parseFloat(row.height)
-        const dataSize = parseFloat(row.size) 
-
-        // 如果数据有效，使用归一化后的尺寸
-        if (!isNaN(dataWidth) && !isNaN(dataHeight) && dataWidth > 0 && dataHeight > 0) {
-          const normalizedWidth = normalize(dataWidth, minWidth, maxWidth)
-          const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
-          const normalizedSize = !isNaN(dataSize) && dataSize > 0 ? normalize(dataSize, minSizeValue, maxSizeValue) : null
-          
-          // 默认使用平均值/现有值
-          let scaleX = avgWidth / currentSize  
-          let scaleY = avgHeight / currentSize  
-
-          // 根据当前映射通道状态应用不同的缩放逻辑
-          if (currentMappingChannel.value === 'size' && normalizedSize !== null) {
-            // 如果是 size 通道，x 和 y 都使用 size 的归一化值
-            scaleX = normalizedSize / currentSize * sizeScale.value
-            scaleY = normalizedSize / currentSize * sizeScale.value
-          } else if (currentMappingChannel.value === 'width') {
-            // 如果是 width 通道，只使用 width 的归一化值
-            scaleX = normalizedWidth / currentSize * widthScale.value
-          } else if (currentMappingChannel.value === 'height') {
-            // 如果是 height 通道，只使用 height 的归一化值 
-            scaleY = normalizedHeight / currentSize * heightScale.value
-          } 
-          obj.set({
-            scaleX: scaleX,
-            scaleY: scaleY
-          })
-        }
+        const currentHeight = obj.height 
+        const processedRow = processedData[i-1]//从1开始的
+         
+        const [normalizedWidth, normalizedHeight] = processedRow
+        
+        // 默认使用归一化后的尺寸
+        let scaleX = normalizedWidth / currentWidth  
+        let scaleY = normalizedHeight / currentHeight   
+        obj.set({
+          scaleX: scaleX,
+          scaleY: scaleY
+        }) 
 
       }
     })
@@ -127,7 +112,7 @@ export const useDataScaleStore = defineStore('dataScale', () => {
   watch([widthScale, heightScale, sizeScale], () => {
     updateAllMarkersScale()
   })
-  watch(currentMappingChannel, () => {
+  watch(() => columnMapping.value.channel, () => {
     changeMappingChannel()
   })
 
@@ -146,9 +131,16 @@ export const useDataScaleStore = defineStore('dataScale', () => {
     sizeScale.value = scale
   }
 
-  // 设置当前映射通道
-  function setCurrentMappingChannel(channel: 'width' | 'height' | 'size') {
-    currentMappingChannel.value = channel
+  // 设置列的映射通道
+  function setColumnMapping(columnName: string, channel: 'width' | 'height' | 'size' | null) {
+    // 如果设置为 null，直接清除映射
+    if (channel === null) {
+      columnMapping.value = { column: null, channel: null }
+      return
+    }
+
+    // 设置新的映射（由于三者互斥，直接覆盖即可）
+    columnMapping.value = { column: columnName, channel }
   }
 
   // 重置缩放基数
@@ -164,32 +156,33 @@ export const useDataScaleStore = defineStore('dataScale', () => {
   function getNormalizationParams(markerId: string) {
     const data = pharseData(markerId)
 
-    // 提取所有的 width、height 和 size 值
-    const widths: number[] = []
-    const heights: number[] = []
-    const sizes: number[] = []
-    data.forEach((row: any) => {
-      const w = parseFloat(row.width)
-      const h = parseFloat(row.height)
-      const s = parseFloat(row.size)
-      if (!isNaN(w) && w > 0) widths.push(w)
-      if (!isNaN(h) && h > 0) heights.push(h)
-      if (!isNaN(s) && s > 0) sizes.push(s)
-    })
+    // 获取映射的列名和通道
+    const mappedColumn = columnMapping.value.column
+    const mappedChannel = columnMapping.value.channel
 
-    // 定义归一化范围
+    // 定义归一化范围（用于宽模式下的高和高模式下的宽）
     const minDisplaySize = 20  // 最小显示尺寸
     const maxDisplaySize = 100  // 最大显示尺寸
+    const defaultSize = 60  // 默认尺寸
+
+    // 只用一个列表记录选中列的数据（包括非数值列全1的处理后的数据）
+    const columnValues: number[] = []
+    
+    data.forEach((row: any) => {
+      if (mappedColumn && row[mappedColumn] !== undefined) {
+        const value = parseFloat(row[mappedColumn])
+        // 如果是非数值列，视为 1
+        const numValue = !isNaN(value) && value > 0 ? value : 1
+        columnValues.push(numValue)
+      } else {
+        // 如果没有映射，默认使用 1
+        columnValues.push(1)
+      }
+    })
 
     // 计算归一化参数
-    const minWidth = widths.length > 0 ? Math.min(...widths) : 1
-    const maxWidth = widths.length > 0 ? Math.max(...widths) : 1
-    const avgWidth = widths.length > 0 ? widths.reduce((sum, w) => sum + w, 0) / widths.length : 1
-    const minHeight = heights.length > 0 ? Math.min(...heights) : 1
-    const maxHeight = heights.length > 0 ? Math.max(...heights) : 1
-    const avgHeight = heights.length > 0 ? heights.reduce((sum, h) => sum + h, 0) / heights.length : 1
-    const minSizeValue = sizes.length > 0 ? Math.min(...sizes) : 1
-    const maxSizeValue = sizes.length > 0 ? Math.max(...sizes) : 1
+    const minValue = columnValues.length > 0 ? Math.min(...columnValues) : 1
+    const maxValue = columnValues.length > 0 ? Math.max(...columnValues) : 1
 
     // 归一化函数：将原始值映射到 [minDisplaySize, maxDisplaySize] 范围
     const normalize = (value: number, min: number, max: number): number => {
@@ -197,17 +190,34 @@ export const useDataScaleStore = defineStore('dataScale', () => {
       return minDisplaySize + ((value - min) / (max - min)) * (maxDisplaySize - minDisplaySize)
     }
 
+    // 处理好的数据：只返回 [[w,h],[w,h],...] 格式
+    const processedData = data.map((row: any, index: number) => {
+      const columnValue = columnValues[index] || 1
+      let normalizedWidth = defaultSize
+      let normalizedHeight = defaultSize
+      
+      if (mappedChannel === 'width') {
+        // width模式：width使用归一化值，height使用defaultSize
+        normalizedWidth = normalize(columnValue, minValue, maxValue)
+        normalizedHeight = defaultSize
+      } else if (mappedChannel === 'height') {
+        // height模式：height使用归一化值，width使用defaultSize
+        normalizedWidth = defaultSize
+        normalizedHeight = normalize(columnValue, minValue, maxValue)
+      } else if (mappedChannel === 'size') {
+        // size模式：width和height都使用归一化值（不使用defaultSize）
+        const normalizedSize = normalize(columnValue, minValue, maxValue)
+        normalizedWidth = normalizedSize
+        normalizedHeight = normalizedSize
+      }
+      // 如果没有映射，使用defaultSize
+      
+      return [normalizedWidth, normalizedHeight]
+    })
+
     return {
-      data,
-      normalize,
-      minWidth,
-      maxWidth,
-      avgWidth,
-      minHeight,
-      maxHeight,
-      avgHeight,
-      minSizeValue,
-      maxSizeValue
+      data, 
+      processedData 
     }
   }
 
@@ -216,12 +226,12 @@ export const useDataScaleStore = defineStore('dataScale', () => {
     widthScale,
     heightScale,
     sizeScale,
-    currentMappingChannel,
+    columnMapping,
     setCanvas,
     setWidthScale,
     setHeightScale,
     setSizeScale,
-    setCurrentMappingChannel,
+    setColumnMapping,
     resetScales,
     updateAllMarkersScale,
     changeMappingChannel,

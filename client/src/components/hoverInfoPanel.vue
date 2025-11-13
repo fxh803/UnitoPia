@@ -8,7 +8,7 @@ const hoverInfoPanelStore = useHoverInfoPanelStore()
 const { showPanel, panelPosition, markerData } = storeToRefs(hoverInfoPanelStore)
 
 const dataScaleStore = useDataScaleStore()
-const { currentMappingChannel } = storeToRefs(dataScaleStore)
+const { columnMapping } = storeToRefs(dataScaleStore)
 
 // 格式化数据用于显示
 const formattedData = computed(() => {
@@ -18,7 +18,7 @@ const formattedData = computed(() => {
   if (typeof markerData.value === 'object' && markerData.value !== null) {
     const entries = Object.entries(markerData.value)
     
-    // 根据 currentMappingChannel 过滤字段
+    // 根据 columnMapping.channel 过滤字段
     const filteredEntries = entries.filter(([key]) => {
       // 过滤的内部属性（如 _X_ROW_KEY）
       if (key.startsWith('_X_ROW_KEY')) {
@@ -28,15 +28,15 @@ const formattedData = computed(() => {
       const lowerKey = key.toLowerCase()
       
       // 如果当前映射通道是 width，只显示 width，隐藏 height 和 size
-      if (currentMappingChannel.value === 'width') {
+      if (columnMapping.value.channel === 'width') {
         return lowerKey !== 'height' && lowerKey !== 'size'
       }
       // 如果当前映射通道是 height，只显示 height，隐藏 width 和 size
-      else if (currentMappingChannel.value === 'height') {
+      else if (columnMapping.value.channel === 'height') {
         return lowerKey !== 'width' && lowerKey !== 'size'
       }
       // 如果当前映射通道是 size，只显示 size，隐藏 width 和 height
-      else if (currentMappingChannel.value === 'size') {
+      else if (columnMapping.value.channel === 'size') {
         return lowerKey !== 'width' && lowerKey !== 'height'
       }
       

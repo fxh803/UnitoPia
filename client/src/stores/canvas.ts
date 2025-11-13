@@ -378,10 +378,8 @@ export const useCanvasStore = defineStore('canvas', () => {
     if (!canvasInstance) return
 
     try {
-      // 获取归一化参数
-      const { data, normalize, minWidth, maxWidth, minHeight, maxHeight, minSizeValue, maxSizeValue, avgWidth, avgHeight } = dataScaleStore.getNormalizationParams(markerId)
-      // 解析 markerId 对应的所有数据
-      const dataArray = pharseData(markerId)
+      // 获取归一化参数和处理好的数据
+      const { data, processedData } = dataScaleStore.getNormalizationParams(markerId) 
 
       for (let i = 0; i < pos.length; i++) {
         const p = pos[i]
@@ -403,7 +401,7 @@ export const useCanvasStore = defineStore('canvas', () => {
             originX: 'center',
             originY: 'center',
             markerId: markerId,
-            data: dataArray[i]
+            data: data[i]
           })
           
           if (selectedModeStore.selectedMode === null) {
@@ -413,42 +411,18 @@ export const useCanvasStore = defineStore('canvas', () => {
 
           // 根据数据中的 width 和 height 调节对象大小
           const currentWidth = group.width || group.getScaledWidth()
-          const currentHeight = group.height || group.getScaledHeight()
-          const currentSize = Math.max(currentWidth, currentHeight)
+          const currentHeight = group.height || group.getScaledHeight() 
 
-          if (currentWidth > 0 && currentHeight > 0 && i < data.length) {
-            const row = data[i]
-            const dataWidth = parseFloat(row.width)
-            const dataHeight = parseFloat(row.height)
-            const dataSize = parseFloat(row.size)
-            
-            // 如果数据有效，使用归一化后的尺寸
-            if (!isNaN(dataWidth) && !isNaN(dataHeight) && dataWidth > 0 && dataHeight > 0) {
-              const normalizedWidth = normalize(dataWidth, minWidth, maxWidth)
-              const normalizedHeight = normalize(dataHeight, minHeight, maxHeight)
-              const normalizedSize = !isNaN(dataSize) && dataSize > 0 ? normalize(dataSize, minSizeValue, maxSizeValue) : null 
-              let scaleX = avgWidth / currentSize  
-              let scaleY = avgHeight / currentSize 
+          const processedRow = processedData[i] 
+          const [normalizedWidth, normalizedHeight] = processedRow
               
-              // 根据当前映射通道状态应用不同的缩放逻辑
-              if (dataScaleStore.currentMappingChannel === 'size' && normalizedSize !== null) {
-                // 如果是 size 通道，x 和 y 都使用 size 的归一化值
-                scaleX = normalizedSize / currentSize * dataScaleStore.sizeScale
-                scaleY = normalizedSize / currentSize * dataScaleStore.sizeScale
-              } else if (dataScaleStore.currentMappingChannel === 'width') {
-                // 如果是 width 通道，只使用 width 的归一化值
-                scaleX = normalizedWidth / currentSize * dataScaleStore.widthScale 
-              } else if (dataScaleStore.currentMappingChannel === 'height') {
-                // 如果是 height 通道，只使用 height 的归一化值 
-                scaleY = normalizedHeight / currentSize * dataScaleStore.heightScale
-              }  
+          let scaleX = normalizedWidth / currentWidth  
+          let scaleY = normalizedHeight / currentHeight  
               
-              group.set({
-                scaleX: scaleX,
-                scaleY: scaleY
-              })
-            } 
-          }
+          group.set({
+            scaleX: scaleX,
+            scaleY: scaleY
+          })
 
           // 添加到主画布（此时所有属性都已设置好）
           canvasInstance.add(group)

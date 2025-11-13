@@ -10,10 +10,28 @@ const { collageSeries, currentSlideIndex } = storeToRefs(collageSeriesStore)
 const tableStore = useTableStore()
 const markerStore = useMarkerStore()
 const dataScaleStore = useDataScaleStore()
-const { widthScale, heightScale, sizeScale, currentMappingChannel } = storeToRefs(dataScaleStore)
+const { widthScale, heightScale, sizeScale, columnMapping } = storeToRefs(dataScaleStore)
 const isDragOver = ref(false)
 const isScrolling = ref(false)
 const cellClasses = ref<Record<number, Record<number, string>>>({})
+
+// 下拉菜单选项
+const mappingOptions = [
+  { value: 'none', label: 'None' },
+  { value: 'width', label: 'Width' },
+  { value: 'height', label: 'Height' },
+  { value: 'size', label: 'Size' }
+]
+
+// 获取列的映射值
+const getColumnMappingValue = (columnName: string) => {
+  return columnMapping.value.column === columnName ? (columnMapping.value.channel || 'none') : 'none'
+}
+
+// 处理列映射变化
+const handleColumnMappingChange = (columnName: string, value: string) => {
+  dataScaleStore.setColumnMapping(columnName, value === 'none' ? null : value as 'width' | 'height' | 'size')
+}
 // 处理滚动事件
 const handleScrolling = () => {
   // 可以在这里添加滚动处理逻辑
@@ -121,95 +139,56 @@ const handleClearData = () => {
 
     <!-- 数据表格区域 - 只在有数据时显示 -->
     <div v-else-if="tableStore.tableData.length > 0" class="flex-1 w-full overflow-hidden flex flex-col"
-      style="min-width: 0; min-height: 0; max-width: 100%; max-height: 100%; contain: layout size;">
+      style="min-width: 0; min-height: 0; max-width: 100%; max-height: 100%;">
       <!-- 表格内容 -->
       <div class="flex-1 overflow-hidden">
         <vxe-table :data="tableStore.tableData" :scroll-y="{ enabled: true }" :scroll-x="{ enabled: true }" height="100%"
-          @scroll="handleScrolling()" :cell-config="{ height: 30 }" show-header-overflow show-overflow size="small" border
+          @scroll="handleScrolling()" :cell-config="{ height: 30 }" :headerCellConfig="{ height: 60}" show-header-overflow show-overflow size="small" border
           :cell-class-name="cellClassName" :auto-resize="true">
           <vxe-column v-for="(item, index) in tableStore.tableColumns" :key="index" :field="item" :title="item" row-resize
             min-width="80">
-            <!-- 自定义 width 列的标题 -->
-            <template v-if="item === 'width'" #header>
+            <!-- 自定义表头：包含列名、下拉菜单和缩放滑块 -->
+            <template #header>
               <div class="flex flex-col items-center w-full gap-1 py-1">
+                <!-- 列名和下拉菜单 -->
                 <div class="flex items-center justify-center gap-2 w-full">
-                  <div class="text-xs font-semibold">Width</div>
-                  <input 
-                    type="radio" 
-                    name="mappingChannel"
-                    :checked="currentMappingChannel === 'width'"
-                    @change="dataScaleStore.setCurrentMappingChannel('width')"
+                  <div class="text-xs font-semibold truncate">{{ item }}</div>
+                  <el-select
+                    :model-value="getColumnMappingValue(item)"
+                    @update:model-value="(value) => handleColumnMappingChange(item, value)"
                     @click.stop
-                    class="w-3 h-3"
-                  />
+                    size="small"
+                    style="width: 80px"
+                    placeholder="Select"
+                  >
+                    <el-option
+                      v-for="option in mappingOptions"
+                      :key="option.value"
+                      :label="option.label"
+                      :value="option.value"
+                    />
+                  </el-select>
                 </div>
-                <div class="flex items-center justify-center gap-2 w-full transform translate-x-2">
+                <!-- 缩放滑块：只在有映射时显示 -->
+                <div v-if="columnMapping.column === item && columnMapping.channel" class="flex items-center justify-center gap-2 w-full transform translate-x-2">
                   <input 
                     type="range" 
-                    v-model.number="widthScale" 
+                    :value="columnMapping.channel === 'width' ? widthScale : columnMapping.channel === 'height' ? heightScale : sizeScale"
+                    @input="(e) => {
+                      const value = parseFloat((e.target as HTMLInputElement).value)
+                      if (columnMapping.channel === 'width') dataScaleStore.setWidthScale(value)
+                      else if (columnMapping.channel === 'height') dataScaleStore.setHeightScale(value)
+                      else if (columnMapping.channel === 'size') dataScaleStore.setSizeScale(value)
+                    }"
                     min="0.1" 
                     max="5" 
                     step="0.1"
                     class="scale-slider w-20"
                     @click.stop
                   />
-                  <span class="text-xs text-gray-600 min-w-8">{{ widthScale.toFixed(1) }}</span>
-                </div>
-              </div>
-            </template>
-            <!-- 自定义 height 列的标题 -->
-            <template v-else-if="item === 'height'" #header>
-              <div class="flex flex-col items-center w-full gap-1 py-1">
-                <div class="flex items-center justify-center gap-2 w-full">
-                  <div class="text-xs font-semibold">Height</div>
-                  <input 
-                    type="radio" 
-                    name="mappingChannel"
-                    :checked="currentMappingChannel === 'height'"
-                    @change="dataScaleStore.setCurrentMappingChannel('height')"
-                    @click.stop
-                    class="w-3 h-3"
-                  />
-                </div>
-                <div class="flex items-center justify-center gap-2 w-full transform translate-x-2">
-                  <input 
-                    type="range" 
-                    v-model.number="heightScale" 
-                    min="0.1" 
-                    max="5" 
-                    step="0.1"
-                    class="scale-slider w-20"
-                    @click.stop
-                  />
-                  <span class="text-xs text-gray-600 min-w-8">{{ heightScale.toFixed(1) }}</span>
-                </div>
-              </div>
-            </template>
-            <!-- 自定义 size 列的标题 -->
-            <template v-else-if="item === 'size'" #header>
-              <div class="flex flex-col items-center w-full gap-1 py-1">
-                <div class="flex items-center justify-center gap-2 w-full">
-                  <div class="text-xs font-semibold">Size</div>
-                  <input 
-                    type="radio" 
-                    name="mappingChannel"
-                    :checked="currentMappingChannel === 'size'"
-                    @change="dataScaleStore.setCurrentMappingChannel('size')"
-                    @click.stop
-                    class="w-3 h-3"
-                  />
-                </div>
-                <div class="flex items-center justify-center gap-2 w-full transform translate-x-2">
-                  <input 
-                    type="range" 
-                    v-model.number="sizeScale" 
-                    min="0.1" 
-                    max="5" 
-                    step="0.1"
-                    class="scale-slider w-20"
-                    @click.stop
-                  />
-                  <span class="text-xs text-gray-600 min-w-8">{{ sizeScale.toFixed(1) }}</span>
+                  <span class="text-xs text-gray-600 min-w-8">
+                    {{ (columnMapping.channel === 'width' ? widthScale : columnMapping.channel === 'height' ? heightScale : sizeScale).toFixed(1) }}
+                  </span>
                 </div>
               </div>
             </template>
@@ -227,9 +206,9 @@ const handleClearData = () => {
 }
 
 /* 增加列标题宽度 */
-.vxe-cell--title {
-  min-width: 100% !important;
-}
+/* .vxe-cell--title {
+  width: 100% !important;
+} */
 
 /* 滑动条样式 */
 .scale-slider {
