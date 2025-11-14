@@ -1,13 +1,29 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { useTableStore } from '~/stores/table'
+
+export type FilterType = 'range' | 'condition'
+
+export interface RangeFilter {
+  type: 'range'
+  start: number
+  end: number
+}
+
+export interface ConditionFilter {
+  type: 'condition'
+  column: string
+  value: string
+}
+
+export type Filter = RangeFilter | ConditionFilter
 
 export interface MarkerData {
   id: string
   thumbnail: string
   jsonData: any
-  mapping: {
-    dataRange: { start: number; end: number }
-  }
+  filters: Filter[]
+  cols: Set<number>  // 记录筛选后的行索引（使用 Set 提高查找性能）
 }
 
 export const useMarkerStore = defineStore('marker', () => {
@@ -15,13 +31,12 @@ export const useMarkerStore = defineStore('marker', () => {
   const markers = ref<MarkerData[]>([])
   
   // 添加新的 marker
-  const addMarker = (marker: Omit<MarkerData, 'id' | 'mapping'>) => {
+  const addMarker = (marker: Omit<MarkerData, 'id' | 'filters' | 'cols'>) => {
     const newMarker: MarkerData = {
       ...marker,
       id: `marker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      mapping: {
-        dataRange: { start: -1, end: -1 }
-      }
+      filters: [],
+      cols: new Set<number>()
     }
     markers.value.push(newMarker)
     return newMarker
@@ -42,28 +57,148 @@ export const useMarkerStore = defineStore('marker', () => {
     markers.value = []
   }
   
-  // 重置所有 marker 的 mapping 配置为默认值
+  // 重置所有 marker 的筛选条件
   const resetAllMarkerMappings = () => {
     markers.value.forEach(marker => {
-      marker.mapping = {
-        dataRange: { start: -1, end: -1 }
-      }
+      marker.filters = []
+      marker.cols = new Set<number>()
     })
   }
   
-  // 获取 marker 的映射配置
-  const getMarkerMapping = (markerId: string) => {
+  // 计算并更新 marker 的筛选行索引
+  const calculateMarkerCols = (markerId: string) => {
+    const markerIndex = markers.value.findIndex(m => m.id === markerId)
+    if (markerIndex === -1) return
+    
+    const tableStore = useTableStore()
+    const tableData = tableStore.tableData
+    
+    const marker = markers.value[markerIndex]
+    const filters = marker.filters
+    
+    if (filters.length === 0) {
+      marker.cols = new Set<number>()
+      return
+    }
+    
+    // 同类型 filter 做并集，不同类型 filter 做交集
+    const rangeIndices = new Set<number>()
+    const conditionIndices = new Set<number>()
+    
+    // 处理所有 range filter（并集）
+    filters.forEach(filter => {
+      if (filter.type === 'range' && filter.start !== -1 && filter.end !== -1) {
+        const start = filter.start > 0 ? filter.start - 1 : 0
+        const end = filter.end > 0 ? filter.end : tableData.length
+        for (let i = start; i < end && i < tableData.length; i++) {
+          rangeIndices.add(i)
+        }
+      }
+    })
+    
+    // 处理所有 condition filter（并集）
+    filters.forEach(filter => {
+      if (filter.type === 'condition' && filter.column && filter.value) {
+        tableData.forEach((row, index) => {
+          if (String(row[filter.column] || '') === filter.value) {
+            conditionIndices.add(index)
+          }
+        })
+      }
+    })
+    
+    // 不同类型 filter 做交集
+    let resultIndices: Set<number>
+    const hasRange = rangeIndices.size > 0
+    const hasCondition = conditionIndices.size > 0
+    
+    if (hasRange && hasCondition) {
+      // 取交集
+      resultIndices = new Set([...rangeIndices].filter(i => conditionIndices.has(i)))
+    } else if (hasRange) {
+      resultIndices = rangeIndices
+    } else if (hasCondition) {
+      resultIndices = conditionIndices
+    } else {
+      // 没有任何有效 filter，返回空集
+      resultIndices = new Set<number>()
+    }
+    
+    marker.cols = resultIndices
+  }
+  
+  // 获取 marker 的筛选条件
+  const getMarkerFilters = (markerId: string) => {
     const marker = markers.value.find(m => m.id === markerId)
-    return marker?.mapping || {
-      dataRange: { start: -1, end: -1 }
+    return marker?.filters || []
+  }
+  
+  // 添加筛选条件
+  const addFilter = (markerId: string, filterType: FilterType) => {
+    const markerIndex = markers.value.findIndex(m => m.id === markerId)
+    if (markerIndex === -1) return null
+    
+    let newFilter: Filter
+    
+    if (filterType === 'range') {
+      newFilter = {
+        type: 'range',
+        start: -1,
+        end: -1
+      }
+    } else {
+      newFilter = {
+        type: 'condition',
+        column: '',
+        value: ''
+      }
+    }
+    
+    markers.value[markerIndex].filters.push(newFilter)
+    return newFilter
+  }
+  
+  // 删除筛选条件
+  const removeFilter = (markerId: string, filterIndex: number) => {
+    const markerIndex = markers.value.findIndex(m => m.id === markerId)
+    if (markerIndex === -1) return
+    
+    const filters = markers.value[markerIndex].filters
+    if (filterIndex >= 0 && filterIndex < filters.length) {
+      filters.splice(filterIndex, 1)
+      // 立即计算 cols
+      calculateMarkerCols(markerId)
     }
   }
   
-  // 更新 marker 的数据范围
-  const updateDataRange = (markerId: string, start: number, end: number) => {
+  // 更新 Range 筛选条件
+  const updateRangeFilter = (markerId: string, filterIndex: number, start: number, end: number) => {
     const markerIndex = markers.value.findIndex(m => m.id === markerId)
-    if (markerIndex !== -1) {
-      markers.value[markerIndex].mapping.dataRange = { start, end }
+    if (markerIndex === -1) return
+    
+    const filter = markers.value[markerIndex].filters[filterIndex]
+    if (filter && filter.type === 'range') {
+      filter.start = start
+      filter.end = end 
+      if (start!==-1 && end!==-1) {
+        calculateMarkerCols(markerId)
+      }
+    }
+  }
+  
+  // 更新 Condition 筛选条件
+  const updateConditionFilter = (markerId: string, filterIndex: number, column: string, value: string) => {
+    const markerIndex = markers.value.findIndex(m => m.id === markerId)
+    if (markerIndex === -1) return
+    
+    const filter = markers.value[markerIndex].filters[filterIndex]
+    if (filter && filter.type === 'condition') {
+      filter.column = column
+      filter.value = value 
+
+      if (column!=='' && value!=='') {
+        calculateMarkerCols(markerId)
+      }  
     }
   }
   
@@ -72,8 +207,12 @@ export const useMarkerStore = defineStore('marker', () => {
     addMarker, 
     deleteMarker,
     clearAllMarkers,
-    getMarkerMapping,
-    updateDataRange,
-    resetAllMarkerMappings
+    getMarkerFilters,
+    resetAllMarkerMappings,
+    addFilter,
+    removeFilter,
+    updateRangeFilter,
+    updateConditionFilter,
+    calculateMarkerCols
   }
 })

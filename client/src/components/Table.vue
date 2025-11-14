@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table' 
 import { useCollageSeriesStore } from '~/stores/collageSeries'
@@ -12,7 +12,6 @@ const markerStore = useMarkerStore()
 const dataScaleStore = useDataScaleStore()
 const { widthScale, heightScale, sizeScale, columnMapping } = storeToRefs(dataScaleStore)
 const isDragOver = ref(false)
-const isScrolling = ref(false)
 const cellClasses = ref<Record<number, Record<number, string>>>({})
 
 // 下拉菜单选项
@@ -32,35 +31,21 @@ const getColumnMappingValue = (columnName: string) => {
 const handleColumnMappingChange = (columnName: string, value: string) => {
   dataScaleStore.setColumnMapping(columnName, value === 'none' ? null : value as 'width' | 'height' | 'size')
 }
-// 处理滚动事件
-const handleScrolling = () => {
-  // 可以在这里添加滚动处理逻辑
-  if(isScrolling.value){
-    return
-  }
-  isScrolling.value = true
-  setTimeout(() => {
-    isScrolling.value = false
-  }, 1000)
-}
 
 // 单元格类名处理
 const cellClassName = ({ rowIndex, column, columnIndex }: any) => {
-     if (isScrolling.value) {
-     return cellClasses.value[rowIndex]?.[columnIndex] || ''
-   } else {
-    const markerData = markerStore.markers
-    for (const data of markerData) {
-       if (data.mapping.dataRange.start <= rowIndex + 1 && data.mapping.dataRange.end >= rowIndex + 1) {
-         // 确保 rowIndex 存在，如果不存在则创建
-         if (!cellClasses.value[rowIndex]) {
-           cellClasses.value[rowIndex] = {}
-         }
-         cellClasses.value[rowIndex][columnIndex] = `highlight-cell`
-         return `highlight-cell`
+  const markerData = markerStore.markers
+  
+  for (const data of markerData) {
+    // 直接检查当前行索引是否在 cols Set 中（O(1) 查找）
+    if (data.cols && data.cols.has(rowIndex)) {
+       // 确保 rowIndex 存在，如果不存在则创建
+       if (!cellClasses.value[rowIndex]) {
+         cellClasses.value[rowIndex] = {}
        }
-    }
-    
+       cellClasses.value[rowIndex][columnIndex] = `highlight-cell`
+       return `highlight-cell`
+     }
   }
 
   return ''
@@ -104,7 +89,7 @@ const handleClearData = () => {
 </script>
 
 <template>
-  <div class="h-full border-b border-gray-200 relative flex flex-col">
+  <div class="h-full border-b border-gray-200 relative flex flex-col group">
     <!-- 工具栏 - 始终显示在顶部 -->
     <div 
       class="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-50 h-12 flex-shrink-0 shadow-sm z-10"
@@ -114,7 +99,7 @@ const handleClearData = () => {
         <button
           v-if="tableStore.tableData.length > 0"
           @click="handleClearData"
-          class="h-full w-8 rounded transition-colors flex items-center justify-center bg-white hover:bg-[var(--delete-color)] text-gray-600 hover:text-white"
+          class="h-full w-8 rounded transition-colors flex items-center justify-center bg-white hover:bg-[var(--delete-color)] text-gray-600 hover:text-white opacity-0 group-hover:opacity-100"
           style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);"
           title="Clear data"
         >
@@ -143,7 +128,7 @@ const handleClearData = () => {
       <!-- 表格内容 -->
       <div class="flex-1 overflow-hidden">
         <vxe-table :data="tableStore.tableData" :scroll-y="{ enabled: true }" :scroll-x="{ enabled: true }" height="100%"
-          @scroll="handleScrolling()" :cell-config="{ height: 30 }" :headerCellConfig="{ height: 60}" show-header-overflow show-overflow size="small" border
+          :cell-config="{ height: 30 }" :headerCellConfig="{ height: 60}" show-header-overflow show-overflow size="small" border
           :cell-class-name="cellClassName" :auto-resize="true">
           <vxe-column v-for="(item, index) in tableStore.tableColumns" :key="index" :field="item" :title="item" row-resize 
             min-width="130">

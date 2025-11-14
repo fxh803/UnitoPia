@@ -489,10 +489,18 @@ export function pharseData(markerId: string) {
   const tableStore = useTableStore()
   const tableData = tableStore.tableData
   const markersData = markerStore.markers.find(m => m.id === markerId)
-  const dataRange = markersData.mapping.dataRange
-  // 用 slice 保证顺序和 dataRange 匹配，返回整行数据
-  const data = tableData.slice(dataRange.start - 1, dataRange.end)
-  return data
+  
+  if (!markersData) {
+    return []
+  }
+  
+  // 直接使用已计算的 cols（Set 转换为数组）
+  if (markersData.cols && markersData.cols.size > 0) {
+    return Array.from(markersData.cols).map(index => tableData[index]).filter(Boolean)
+  }
+  
+  // 如果没有 cols，返回空数组（应该不会发生，因为筛选条件更新时会计算）
+  return []
 }
 export async function handleMarkerDropCanvas(markerId: string,pos: [number,number]) {
   const collageSeriesStore = useCollageSeriesStore()

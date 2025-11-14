@@ -1,21 +1,82 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useMarkerStore } from '~/stores/marker'
+import { useMarkerStore, type FilterType } from '~/stores/marker'
 import { useTableStore } from '~/stores/table'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 const markerStore = useMarkerStore()
 const tableStore = useTableStore()
 
 const { markers } = storeToRefs(markerStore)
-const { tableColumns } = storeToRefs(tableStore)
+const { tableColumns, tableData } = storeToRefs(tableStore)
 
-// 从 store 获取 marker 映射配置
-const getMarkerMapping = markerStore.getMarkerMapping
-const { deleteMarker } = markerStore
+// 从 store 获取 marker 筛选条件
+const getMarkerFilters = markerStore.getMarkerFilters
+const { deleteMarker, addFilter, removeFilter, updateRangeFilter, updateConditionFilter } = markerStore
 
-// 处理数据范围变化
-const handleDataRangeChange = (markerId: string, start: number, end: number) => {
-  markerStore.updateDataRange(markerId, start, end)
+// 控制每个 marker 的筛选方法选择菜单显示状态
+const showFilterMenu = ref<Record<string, boolean>>({})
+
+// 切换筛选方法选择菜单
+const toggleFilterMenu = (markerId: string) => {
+  // 关闭其他菜单
+  Object.keys(showFilterMenu.value).forEach(key => {
+    if (key !== markerId) {
+      showFilterMenu.value[key] = false
+    }
+  })
+  showFilterMenu.value[markerId] = !showFilterMenu.value[markerId]
+}
+
+// 点击外部关闭菜单
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  if (!target.closest('.filter-menu-container')) {
+    Object.keys(showFilterMenu.value).forEach(key => {
+      showFilterMenu.value[key] = false
+    })
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
+
+// 添加筛选条件
+const handleAddFilter = (markerId: string, filterType: FilterType) => {
+  addFilter(markerId, filterType)
+  showFilterMenu.value[markerId] = false
+}
+
+// 删除筛选条件
+const handleRemoveFilter = (markerId: string, filterIndex: number) => {
+  removeFilter(markerId, filterIndex)
+}
+
+// 处理 Range 筛选条件变化
+const handleRangeFilterChange = (markerId: string, filterIndex: number, start: number, end: number) => {
+  updateRangeFilter(markerId, filterIndex, start, end)
+}
+
+// 处理 Condition 筛选条件变化
+const handleConditionFilterChange = (markerId: string, filterIndex: number, column: string, value: string) => {
+  updateConditionFilter(markerId, filterIndex, column, value)
+}
+
+// 获取列的唯一值（用于条件筛选）
+const getColumnUniqueValues = (column: string) => {
+  if (!tableData.value || !column) return []
+  const values = new Set<string>()
+  tableData.value.forEach(row => {
+    if (row[column] !== undefined && row[column] !== null && row[column] !== '') {
+      values.add(String(row[column]))
+    }
+  })
+  return Array.from(values).sort()
 }
 
 // 处理 marker 拖拽开始
@@ -70,7 +131,7 @@ const handleDeleteMarker = (markerId: string) => {
           <!-- 删除按钮 -->
             <button
               @click.stop="handleDeleteMarker(marker.id)"
-              class="absolute top-1 right-1 z-10 !m-0 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--delete-color)] hover:text-white transition-colors"
+              class="absolute top-1 right-1 z-10 !m-0 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--delete-color)] hover:text-white transition-colors opacity-0 group-hover:opacity-100"
               title="Delete marker"
             >
             <span class="i-carbon-close text-sm"></span>
@@ -87,42 +148,118 @@ const handleDeleteMarker = (markerId: string) => {
 
           <!-- 右侧：数据绑定操作 - 垂直布局 -->
           <div class="flex-1 flex flex-col space-y-2">
-            <!-- 数据范围选择器 -->
-            <div>
-              <div v-if="tableColumns && tableColumns.length > 0" class="flex flex-col space-y-1">
-                <!-- 数据范围输入 -->
-                <div class="flex items-center space-x-1 justify-center">
-                  <span class="text-xs font-medium text-gray-700">Data Range:</span>
-                  <input type="number"
-                    :value="getMarkerMapping(marker.id).dataRange.start === -1 ? '' : getMarkerMapping(marker.id).dataRange.start"
-                    @input="(e) => {
-                      if (isDragging.value) return;
-                      const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
-                      handleDataRangeChange(marker.id, value, getMarkerMapping(marker.id).dataRange.end);
-                    }"
-                    @mousedown="preventInputDuringDrag"
-                    @mouseup="preventInputDuringDrag"
-                    class="w-19 px-1 py-0.5 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="1" placeholder="start" />
-                  <span class="text-xs text-gray-500">-</span>
-                  <input type="number"
-                    :value="getMarkerMapping(marker.id).dataRange.end === -1 ? '' : getMarkerMapping(marker.id).dataRange.end"
-                    @input="(e) => {
-                      if (isDragging.value) return;
-                      const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
-                      handleDataRangeChange(marker.id, getMarkerMapping(marker.id).dataRange.start, value);
-                    }"
-                    @mousedown="preventInputDuringDrag"
-                    @mouseup="preventInputDuringDrag"
-                    class="w-19 px-1 py-0.5 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    min="1" placeholder="end" />
+            <div v-if="tableColumns && tableColumns.length > 0">
+              <!-- 筛选条件列表 -->
+              <div class="space-y-2">
+                <div v-for="(filter, filterIndex) in getMarkerFilters(marker.id)" :key="filterIndex"
+                  class="border border-gray-200 rounded p-2 bg-gray-50 relative group flex items-center">
+                  <!-- 删除筛选条件按钮 -->
+                  <button
+                    @click.stop="handleRemoveFilter(marker.id, filterIndex)"
+                    class="absolute right-3 top-1/2 -translate-y-1/2 z-10 !m-0 p-0 border-0 bg-transparent cursor-pointer delete-filter-btn"
+                    title="Delete filter"
+                  >
+                    <div class="i-carbon:subtract-filled text-base"></div>
+                  </button>
+
+                  <!-- Range 筛选条件 -->
+                  <div v-if="filter.type === 'range'" class="flex flex-col space-y-1">
+                    <span class="text-xs font-medium text-gray-700">Range:</span>
+                    <div class="flex items-center space-x-1">
+                      <input type="number"
+                        :value="filter.start === -1 ? '' : filter.start"
+                        @input="(e) => {
+                          if (isDragging.value) return;
+                          const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
+                          handleRangeFilterChange(marker.id, filterIndex, value, filter.end);
+                        }"
+                        @mousedown="preventInputDuringDrag"
+                        @mouseup="preventInputDuringDrag"
+                        class="w-19 px-1 py-0.5 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="1" placeholder="start" />
+                      <span class="text-xs text-gray-500">-</span>
+                      <input type="number"
+                        :value="filter.end === -1 ? '' : filter.end"
+                        @input="(e) => {
+                          if (isDragging.value) return;
+                          const value = e.target.value === '' ? -1 : parseInt(e.target.value) || -1;
+                          handleRangeFilterChange(marker.id, filterIndex, filter.start, value);
+                        }"
+                        @mousedown="preventInputDuringDrag"
+                        @mouseup="preventInputDuringDrag"
+                        class="w-19 px-1 py-0.5 border border-gray-300 rounded text-xs text-center focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        min="1" placeholder="end" />
+                    </div>
+                  </div>
+
+                  <!-- Condition 筛选条件 -->
+                  <div v-if="filter.type === 'condition'" class="flex flex-col space-y-1">
+                    <span class="text-xs font-medium text-gray-700">Condition:</span>
+                    <div class="flex items-center space-x-1">
+                      <select
+                        :value="filter.column"
+                        @change="(e) => {
+                          if (isDragging.value) return;
+                          handleConditionFilterChange(marker.id, filterIndex, (e.target as HTMLSelectElement).value, filter.value);
+                        }"
+                        @mousedown="preventInputDuringDrag"
+                        @mouseup="preventInputDuringDrag"
+                        class="w-19 px-1 py-0.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select column</option>
+                        <option v-for="col in tableColumns" :key="col" :value="col">{{ col }}</option>
+                      </select>
+                      <span class="text-xs text-gray-500">=</span>
+                      <input type="text"
+                        :value="filter.value"
+                        @input="(e) => {
+                          if (isDragging.value) return;
+                          handleConditionFilterChange(marker.id, filterIndex, filter.column, (e.target as HTMLInputElement).value);
+                        }"
+                        @mousedown="preventInputDuringDrag"
+                        @mouseup="preventInputDuringDrag"
+                        class="w-19 px-1 py-0.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="value" />
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div v-else class="flex justify-center">
-                <div class="text-center text-gray-400 text-xs">
-                  <p>No data available</p>
-                  <p class="text-xs">Please load data in the Table tab first</p>
+
+              <!-- 添加筛选条件按钮 -->
+              <div class="relative mt-2 filter-menu-container">
+                <button
+                  @click.stop="toggleFilterMenu(marker.id)"
+                  class="w-full flex items-center justify-center gap-1 px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 transition-colors"
+                >
+                  <span class="i-carbon:add text-sm"></span>
+                  <span>Add Filter</span>
+                </button>
+
+                <!-- 筛选方法选择菜单 -->
+                <div v-if="showFilterMenu[marker.id]"
+                  class="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded shadow-lg z-10"
+                  @click.stop>
+                  <button
+                    @click.stop="handleAddFilter(marker.id, 'range')"
+                    class="w-full px-3 py-2 text-left text-xs hover:bg-gray-100 transition-colors flex items-center gap-2"
+                  >
+                    <span class="i-carbon:arrows text-sm"></span>
+                    <span>Range</span>
+                  </button>
+                  <button
+                    @click.stop="handleAddFilter(marker.id, 'condition')"
+                    class="w-full px-3 py-2 text-left text-xs hover:bg-gray-100 transition-colors flex items-center gap-2"
+                  >
+                    <span class="i-carbon:filter text-sm"></span>
+                    <span>Condition</span>
+                  </button>
                 </div>
+              </div>
+            </div>
+            <div v-else class="flex justify-center">
+              <div class="text-center text-gray-400 text-xs">
+                <p>No data available</p>
+                <p class="text-xs">Please load data in the Table tab first</p>
               </div>
             </div>
           </div>
@@ -143,5 +280,16 @@ const handleDeleteMarker = (markerId: string) => {
 </template>
 
 <style scoped>
-/* 可以添加自定义样式 */
+.delete-filter-btn {
+  color: var(--delete-color);
+  transition: color 0.2s;
+}
+
+.delete-filter-btn:hover {
+  color: var(--delete-hover-color);
+}
+
+.delete-filter-btn > div {
+  color: inherit;
+}
 </style>
