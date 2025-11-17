@@ -24,22 +24,6 @@ const formattedData = computed(() => {
       if (key.startsWith('_X_ROW_KEY')) {
         return false
       }
-      
-      const lowerKey = key.toLowerCase()
-      
-      // 如果当前映射通道是 width，只显示 width，隐藏 height 和 size
-      if (columnMapping.value.channel === 'width') {
-        return lowerKey !== 'height' && lowerKey !== 'size'
-      }
-      // 如果当前映射通道是 height，只显示 height，隐藏 width 和 size
-      else if (columnMapping.value.channel === 'height') {
-        return lowerKey !== 'width' && lowerKey !== 'size'
-      }
-      // 如果当前映射通道是 size，只显示 size，隐藏 width 和 height
-      else if (columnMapping.value.channel === 'size') {
-        return lowerKey !== 'width' && lowerKey !== 'height'
-      }
-      
       // 默认显示所有字段
       return true
     })

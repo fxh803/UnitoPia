@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { useMarkerStore, type FilterType } from '~/stores/marker'
+import { useMarkerStore, type FilterType, type ConditionOperator } from '~/stores/marker'
 import { useTableStore } from '~/stores/table'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
@@ -63,8 +63,8 @@ const handleRangeFilterChange = (markerId: string, filterIndex: number, start: n
 }
 
 // 处理 Condition 筛选条件变化
-const handleConditionFilterChange = (markerId: string, filterIndex: number, column: string, value: string) => {
-  updateConditionFilter(markerId, filterIndex, column, value)
+const handleConditionFilterChange = (markerId: string, filterIndex: number, column: string, operator: ConditionOperator, value: string) => {
+  updateConditionFilter(markerId, filterIndex, column, operator, value)
 }
 
 // 获取列的唯一值（用于条件筛选）
@@ -200,7 +200,7 @@ const handleDeleteMarker = (markerId: string) => {
                         :value="filter.column"
                         @change="(e) => {
                           if (isDragging.value) return;
-                          handleConditionFilterChange(marker.id, filterIndex, (e.target as HTMLSelectElement).value, filter.value);
+                          handleConditionFilterChange(marker.id, filterIndex, (e.target as HTMLSelectElement).value, filter.operator, filter.value);
                         }"
                         @mousedown="preventInputDuringDrag"
                         @mouseup="preventInputDuringDrag"
@@ -209,12 +209,25 @@ const handleDeleteMarker = (markerId: string) => {
                         <option value="">Select column</option>
                         <option v-for="col in tableColumns" :key="col" :value="col">{{ col }}</option>
                       </select>
-                      <span class="text-xs text-gray-500">=</span>
+                      <select
+                        :value="filter.operator"
+                        @change="(e) => {
+                          if (isDragging.value) return;
+                          handleConditionFilterChange(marker.id, filterIndex, filter.column, (e.target as HTMLSelectElement).value as ConditionOperator, filter.value);
+                        }"
+                        @mousedown="preventInputDuringDrag"
+                        @mouseup="preventInputDuringDrag"
+                        class="w-12 px-1 py-0.5 border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="=">=</option>
+                        <option value=">">&gt;</option>
+                        <option value="<">&lt;</option>
+                      </select>
                       <input type="text"
                         :value="filter.value"
                         @input="(e) => {
                           if (isDragging.value) return;
-                          handleConditionFilterChange(marker.id, filterIndex, filter.column, (e.target as HTMLInputElement).value);
+                          handleConditionFilterChange(marker.id, filterIndex, filter.column, filter.operator, (e.target as HTMLInputElement).value);
                         }"
                         @mousedown="preventInputDuringDrag"
                         @mouseup="preventInputDuringDrag"

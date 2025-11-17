@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 export const useSelectedModeStore = defineStore('selectedMode', () => {
     // 颜色选择器状态
-    const selectedMode = ref<'container' | 'emitter' | 'force' | null>(null)
+    const selectedMode = ref<'container' | 'emitter' | 'force' | null>('container')
     const canvasRef = ref<(() => Canvas | null) | null>(null)
 
     // 设置canvas引用

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useTableStore } from '~/stores/table'
 
 export type FilterType = 'range' | 'condition'
+export type ConditionOperator = '=' | '>' | '<'
 
 export interface RangeFilter {
   type: 'range'
@@ -13,6 +14,7 @@ export interface RangeFilter {
 export interface ConditionFilter {
   type: 'condition'
   column: string
+  operator: ConditionOperator
   value: string
 }
 
@@ -98,9 +100,38 @@ export const useMarkerStore = defineStore('marker', () => {
     
     // 处理所有 condition filter（并集）
     filters.forEach(filter => {
-      if (filter.type === 'condition' && filter.column && filter.value) {
+      if (filter.type === 'condition' && filter.column && filter.value !== '') {
         tableData.forEach((row, index) => {
-          if (String(row[filter.column] || '') === filter.value) {
+          const cellValue = row[filter.column]
+          const filterValue = filter.value
+          let matches = false
+          
+          // 尝试将值转换为数字进行比较
+          const cellNum = Number(cellValue)
+          const filterNum = Number(filterValue)
+          const isNumeric = !isNaN(cellNum) && !isNaN(filterNum) && cellValue !== '' && filterValue !== ''
+          
+          if (isNumeric) {
+            // 数值比较
+            switch (filter.operator) {
+              case '=':
+                matches = cellNum === filterNum
+                break
+              case '>':
+                matches = cellNum > filterNum
+                break
+              case '<':
+                matches = cellNum < filterNum
+                break
+            }
+          } else {
+            // 字符串比较（只支持等于）
+            if (filter.operator === '=') {
+              matches = String(cellValue || '') === filterValue
+            }
+          }
+          
+          if (matches) {
             conditionIndices.add(index)
           }
         })
@@ -150,6 +181,7 @@ export const useMarkerStore = defineStore('marker', () => {
       newFilter = {
         type: 'condition',
         column: '',
+        operator: '=',
         value: ''
       }
     }
@@ -187,13 +219,14 @@ export const useMarkerStore = defineStore('marker', () => {
   }
   
   // 更新 Condition 筛选条件
-  const updateConditionFilter = (markerId: string, filterIndex: number, column: string, value: string) => {
+  const updateConditionFilter = (markerId: string, filterIndex: number, column: string, operator: ConditionOperator, value: string) => {
     const markerIndex = markers.value.findIndex(m => m.id === markerId)
     if (markerIndex === -1) return
     
     const filter = markers.value[markerIndex].filters[filterIndex]
     if (filter && filter.type === 'condition') {
       filter.column = column
+      filter.operator = operator
       filter.value = value 
 
       if (column!=='' && value!=='') {
