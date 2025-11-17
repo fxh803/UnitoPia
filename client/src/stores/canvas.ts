@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { defineStore, storeToRefs } from 'pinia'
 import { ref } from 'vue'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useBezierDrawingStore } from '~/stores/bezierDrawing'
@@ -378,6 +378,9 @@ export const useCanvasStore = defineStore('canvas', () => {
     if (!canvasInstance) return
 
     try {
+      // 使用 storeToRefs 解构 dataScaleStore 的响应式属性
+      const { columnMapping, widthScale, heightScale, sizeScale } = storeToRefs(dataScaleStore)
+      
       // 获取归一化参数和处理好的数据
       const { data, processedData } = dataScaleStore.getNormalizationParams(markerId) 
 
@@ -418,6 +421,17 @@ export const useCanvasStore = defineStore('canvas', () => {
               
           let scaleX = normalizedWidth / currentWidth  
           let scaleY = normalizedHeight / currentHeight  
+
+          // 根据 dataScale store 当前的映射通道应用对应的缩放基数
+          const mappingChannel = columnMapping.value.channel
+          if (mappingChannel === 'size') {
+            scaleX *= sizeScale.value
+            scaleY *= sizeScale.value
+          } else if (mappingChannel === 'width') {
+            scaleX *= widthScale.value
+          } else if (mappingChannel === 'height') {
+            scaleY *= heightScale.value
+          }
               
           group.set({
             scaleX: scaleX,
