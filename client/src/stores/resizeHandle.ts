@@ -2,15 +2,15 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
 export const useResizeHandleStore = defineStore('resizeHandle', () => {
-  // 左侧容器的宽度
-  const leftWidth = ref(300)
+  // 右侧画布区宽度
+  const rightWidth = ref(640)
   
   // 是否正在拖动
   const isDragging = ref(false)
   
-  // 更新左侧宽度
-  function updateLeftWidth(width: number) {
-    leftWidth.value = width
+  // 更新右侧宽度
+  function updateRightWidth(width: number) {
+    rightWidth.value = width
   }
   
   // 设置拖动状态
@@ -21,9 +21,9 @@ export const useResizeHandleStore = defineStore('resizeHandle', () => {
 
   
   return {
-    leftWidth,
+    rightWidth,
     isDragging,
-    updateLeftWidth,
+    updateRightWidth,
     setDragging
   }
 })

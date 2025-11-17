@@ -16,27 +16,28 @@ function onDrag(e: MouseEvent) {
   if (!resizeHandleStore.isDragging || !container.value)
     return
   const rect = container.value.getBoundingClientRect()
-  let newWidth = e.clientX - rect.left
-  newWidth =  Math.max(minLeftWidth.value, Math.min(newWidth, rect.width - minRightWidth.value))
-  
-  // 更新store中的左侧宽度
-  resizeHandleStore.updateLeftWidth(newWidth)
+  let newWidth = rect.right - e.clientX
+  const maxRightWidth = Math.max(0, rect.width - minLeftWidth.value)
+  if (maxRightWidth <= 0) {
+    resizeHandleStore.updateRightWidth(0)
+    return
+  }
+  newWidth = Math.max(minRightWidth.value, Math.min(newWidth, maxRightWidth))
+  resizeHandleStore.updateRightWidth(newWidth)
 }
 
 function stopDrag() {
   resizeHandleStore.setDragging(false)
   document.body.style.cursor = ''
 }
+function handleMouseEnter() {
+  showBar.value = true
+}
 
-function handleMouseMove(e: MouseEvent) {
-  if (!container.value) return
-  const rect = container.value.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  if (Math.abs(x - resizeHandleStore.leftWidth) < 12) {
-    showBar.value = true
-  } else if (!resizeHandleStore.isDragging) {
+function handleMouseLeave() {
+  // if (!resizeHandleStore.isDragging) {
     showBar.value = false
-  }
+  // }
 }
 
 onMounted(() => {
@@ -44,26 +45,24 @@ onMounted(() => {
   nextTick(() => {
     if (container.value) {
       const containerWidth = container.value.offsetWidth
-      const initialWidth = Math.max(containerWidth * 0.4, minLeftWidth.value) 
-      resizeHandleStore.updateLeftWidth(initialWidth)
+      const initialRightWidth = Math.max(minRightWidth.value, containerWidth * 0.6)
+      resizeHandleStore.updateRightWidth(initialRightWidth)
     }
   })
   window.addEventListener('mousemove', onDrag)
   window.addEventListener('mouseup', stopDrag)
-  window.addEventListener('mousemove', handleMouseMove)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('mousemove', onDrag)
   window.removeEventListener('mouseup', stopDrag)
-  window.removeEventListener('mousemove', handleMouseMove)
 })
 </script>
 
 <template>
   <div ref="container" class="flex h-full w-full select-none relative overflow-hidden">
     <!-- 左侧数据区 + 滑动条 -->
-    <div :style="{ width: `${resizeHandleStore.leftWidth}px` }" class="h-full border-r border-gray-300 relative">
+    <div :style="{ minWidth: `${minLeftWidth}px` }" class="h-full border-r border-gray-300 relative flex-1 min-w-0">
       <slot name="left" />
       <!-- 滑动条，绝对定位在右侧 -->
       <div
@@ -71,10 +70,12 @@ onBeforeUnmount(() => {
         :class="{ 'resizer-bar-active': showBar || resizeHandleStore.isDragging }"
         style="position: absolute; top: 0; right: 0; height: 100%;"
         @mousedown="startDrag"
+        @mouseenter="handleMouseEnter"
+        @mouseleave="handleMouseLeave"
       />
     </div>
     <!-- 右侧画布区 -->
-    <div class="flex-1 h-full flex flex-col">
+    <div class="h-full flex flex-col" :style="{ width: `${resizeHandleStore.rightWidth}px`, minWidth: `${minRightWidth}px` }">
       <!-- 工具栏 -->
       <div class="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-50 h-12 flex-shrink-0 shadow-sm z-10">
         <span class="text-sm text-gray-600">Canvas Editor</span>

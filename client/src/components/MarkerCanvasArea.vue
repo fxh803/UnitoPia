@@ -51,8 +51,8 @@ function updateCanvasSize() {
   }
 }
 
-// 监听store中左侧宽度的变化
-watch(() => resizeHandleStore.leftWidth, () => {
+// 监听store中右侧宽度的变化
+watch(() => resizeHandleStore.rightWidth, () => {
   setTimeout(() => {
     updateCanvasSize()
   }, 0)
