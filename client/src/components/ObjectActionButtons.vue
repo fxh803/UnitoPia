@@ -2,14 +2,8 @@
 import { ref, computed, nextTick } from 'vue'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { storeToRefs } from 'pinia'
-import { watch } from 'vue'
-import { useSelectedModeStore } from '~/stores/selectedMode'
 
 const objectActionsStore = useObjectActionsStore()
-const selectedModeStore = useSelectedModeStore()
-const {
-    isContainerMode
-} = storeToRefs(selectedModeStore)
 const {
     showDeleteBtn, 
     showClosePathBtn, 

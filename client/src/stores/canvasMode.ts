@@ -47,9 +47,8 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       canvasInstance.isDrawingMode = true;
       canvasInstance.selection = false;
       canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; });
-      if (canvasInstance.freeDrawingBrush) {
-        // Container模式下使用黑色，Marker模式下使用选择的颜色
-        canvasInstance.freeDrawingBrush.color = selectedModeStore.isContainerMode ? 'rgba(' + canvasStore.containerColor.join(',') + ')' : colorPickerStore.selectedColor;
+      if (canvasInstance.freeDrawingBrush) { 
+        canvasInstance.freeDrawingBrush.color = 'rgba(' + canvasStore.containerColor.join(',') + ')'  ;
         canvasInstance.freeDrawingBrush.width = brushSizeStore.brushWidth * dpr;
       }
     } else if (mode.value === 'erase') {

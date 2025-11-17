@@ -1,13 +1,10 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 export const useSelectedModeStore = defineStore('selectedMode', () => {
     // 颜色选择器状态
     const selectedMode = ref<'container' | 'emitter' | 'force' | null>(null)
     const canvasRef = ref<(() => Canvas | null) | null>(null)
-    
-    // 计算是否为Container模式
-    const isContainerMode = computed(() => selectedMode.value === 'container')
 
     // 设置canvas引用
     function setCanvas(canvas: () => Canvas | null) {
@@ -56,7 +53,6 @@ export const useSelectedModeStore = defineStore('selectedMode', () => {
 
     return {
         selectedMode,
-        isContainerMode,
         setSelectedMode,
         setCanvas,
         handleModeSwitch
