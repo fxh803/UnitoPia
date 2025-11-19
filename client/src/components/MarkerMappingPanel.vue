@@ -87,6 +87,48 @@ const handleMarkerDragStart = (markerId: string, e: DragEvent) => {
     if (marker && marker.jsonData) {
       e.dataTransfer.setData('application/json', JSON.stringify(marker.jsonData))
       e.dataTransfer.setData('text/plain', markerId)
+      
+      // 创建自定义拖拽图像
+      const dragDiv = document.createElement('div')
+      dragDiv.style.cssText = `
+        position: absolute;
+        top: -1000px;
+        left: -1000px;
+        width: 120px;
+        padding: 8px;
+        background: white;
+        border: 2px solid var(--primary-color);
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        pointer-events: none;
+        z-index: 10000;
+      `
+      
+      // 添加缩略图 
+      const img = document.createElement('img')
+      img.src = marker.thumbnail
+      img.style.cssText = 'width: 40px; height: 40px; object-fit: cover; border-radius: 4px;'
+      dragDiv.appendChild(img)
+      
+      
+      // 添加文本信息
+      const textContainer = document.createElement('div')
+      textContainer.style.cssText = 'flex: 1; display: flex; flex-direction: column; gap: 2px;'
+      const countText = document.createElement('div')
+      countText.style.cssText = 'font-size: 12px; font-weight: 600; color: #1f2937;'
+      const colsCount = marker.cols ? marker.cols.size : 0
+      countText.textContent = `${colsCount} markers`
+      textContainer.appendChild(countText)
+      dragDiv.appendChild(textContainer)
+      
+      // 添加到 DOM 并设置拖拽图像
+      document.body.appendChild(dragDiv)
+      dragImageElement.value = dragDiv
+      // 设置偏移：鼠标在图像左下角，这样图像会显示在鼠标右上方，不会挡住目标位置
+      e.dataTransfer.setDragImage(dragDiv, -10, -10)
     }
   }
   isDragging.value = true 
@@ -94,7 +136,12 @@ const handleMarkerDragStart = (markerId: string, e: DragEvent) => {
 
 // 处理 marker 拖拽结束
 const handleMarkerDragEnd = () => {
-  isDragging.value = false 
+  isDragging.value = false
+  // 清理拖拽图像元素
+  if (dragImageElement.value && document.body.contains(dragImageElement.value)) {
+    document.body.removeChild(dragImageElement.value)
+    dragImageElement.value = null
+  }
 }
 
 // 防止拖拽时触发输入事件
@@ -107,6 +154,9 @@ const preventInputDuringDrag = (e: Event) => {
 
 // 拖拽时的样式状态
 const isDragging = ref(false)
+
+// 存储拖拽图像元素引用，用于清理
+const dragImageElement = ref<HTMLElement | null>(null)
 
 // 处理删除单个 marker
 const handleDeleteMarker = (markerId: string) => {
