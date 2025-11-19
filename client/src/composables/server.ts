@@ -37,12 +37,7 @@ interface ProcessedData {
 }
 const ip = 'http://localhost:4444'
 
-// 批量获取 render txt 文件的 base64 数据
-async function getRenderTxtData(id: string, collageIdx: number): Promise<string[]> {
-  const response = await fetch(`${ip}/getRenderTxtApi?id=${id}&collage_idx=${collageIdx}`)
-  const result = await response.json()
-  return result.success ? result.data : []
-}
+
 
 // 收集所有总览数据的函数
 export async function collectAllSlidesData(): Promise<Array<{overviewId: string, slides: ProcessedData[]}>> {
@@ -356,10 +351,6 @@ async function startProgressTimer() {
         result.progress["now_overview_idx"] = now_overview_idx.value
         result.progress["process_id"] = process_id.value
         result.progress["collage_result_type"] = collage_result_type.value
-        if( result.progress["now_collage"] != now_collage_idx.value || txtArray.value.length === 0 ) {
-          const txtData = await getRenderTxtData(process_id.value, result.progress["now_collage"])
-          txtArray.value.push(...txtData)
-        }
         progress_data.value.push(result.progress)
         result_data.value.push(result.result)
         animationStore.updateAnimation()

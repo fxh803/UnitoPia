@@ -4,8 +4,7 @@ import paper from "paper";
 import { useContainerStore } from '~/stores/container'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
-import { ref, computed, watch } from 'vue';
-
+import { ref, computed, watch } from 'vue'; 
 export const useAnimationStore = defineStore('animation', () => {
   // 状态
   const collaging = ref(false)
@@ -54,6 +53,21 @@ export const useAnimationStore = defineStore('animation', () => {
   })
 
   // 方法
+  // 批量获取 render txt 文件的 base64 数据
+  async function getRenderTxtData(id: string, collageIdx: number): Promise<string[]> {
+    try {
+      const response = await fetch(`${ip.value}/getRenderTxtApi?id=${id}&collage_idx=${collageIdx}`)
+      if (!response.ok) {
+        console.error('获取 render txt 数据失败:', response.status, response.statusText)
+        return []
+      }
+      const result = await response.json()
+      return result.success ? result.data : []
+    } catch (error) {
+      console.error('获取 render txt 数据出错:', error)
+      return []
+    }
+  }
   function resetData() {
     collaging.value = false
     progress_data.value = []
@@ -225,7 +239,9 @@ export const useAnimationStore = defineStore('animation', () => {
       const now_collage = progress.value.now_collage;
       const type = progress.value.type;
       if (now_collage != now_collage_idx.value && type === 1) {// 如果进行的collage变了，要绘制新的elements
-        console.log('1')
+        console.log('1') 
+        const txtData = await getRenderTxtData(process_id.value, now_collage)
+        txtArray.value.push(...txtData) 
         // paper.view.off('frame', markerAni.value); 
         // paper.view.off('frame', containerAni.value);
         // markerAni.value = null
@@ -272,6 +288,8 @@ export const useAnimationStore = defineStore('animation', () => {
     else if (elements.value.length === 0) {//一开始
       setData(now_collage, 0)
       console.log('2')
+      const txtData = await getRenderTxtData(process_id.value, now_collage)
+      txtArray.value.push(...txtData) 
       for (let i = 0; i < posArray.value.length; i++) {
         const base64Source = txtArray.value[i]
         const raster = new paper.Raster({

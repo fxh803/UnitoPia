@@ -248,8 +248,7 @@ def get_render_txt_api():
     try:
         # 先收集所有 txt 文件名
         filenames = [f for f in os.listdir(render_dir) if f.endswith('.txt')]
-        # 按文件名排序
-        filenames.sort()
+        filenames.sort(key=lambda name: int(name.split('.')[0]))
         # 按顺序读取文件内容
         for filename in filenames:
             txt_path = os.path.join(render_dir, filename)
