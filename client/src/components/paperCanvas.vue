@@ -13,7 +13,7 @@ function updateBackground() {
     //先删除现有背景
     const objects = paper.project.activeLayer.children
     objects.forEach(obj => {
-        if (obj.isBackground) {
+        if (obj.dataType === 'background') {
             obj.remove()
         }
     })
@@ -31,7 +31,7 @@ function updateBackground() {
             // 设置图片位置和缩放
             backgroundImage.scaling = new paper.Point(scale, scale);
             backgroundImage.position = new paper.Point(size.value / 2, size.value / 2);
-            backgroundImage.isBackground = true
+            backgroundImage.dataType = 'background'
             // 将背景图片添加到画布并置于最底层
             backgroundImage.sendToBack();
 

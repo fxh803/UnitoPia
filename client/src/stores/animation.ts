@@ -257,6 +257,7 @@ export const useAnimationStore = defineStore('animation', () => {
             dataBinding: dataBindingArray.value[i],
             imgLoaded: false,
             dataLoaded: false,
+            dataType: 'marker',   
             collage_idx: now_collage,
             onLoad: () => { 
               raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
@@ -299,6 +300,7 @@ export const useAnimationStore = defineStore('animation', () => {
           dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
+          dataType: 'marker',   
           collage_idx: now_collage,
           onLoad: (e) => { 
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
@@ -440,6 +442,7 @@ export const useAnimationStore = defineStore('animation', () => {
           dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
+          dataType: 'marker', 
           collage_idx: now_collage,
           onLoad: () => { 
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
@@ -478,6 +481,7 @@ export const useAnimationStore = defineStore('animation', () => {
           dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
+          dataType: 'marker',   
           collage_idx: now_collage,
           onLoad: () => { 
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));

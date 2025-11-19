@@ -80,6 +80,7 @@ export const useContainerStore = defineStore('container', () => {
                 slideIndex: item.slideIndex,
                 overviewIdx: item.overviewIdx,
                 opacity: 0,
+                dataType: 'container',
                 initialized:false,
                 changeRate: 0.2,
                 onError: (e) => {

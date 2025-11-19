@@ -569,13 +569,10 @@ function getDataBinding (){
   
   // 获取canvas实例
   const canvasInstance = canvasStore.canvasRef?.()
-  if (canvasInstance && process_id.value) {
+  if (canvasInstance) {
     try {
-      // // 删除所有现有对象
-      // const allObjects = canvasInstance.getObjects()
-      // allObjects.forEach(obj => {
-      //   canvasInstance.remove(obj)
-      // })
+      // 遍历 paper 上所有对象，将它们的 dataType 保存成数组
+      const dataTypeList = paper.project.activeLayer.children.map(obj => obj.dataType)
       // 将当前 paper.js 画布导出为 SVG
       const paperSvgString = paper.project.exportSVG({ asString: true })
       
@@ -588,13 +585,14 @@ function getDataBinding (){
       // 将所有 SVG 对象添加到画布，保持原始位置和大小
       loadedSVG.objects.forEach((obj: any, index: number) => {
         // 按索引分配拍平的 data
-        const data = flattenedData[index] || null
-        
+        const dataType = dataTypeList[index]
+        const data = (dataType === 'marker') ? (flattenedData[index] || null) : undefined
+
         obj.set({
           selectable: true,
           evented: true,
-          dataType: 'marker',
-          data: data
+          dataType: dataType,
+          ...(dataType === 'marker' ? { data } : {})
         })
         canvasInstance.add(obj)
       })
