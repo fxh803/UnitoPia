@@ -31,14 +31,6 @@ export const useContainerStore = defineStore('container', () => {
         containerRecords.value.push(record)
     }
 
-
-    // 根据overviewIdx和slideIndex获取特定container
-    function getContainerByOverviewAndSlide(overviewIdx: number, slideIndex: number): ContainerRecord | undefined {
-        return containerRecords.value.find(record =>
-            record.overviewIdx === overviewIdx && record.slideIndex === slideIndex
-        )
-    }
-
     function containerAnimation(event) {
         const animationStore = useAnimationStore()
         const { collaging, now_overview_idx, now_collage_idx } = storeToRefs(animationStore)
@@ -76,8 +68,7 @@ export const useContainerStore = defineStore('container', () => {
     }
 
     function createShiningPaths() {
-        const { currentOverviewIndex } = storeToRefs(collageSeriesStore)
-        let index = 0
+        const { currentOverviewIndex } = storeToRefs(collageSeriesStore) 
         for (let i = 0; i < containerRecords.value.length; i++) {
             if (containerRecords.value[i].overviewIdx !== currentOverviewIndex.value) {//这个是只进行当前overview的代码段，注意
                 continue
@@ -87,7 +78,7 @@ export const useContainerStore = defineStore('container', () => {
                 source: item.container,
                 position: paper.view.center,
                 slideIndex: item.slideIndex,
-                overviewIdx: index,
+                overviewIdx: item.overviewIdx,
                 opacity: 0,
                 initialized:false,
                 changeRate: 0.2,
@@ -95,8 +86,7 @@ export const useContainerStore = defineStore('container', () => {
                     console.log('onError', e)
                 }
             })
-            shining_paths.value.push(raster)
-            index++
+            shining_paths.value.push(raster) 
         } 
     }
 
@@ -119,7 +109,6 @@ export const useContainerStore = defineStore('container', () => {
     return {
         containerRecords,
         addContainerRecord,
-        getContainerByOverviewAndSlide,
         clearAllRecords,
         containerAnimation,
         createShiningPaths,
