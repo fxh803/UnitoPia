@@ -13,10 +13,10 @@ export const useAnimationStore = defineStore('animation', () => {
   const collage_result_type = ref([])
   const canvas_width = ref(0)
   const canvas_height = ref(0)
-  const srcArray = ref([])
   const posArray = ref([])
   const widthArray = ref([])
   const heightArray = ref([])
+  const txtArray = ref([])
   const angleArray = ref([])
   const elements = ref([])
   const result_data = ref([])
@@ -60,7 +60,7 @@ export const useAnimationStore = defineStore('animation', () => {
     collage_result_type.value = []
     canvas_width.value = 0
     canvas_height.value = 0
-    srcArray.value = []
+    txtArray.value = []
     posArray.value = []
     widthArray.value = []
     heightArray.value = []
@@ -93,7 +93,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function resetReplayData() {
     replayIdx.value = 0
-    srcArray.value = []
+    txtArray.value = []
     posArray.value = []
     widthArray.value = []
     heightArray.value = []
@@ -134,8 +134,6 @@ export const useAnimationStore = defineStore('animation', () => {
     const renderSize = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size ?? 1000
     
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
-      srcArray.value[i] = `${ip.value}/workdir/${process_id.value}_${now_collage}/render_files/${i + 1 - startIndex}.txt`
-
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
       angleArray.value[i] = result['angle'][i - startIndex];
       dataBindingArray.value[i] = dataBinding[i - startIndex];
@@ -160,8 +158,6 @@ export const useAnimationStore = defineStore('animation', () => {
     const renderSize = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size ?? 1000
     
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
-      srcArray.value[i] = `${ip.value}/workdir/${process_id.value}_${now_collage}/render_files/${i + 1 - startIndex}.txt`
-
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
       angleArray.value[i] = result['angle'][i - startIndex];
       dataBindingArray.value[i] = dataBinding[i - startIndex];
@@ -237,7 +233,7 @@ export const useAnimationStore = defineStore('animation', () => {
         now_start_idx.value = elements.value.length
         setData(now_collage, now_start_idx.value)
         for (let i = now_start_idx.value; i < posArray.value.length; i++) {
-          const base64Source = await fetchBase64FromTxt(srcArray.value[i])
+          const base64Source = txtArray.value[i]
           const raster = new paper.Raster({
             source: base64Source,
             position: posArray.value[i],
@@ -277,7 +273,7 @@ export const useAnimationStore = defineStore('animation', () => {
       setData(now_collage, 0)
       console.log('2')
       for (let i = 0; i < posArray.value.length; i++) {
-        const base64Source = await fetchBase64FromTxt(srcArray.value[i])
+        const base64Source = txtArray.value[i]
         const raster = new paper.Raster({
           source: base64Source,
           position: posArray.value[i],
@@ -418,7 +414,7 @@ export const useAnimationStore = defineStore('animation', () => {
       now_start_idx.value = elements.value.length
       setReplayData(replayIdx.value, now_collage, now_start_idx.value)
       for (let i = now_start_idx.value; i < posArray.value.length; i++) {
-        const base64Source = await fetchBase64FromTxt(srcArray.value[i])
+        const base64Source = txtArray.value[i]
         const raster = new paper.Raster({
           source: base64Source,
           position: posArray.value[i],
@@ -456,7 +452,7 @@ export const useAnimationStore = defineStore('animation', () => {
       console.log('5')
       setReplayData(replayIdx.value, now_collage, 0)
       for (let i = 0; i < posArray.value.length; i++) {
-        const base64Source = await fetchBase64FromTxt(srcArray.value[i])
+        const base64Source = txtArray.value[i]
         const raster = new paper.Raster({
           source: base64Source,
           position: posArray.value[i],
@@ -538,7 +534,7 @@ export const useAnimationStore = defineStore('animation', () => {
     now_start_idx.value = 0
     removeAnimation()
     removeElements()
-    srcArray.value = []
+    txtArray.value = []
     posArray.value = []
     widthArray.value = []
     heightArray.value = []
@@ -564,7 +560,7 @@ export const useAnimationStore = defineStore('animation', () => {
     collage_result_type,
     canvas_width,
     canvas_height,
-    srcArray,
+    txtArray,
     posArray,
     widthArray,
     heightArray,

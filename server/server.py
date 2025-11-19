@@ -236,6 +236,38 @@ def marker_drop_api():
         "init_pos": init_positions
     })
 
+@app.route('/getRenderTxtApi', methods=['GET'])
+def get_render_txt_api():
+    """获取指定 id 和 collage_idx 的 render_files 目录下所有 txt 文件的 base64 字符串列表"""
+    id = request.args.get('id')
+    collage_idx = request.args.get('collage_idx')
+    # 构建目录路径
+    render_dir = f"./workdir/{id}_{collage_idx}/render_files"
+    # 获取所有 txt 文件
+    txt_files = []
+    try:
+        # 先收集所有 txt 文件名
+        filenames = [f for f in os.listdir(render_dir) if f.endswith('.txt')]
+        # 按文件名排序
+        filenames.sort()
+        # 按顺序读取文件内容
+        for filename in filenames:
+            txt_path = os.path.join(render_dir, filename)
+            with open(txt_path, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+                txt_files.append(content)
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"读取文件时出错：{str(e)}"
+        }), 500
+    
+    return jsonify({
+        "success": True,
+        "data": txt_files,
+        "count": len(txt_files)
+    }), 200
+
 @app.route('/workdir/<path:filename>')
 def serve_workdir(filename):
     """提供 workdir 下的静态文件，并设置长期缓存"""

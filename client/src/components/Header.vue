@@ -10,7 +10,7 @@ import {fabric} from 'fabric'
 import { FabricImage } from 'fabric'
 const animationStore = useAnimationStore()
 const canvasStore = useCanvasStore()
-const { collaging, progress, result_data, replaying,now_overview_idx,totalOverview, time_interval, srcArray,widthArray,heightArray,angleArray,posArray } = storeToRefs(animationStore)
+const { collaging, progress, result_data, replaying,now_overview_idx,totalOverview, time_interval } = storeToRefs(animationStore)
 
 // 计算进度百分比
 const percentage = ref(0)
