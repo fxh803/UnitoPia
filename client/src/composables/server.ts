@@ -56,7 +56,7 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
       }
       const overview = collageSeriesStore.overviews[overviewIdx]
       const slidesResult = []
-      
+
       // 遍历当前总览的所有幻灯片
       for (let slideIdx = 0; slideIdx < overview.collageSeries.length; slideIdx++) {
         const result: ProcessedData = {
@@ -92,7 +92,7 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         result.rotation = slideSettings.rotation ?? true
         result.orientation = slideSettings.orientation ?? 'free'
         result.hole = slideSettings.hole ?? false
-        
+
         // 将container信息记录到store中
         if (result.container) {
           containerStore.addContainerRecord(
@@ -103,10 +103,10 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
             result.container
           )
         }
-        
+
         slidesResult.push(result)
       }
-      
+
       overviewsResult.push({
         overviewId: overview.overviewId,
         slides: slidesResult
@@ -124,7 +124,7 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
 // 处理 marker 对象
 function processMarker(tempCanvas: Canvas) {
   const canvasObjects = tempCanvas.getObjects()
-  
+
   // 先获取所有不重复的markerId
   const uniqueMarkerIds = new Set<string>()
   for (const obj of canvasObjects) {
@@ -135,7 +135,7 @@ function processMarker(tempCanvas: Canvas) {
       }
     }
   }
-  
+
   // 为每个唯一的markerId收集位置信息和尺寸
   const markers: Array<{
     thumbnail: string
@@ -144,14 +144,14 @@ function processMarker(tempCanvas: Canvas) {
     widths: number[]
     heights: number[]
   }> = []
-  
+
   for (const markerId of uniqueMarkerIds) {
     // 收集该markerId的所有位置和对应的尺寸
     const positions: Array<{ x: number, y: number }> = []
     const widths: number[] = []
     const heights: number[] = []
     let thumbnail = ''
-    
+
     for (const obj of canvasObjects) {
       if (obj.get('dataType') === 'marker' && obj.get('markerId') === markerId) {
         // 记录位置
@@ -159,16 +159,16 @@ function processMarker(tempCanvas: Canvas) {
           x: obj.get('left') || 0,
           y: obj.get('top') || 0
         })
-        
+
         // 记录每个位置对应的宽高（包含缩放）
         const baseWidth = obj.width || 0
-        const baseHeight = obj.height || 0  
-        const baseSize = Math.max(baseWidth, baseHeight)  
+        const baseHeight = obj.height || 0
+        const baseSize = Math.max(baseWidth, baseHeight)
         const scaleX = obj.scaleX || 1
-        const scaleY = obj.scaleY || 1 
+        const scaleY = obj.scaleY || 1
         widths.push(scaleX*baseSize/80) //这里传的是对于正方形bbox的缩放系数
-        heights.push(scaleY*baseSize/80) 
-        
+        heights.push(scaleY*baseSize/80)
+
         // 只生成一次thumbnail（使用第一个对象）
         if (!thumbnail) {
           obj.set('visible', true)
@@ -182,7 +182,7 @@ function processMarker(tempCanvas: Canvas) {
         }
       }
     }
-    
+
     markers.push({
       thumbnail,
       markerId,
@@ -191,7 +191,7 @@ function processMarker(tempCanvas: Canvas) {
       height:heights
     })
   }
-  
+
   return markers
 }
 
@@ -300,8 +300,8 @@ function processForce(tempCanvas: Canvas) {
 }
 
 function processDataBinding(tempCanvas: Canvas) {
-  const canvasObjects = tempCanvas.getObjects() 
-  
+  const canvasObjects = tempCanvas.getObjects()
+
   // 先获取所有不重复的markerId
   const uniqueMarkerIds = new Set<string>()
   for (const obj of canvasObjects) {
@@ -312,13 +312,13 @@ function processDataBinding(tempCanvas: Canvas) {
       }
     }
   }
-  
+
   // 再提取dataBindingList，从画布对象一个一个取data
   const dataList : Array<{ data: Array<any>, markerId: string}> = []
   for (const markerId of uniqueMarkerIds) {
     // 收集该markerId的所有data
     const dataArray: Array<any> = []
-    
+
     for (const obj of canvasObjects) {
       if (obj.get('dataType') === 'marker' && obj.get('markerId') === markerId) {
         // 从对象中提取data
@@ -328,7 +328,7 @@ function processDataBinding(tempCanvas: Canvas) {
         }
       }
     }
-    
+
     dataList.push({
       data: dataArray,
       markerId: markerId
@@ -337,6 +337,21 @@ function processDataBinding(tempCanvas: Canvas) {
   return dataList
 }
 // 发送数据到后端的函数
+ // 批量获取 render txt 文件的 base64 数据
+ export async function getRenderTxtData(id: string, collageIdx: number): Promise<string[]> {
+  try {
+    const response = await fetch(`${ip}/getRenderTxtApi?id=${id}&collage_idx=${collageIdx}`)
+    if (!response.ok) {
+      console.error('获取 render txt 数据失败:', response.status, response.statusText)
+      return []
+    }
+    const result = await response.json()
+    return result.success ? result.data : []
+  } catch (error) {
+    console.error('获取 render txt 数据出错:', error)
+    return []
+  }
+}
 // 轮询处理状态的函数
 async function startProgressTimer() {
   const animationStore = useAnimationStore()
@@ -369,17 +384,17 @@ export async function sendDataToServer(): Promise<boolean> {
   const { process_id, collage_result_type, canvas_width, canvas_height, collaging, totalOverview, now_overview_idx } = storeToRefs(animationStore)
   const selectedModeStore = useSelectedModeStore()
   const fetchInterval = 500
-  try { 
+  try {
     animationStore.ip = ip
     // 设置系统为拼贴处理状态
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
     const data = await collectAllSlidesData()
-    
+
     // 将 dataBinding 数据存储到 hoverInfoPanel store
     const hoverInfoPanelStore = useHoverInfoPanelStore()
     const collageSeriesStore = useCollageSeriesStore()
-    
+
     hoverInfoPanelStore.allData = data.map((overview) => {
       // 根据 overviewId 找到对应的 overview
       const overviewObj = collageSeriesStore.overviews.find(ov => ov.overviewId === overview.overviewId)
@@ -390,24 +405,24 @@ export async function sendDataToServer(): Promise<boolean> {
           dataBinding: slide.dataBinding || []
         }))
       }
-    }) 
+    })
     const containerStore = useContainerStore()
     containerStore.createShiningPaths()
     animationStore.startContainerAnimation()
     totalOverview.value = data.length
     now_overview_idx.value = 0
     for (const overview of data) {//对于每一个总览
-      //对于每一个slide检查marker的类型 
+      //对于每一个slide检查marker的类型
       for (const slide of overview.slides) {
         slide.markers.forEach((marker: any) => {
           if (marker.thumbnail.includes('data:image/png;base64,')) {
             collage_result_type.value.push('png')
             return
           }
-        }) 
-        collage_result_type.value.push('svg') 
+        })
+        collage_result_type.value.push('svg')
       }
-    
+
       const time = Math.floor(Date.now() / 1000)
       process_id.value = time.toString()
       const collageSeriesStore = useCollageSeriesStore()
@@ -421,11 +436,11 @@ export async function sendDataToServer(): Promise<boolean> {
         "id": time,
         "canvasWidth": originalWidth,
         "canvasHeight": originalHeight
-      } 
+      }
       progressTimer.value = setInterval(() => {
         startProgressTimer()
       }, fetchInterval)
-      
+
       try {
         // 这里实现向后端发送数据的逻辑
         const response = await fetch(`${ip}/processDataApi`, {
@@ -434,7 +449,7 @@ export async function sendDataToServer(): Promise<boolean> {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(sendData)
-        }) 
+        })
 
         if (!response.ok) {
           clearInterval(progressTimer.value)
@@ -442,11 +457,11 @@ export async function sendDataToServer(): Promise<boolean> {
           collaging.value = false
           return false
         }
-        
+
         clearInterval(progressTimer.value)
         if (now_overview_idx.value < totalOverview.value - 1) {
           animationStore.nextOverview()
-        } 
+        }
       } catch (error) {
         console.error(`处理 overview ${time} 时出错:`, error)
         clearInterval(progressTimer.value)
@@ -457,7 +472,7 @@ export async function sendDataToServer(): Promise<boolean> {
     collaging.value = false
     // 所有overview都处理完成后，停止拼贴处理状态并触发重绘
     await renderResult()
-    
+
     return true
   } catch (error) {
     console.error('发送数据时出错:', error)
@@ -494,16 +509,16 @@ export function pharseData(markerId: string) {
   const tableStore = useTableStore()
   const tableData = tableStore.tableData
   const markersData = markerStore.markers.find(m => m.id === markerId)
-  
+
   if (!markersData) {
     return []
   }
-  
+
   // 直接使用已计算的 cols（Set 转换为数组）
   if (markersData.cols && markersData.cols.size > 0) {
     return Array.from(markersData.cols).map(index => tableData[index]).filter(Boolean)
   }
-  
+
   // 如果没有 cols，返回空数组（应该不会发生，因为筛选条件更新时会计算）
   return []
 }
@@ -511,9 +526,9 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
   const collageSeriesStore = useCollageSeriesStore()
   const canvas = collageSeriesStore.canvasRef?.()
   const container = processContainer(canvas)
-  
- 
-  const data = pharseData(markerId)  
+
+
+  const data = pharseData(markerId)
   const response = await fetch(`${ip}/markerDropApi`, {
     method: 'POST',
     headers: {
@@ -528,10 +543,10 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
     )
   })
   if (response.ok) {
-    const result = await response.json() 
+    const result = await response.json()
     if (result.init_pos) {
       return result
-      
+
     }
   } else {
     console.error('获取处理状态失败:', response.statusText)
@@ -539,11 +554,11 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
 }
 function getDataBinding (){
   const hoverInfoPanelStore = useHoverInfoPanelStore()
-  const allData = hoverInfoPanelStore.allData 
-  
+  const allData = hoverInfoPanelStore.allData
+
   // 将所有 data 拍平成一维数组
   const flattenedData: Array<any> = []
-  
+
   // 遍历所有 overview
   for (const overview of allData) {
     // 遍历每个 overview 的所有 slides
@@ -557,16 +572,16 @@ function getDataBinding (){
       }
     }
   }
-  
+
   return flattenedData
 }
  async function renderResult (){
   const collageSeriesStore = useCollageSeriesStore()
   collageSeriesStore.addNewSlide()
-  const canvasStore = useCanvasStore() 
+  const canvasStore = useCanvasStore()
   const animationStore = useAnimationStore()
   const { process_id } = storeToRefs(animationStore)
-  
+
   // 获取canvas实例
   const canvasInstance = canvasStore.canvasRef?.()
   if (canvasInstance) {
@@ -575,13 +590,13 @@ function getDataBinding (){
       const dataTypeList = paper.project.activeLayer.children.map(obj => obj.dataType)
       // 将当前 paper.js 画布导出为 SVG
       const paperSvgString = paper.project.exportSVG({ asString: true })
-      
+
       // 使用 Fabric.js 加载 SVG
       const loadedSVG = await fabric.loadSVGFromString(paperSvgString)
-      
+
       // 获取拍平的 data
       const flattenedData = getDataBinding()
-      
+
       // 将所有 SVG 对象添加到画布，保持原始位置和大小
       loadedSVG.objects.forEach((obj: any, index: number) => {
         // 按索引分配拍平的 data
@@ -596,10 +611,10 @@ function getDataBinding (){
         })
         canvasInstance.add(obj)
       })
-      
+
       // 重新渲染画布
-      canvasInstance.renderAll() 
-      
+      canvasInstance.renderAll()
+
     } catch (error) {
       console.error('加载 SVG 结果失败:', error)
     }

@@ -6,11 +6,11 @@ import { storeToRefs } from 'pinia'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useForceDrawingStore } from '~/stores/forceDrawing'
 import { useAnimationStore } from '~/stores/animation'
-const animationStore = useAnimationStore()
-const { collaging } = storeToRefs(animationStore)
-const selectedModeStore = useSelectedModeStore()
-const forceDrawingStore = useForceDrawingStore()
 export const useObjectActionsStore = defineStore('objectActions', () => {
+    const animationStore = useAnimationStore()
+    const { collaging } = storeToRefs(animationStore)
+    const selectedModeStore = useSelectedModeStore()
+    const forceDrawingStore = useForceDrawingStore()
     const canvasRef = ref<(() => Canvas | null) | null>(null)
     const showDeleteBtn = ref(false)
     const actionBtnPosition = ref({ top: '0px', left: '0px' })
@@ -37,7 +37,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     function setCurrentPathObj() {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
-        currentPathObj.value = obj 
+        currentPathObj.value = obj
     }
     function updateActionBtnVisble() {
         const canvasInstance = canvasRef.value?.()
@@ -55,19 +55,19 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         if (!isGroupMode.value && !isMultipleSelection.value) {
             showGroupBtn.value = false
         }
-        if(selectedModeStore.selectedMode === 'emitter') { 
+        if(selectedModeStore.selectedMode === 'emitter') {
             showClosePathBtn.value = false
             showGroupBtn.value = false
         }
-        if(selectedModeStore.selectedMode === 'force') { 
+        if(selectedModeStore.selectedMode === 'force') {
             showClosePathBtn.value = false
             showGroupBtn.value = false
             if(forceDrawingStore.forceType === 'fieldForce') {
                 showDeleteBtn.value = false
             }
         }
-        const activeObject = canvasInstance?.getActiveObject() 
-        if(activeObject && activeObject.get('dataType') === 'marker') { 
+        const activeObject = canvasInstance?.getActiveObject()
+        if(activeObject && activeObject.get('dataType') === 'marker') {
             showClosePathBtn.value = false
             showGroupBtn.value = false
         }
@@ -98,7 +98,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         actionBtnPosition.value = {
             top: `${y - btnOffsetY}px`,
             left: `${x + btnOffsetX}px`,
-        } 
+        }
     }
     function deleteActiveObject() {
         const canvasInstance = canvasRef.value?.()
@@ -166,7 +166,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
                     dataType: selectedModeStore.selectedMode
                 })
                 // 将组添加到画布
-                canvasInstance.add(group) 
+                canvasInstance.add(group)
                 canvasInstance.setActiveObject(group)
                 canvasInstance.requestRenderAll()
             }
@@ -197,4 +197,4 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         setCanvas,
         setCurrentPathObj
     }
-}) 
+})

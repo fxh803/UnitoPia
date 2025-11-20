@@ -3,8 +3,9 @@ import { defineStore, storeToRefs } from 'pinia'
 import paper from "paper";
 import { useContainerStore } from '~/stores/container'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
+import { getRenderTxtData } from '~/composables/server'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
-import { ref, computed, watch } from 'vue'; 
+import { ref, computed, watch } from 'vue';
 export const useAnimationStore = defineStore('animation', () => {
   // 状态
   const collaging = ref(false)
@@ -25,11 +26,10 @@ export const useAnimationStore = defineStore('animation', () => {
   const markerAni = ref(null)
   const containerAni = ref(null)
   const replayIdx = ref(0)
-  const ip = ref('http://127.0.0.1:5000')
   const process_id = ref(null)
   const replayTimer = ref(null)
   const time_interval = ref(2000)
-  const replaying = ref(false) 
+  const replaying = ref(false)
   const hoverDataBinding = ref(null)
   const totalOverview = ref(0)
   const now_overview_idx = ref(0)
@@ -53,21 +53,7 @@ export const useAnimationStore = defineStore('animation', () => {
   })
 
   // 方法
-  // 批量获取 render txt 文件的 base64 数据
-  async function getRenderTxtData(id: string, collageIdx: number): Promise<string[]> {
-    try {
-      const response = await fetch(`${ip.value}/getRenderTxtApi?id=${id}&collage_idx=${collageIdx}`)
-      if (!response.ok) {
-        console.error('获取 render txt 数据失败:', response.status, response.statusText)
-        return []
-      }
-      const result = await response.json()
-      return result.success ? result.data : []
-    } catch (error) {
-      console.error('获取 render txt 数据出错:', error)
-      return []
-    }
-  }
+
   function resetData() {
     collaging.value = false
     progress_data.value = []
@@ -88,7 +74,7 @@ export const useAnimationStore = defineStore('animation', () => {
     replayIdx.value = 0
     process_id.value = null
     replayTimer.value = null
-    replaying.value = false 
+    replaying.value = false
     hoverDataBinding.value = null
     now_overview_idx.value = 0
     totalOverview.value = 0
@@ -101,7 +87,7 @@ export const useAnimationStore = defineStore('animation', () => {
     replaying.value = false
   }
 
-  function backToEdit() { 
+  function backToEdit() {
     resetData()
   }
 
@@ -122,7 +108,7 @@ export const useAnimationStore = defineStore('animation', () => {
     if (markerAni.value) {
       paper.view.off('frame', markerAni.value);
       markerAni.value = null
-    } 
+    }
     if (containerAni.value) {
       paper.view.off('frame', containerAni.value);
       containerAni.value = null
@@ -132,7 +118,7 @@ export const useAnimationStore = defineStore('animation', () => {
     containerStore.clearShiningPaths()
   }
 
-  function removeElements() { 
+  function removeElements() {
     elements.value.forEach(element => {
       element.remove();
     });
@@ -146,7 +132,7 @@ export const useAnimationStore = defineStore('animation', () => {
     const collageSeriesStore = useCollageSeriesStore()
     const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
     const renderSize = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size ?? 1000
-    
+
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
       angleArray.value[i] = result['angle'][i - startIndex];
@@ -170,7 +156,7 @@ export const useAnimationStore = defineStore('animation', () => {
     const collageSeriesStore = useCollageSeriesStore()
     const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
     const renderSize = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size ?? 1000
-    
+
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
       angleArray.value[i] = result['angle'][i - startIndex];
@@ -189,10 +175,10 @@ export const useAnimationStore = defineStore('animation', () => {
   // 根据 overview_idx 和 collage_idx 获取对应的 dataBinding，打平成一维数组
   function getDataBinding(overview_idx: number, collage_idx: number): Array<any> | null {
     const hoverInfoPanelStore = useHoverInfoPanelStore()
-    const allData = hoverInfoPanelStore.allData 
-    const overview = allData[overview_idx] 
-    const slide = overview.slides[collage_idx] 
-    
+    const allData = hoverInfoPanelStore.allData
+    const overview = allData[overview_idx]
+    const slide = overview.slides[collage_idx]
+
     // 遍历所有 dataBinding，将每个 data 数组打平合并成一维数组
     const flattenedData: Array<any> = []
     for (const binding of slide.dataBinding) {
@@ -200,7 +186,7 @@ export const useAnimationStore = defineStore('animation', () => {
         flattenedData.push(...binding.data)
       }
     }
-    
+
     return flattenedData.length > 0 ? flattenedData : null
   }
 
@@ -221,11 +207,11 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function startContainerAnimation() {
     const containerStore = useContainerStore()
-    if (!containerAni.value) {  
-        containerAni.value = (event) => { 
+    if (!containerAni.value) {
+        containerAni.value = (event) => {
           containerStore.containerAnimation(event)
         };
-        paper.view.on('frame', containerAni.value);  
+        paper.view.on('frame', containerAni.value);
       }
   }
   async function updateAnimation() {//每当收到进度信息，检查动画更新情况
@@ -233,16 +219,16 @@ export const useAnimationStore = defineStore('animation', () => {
     if (isUpdatingAnimation.value) {
       return
     }
-    
+
     isUpdatingAnimation.value = true
     try {
       const now_collage = progress.value.now_collage;
       const type = progress.value.type;
       if (now_collage != now_collage_idx.value && type === 1) {// 如果进行的collage变了，要绘制新的elements
-        console.log('1') 
+        console.log('1')
         const txtData = await getRenderTxtData(process_id.value, now_collage)
-        txtArray.value.push(...txtData) 
-        // paper.view.off('frame', markerAni.value); 
+        txtArray.value.push(...txtData)
+        // paper.view.off('frame', markerAni.value);
         // paper.view.off('frame', containerAni.value);
         // markerAni.value = null
         // containerAni.value = null
@@ -257,9 +243,9 @@ export const useAnimationStore = defineStore('animation', () => {
             dataBinding: dataBindingArray.value[i],
             imgLoaded: false,
             dataLoaded: false,
-            dataType: 'marker',   
+            dataType: 'marker',
             collage_idx: now_collage,
-            onLoad: () => { 
+            onLoad: () => {
               raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
               raster.rotate(angleArray.value[i] * (180 / Math.PI))
               raster.imgLoaded = true;
@@ -269,7 +255,7 @@ export const useAnimationStore = defineStore('animation', () => {
               console.log('onError',e)
             }
           });
-          raster.onMouseEnter = (event: any) => {  
+          raster.onMouseEnter = (event: any) => {
             hoverDataBinding.value = raster.dataBinding
             const hoverInfoPanelStore = useHoverInfoPanelStore()
             hoverInfoPanelStore.handleRasterHover(event, raster)
@@ -290,7 +276,7 @@ export const useAnimationStore = defineStore('animation', () => {
       setData(now_collage, 0)
       console.log('2')
       const txtData = await getRenderTxtData(process_id.value, now_collage)
-      txtArray.value.push(...txtData) 
+      txtArray.value.push(...txtData)
       for (let i = 0; i < posArray.value.length; i++) {
         const base64Source = txtArray.value[i]
         const raster = new paper.Raster({
@@ -300,9 +286,9 @@ export const useAnimationStore = defineStore('animation', () => {
           dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
-          dataType: 'marker',   
+          dataType: 'marker',
           collage_idx: now_collage,
-          onLoad: (e) => { 
+          onLoad: (e) => {
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true
@@ -324,7 +310,7 @@ export const useAnimationStore = defineStore('animation', () => {
         //   markerToast.value.classList.add('hidden')
         // }
         elements.value.push(raster);
-      } 
+      }
     }
     else if (elements.value.length > 0) {
       console.log('3')
@@ -362,7 +348,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function markerAnimation(event, startIndex) {
     for (let i = startIndex; i < elements.value.length; i++) {
-      if (elements.value[i].imgLoaded && elements.value[i].dataLoaded) { 
+      if (elements.value[i].imgLoaded && elements.value[i].dataLoaded) {
         const epsilon = 0.0001; // 允许的误差范围
         const pos = new paper.Point(elements.value[i].position);
         const startPos = elements.value[i].startPos;
@@ -423,12 +409,12 @@ export const useAnimationStore = defineStore('animation', () => {
     const now_overview = progress_data.value[replayIdx.value].now_overview_idx;
     process_id.value = progress_data.value[replayIdx.value].process_id;
     collage_result_type.value = progress_data.value[replayIdx.value].collage_result_type;
-    
-    if (now_overview != now_overview_idx.value && now_overview_idx.value != totalOverview.value - 1) { 
+
+    if (now_overview != now_overview_idx.value && now_overview_idx.value != totalOverview.value - 1) {
       nextOverview()
       return
     }
-    
+
     if (now_collage != now_collage_idx.value) {//进入下一个collage
       console.log('4')
       now_start_idx.value = elements.value.length
@@ -442,9 +428,9 @@ export const useAnimationStore = defineStore('animation', () => {
           dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
-          dataType: 'marker', 
+          dataType: 'marker',
           collage_idx: now_collage,
-          onLoad: () => { 
+          onLoad: () => {
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true;
@@ -453,7 +439,7 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e,raster)
           }
         });
-        raster.onMouseEnter = (event: any) => { 
+        raster.onMouseEnter = (event: any) => {
           hoverDataBinding.value = raster.dataBinding
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterHover(event, raster)
@@ -481,9 +467,9 @@ export const useAnimationStore = defineStore('animation', () => {
           dataBinding: dataBindingArray.value[i],
           imgLoaded: false,
           dataLoaded: false,
-          dataType: 'marker',   
+          dataType: 'marker',
           collage_idx: now_collage,
-          onLoad: () => { 
+          onLoad: () => {
             raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true
@@ -492,7 +478,7 @@ export const useAnimationStore = defineStore('animation', () => {
             console.log('onError',e,raster)
           }
         });
-        raster.onMouseEnter = (event: any) => { 
+        raster.onMouseEnter = (event: any) => {
           hoverDataBinding.value = raster.dataBinding
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterHover(event, raster)
@@ -534,7 +520,7 @@ export const useAnimationStore = defineStore('animation', () => {
         paper.view.on('frame', markerAni.value);
       }
     }
-    
+
     replayIdx.value += 1;
     if (replayIdx.value >= result_data.value.length) {
       stopReplay()
@@ -594,7 +580,6 @@ export const useAnimationStore = defineStore('animation', () => {
     markerAni,
     containerAni,
     replayIdx,
-    ip,
     process_id,
     replayTimer,
     time_interval,
