@@ -40,6 +40,38 @@ export const useCanvasStore = defineStore('canvas', () => {
     canvasRef.value = canvas
   }
 
+  // 更新marker透明度：选中的marker保持正常，其他变低
+  function updateMarkerOpacity(selectedMarker: any = null) {
+    const canvasInstance = canvasRef.value?.()
+    if (!canvasInstance) return
+    
+    const allObjects = canvasInstance.getObjects()
+    allObjects.forEach((obj: any) => {
+      if (obj.get('dataType') === 'marker') {
+        if (selectedMarker && obj === selectedMarker) {
+          obj.set('opacity', 1)
+        } else {
+          obj.set('opacity', 0.3)
+        }
+      }
+    })
+    canvasInstance.renderAll()
+  }
+
+  // 恢复所有marker透明度
+  function restoreAllMarkerOpacity() {
+    const canvasInstance = canvasRef.value?.()
+    if (!canvasInstance) return
+    
+    const allObjects = canvasInstance.getObjects()
+    allObjects.forEach((obj: any) => {
+      if (obj.get('dataType') === 'marker') {
+        obj.set('opacity', 1)
+      }
+    })
+    canvasInstance.renderAll()
+  }
+
   // 添加画布事件监听器
   function addCanvasEventListeners() {
     const canvasInstance = canvasRef.value?.()
@@ -50,14 +82,28 @@ export const useCanvasStore = defineStore('canvas', () => {
         objectActionsStore.setCurrentPathObj()
         objectActionsStore.updateActionBtnVisble()
         objectActionsStore.updateActionBtnPosition()
+        console.log('1')
+        // 如果选中的是marker，更新透明度
+        const activeObject = canvasInstance.getActiveObject()
+        if (activeObject && activeObject.get('dataType') === 'marker') {
+          updateMarkerOpacity(activeObject)
+        }
       },
       'selection:updated': () => {
         objectActionsStore.setCurrentPathObj()
         objectActionsStore.updateActionBtnVisble()
         objectActionsStore.updateActionBtnPosition()
+        console.log('2')
+        // 如果选中的是marker，更新透明度
+        const activeObject = canvasInstance.getActiveObject()
+        if (activeObject && activeObject.get('dataType') === 'marker') {
+          updateMarkerOpacity(activeObject)
+        }
       },
       'selection:cleared': () => {
         objectActionsStore.hideBtns()
+        // 取消选中时，恢复所有marker的透明度
+        restoreAllMarkerOpacity()
       },
       'object:moving': () => {
         objectActionsStore.hideBtns()
@@ -97,6 +143,17 @@ export const useCanvasStore = defineStore('canvas', () => {
           })
           canvasInstance.renderAll()
         }
+        if (e.target && e.target.get('dataType') === 'marker') {
+          // 检查是否有选中的marker
+          const activeObject = canvasInstance.getActiveObject()
+          if (activeObject && activeObject.get('dataType') === 'marker') {
+            // 如果有选中的marker，保持选中marker的正常透明度，其他变低
+            updateMarkerOpacity(activeObject)
+          } else {
+            // 如果没有选中的marker，当前悬停的marker保持正常透明度，其他marker变低透明度
+            updateMarkerOpacity(e.target)
+          }
+        }
         // 处理 marker 悬浮显示信息面板
         hoverInfoPanelStore.handleMarkerHover(e, canvasInstance)
       },
@@ -112,6 +169,17 @@ export const useCanvasStore = defineStore('canvas', () => {
             childObj.set('opacity', 1)
           })
           canvasInstance.renderAll()
+        }
+        if (e.target && e.target.get('dataType') === 'marker') {
+          // 检查是否有选中的marker
+          const activeObject = canvasInstance.getActiveObject()
+          if (activeObject && activeObject.get('dataType') === 'marker') {
+            // 如果有选中的marker，保持选中marker的正常透明度，其他变低
+            updateMarkerOpacity(activeObject)
+          } else {
+            // 如果没有选中的marker，恢复所有marker的透明度
+            restoreAllMarkerOpacity()
+          }
         }
         // 处理鼠标离开 marker，隐藏信息面板
         hoverInfoPanelStore.handleMarkerOut(e)

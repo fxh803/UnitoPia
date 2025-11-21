@@ -37,6 +37,7 @@ declare global {
   const extendRef: typeof import('@vueuse/core')['extendRef']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const getRenderTxtData: typeof import('./src/composables/server')['getRenderTxtData']
   const h: typeof import('vue')['h']
   const handleMarkerDropCanvas: typeof import('./src/composables/server')['handleMarkerDropCanvas']
   const ignorableWatch: typeof import('@vueuse/core')['ignorableWatch']
@@ -344,6 +345,7 @@ declare module 'vue' {
     readonly extendRef: UnwrapRef<typeof import('@vueuse/core')['extendRef']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly getRenderTxtData: UnwrapRef<typeof import('./src/composables/server')['getRenderTxtData']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly handleMarkerDropCanvas: UnwrapRef<typeof import('./src/composables/server')['handleMarkerDropCanvas']>
     readonly ignorableWatch: UnwrapRef<typeof import('@vueuse/core')['ignorableWatch']>
