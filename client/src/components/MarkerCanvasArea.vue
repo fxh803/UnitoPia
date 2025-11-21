@@ -96,6 +96,15 @@ watch([isColorPickerOpen, () => closePathConfirm.value.show], ([colorPickerOpen,
   }
 })
 
+// 处理键盘删除事件
+const handleKeyDown = (e: KeyboardEvent) => {
+  // Delete 或 Backspace 键删除选中的对象
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault()
+    markerObjectActionsStore.deleteActiveObject()
+  }
+}
+
 onMounted(async () => {
   await nextTick()
   setTimeout(() => {
@@ -129,6 +138,9 @@ onMounted(async () => {
       // 添加形状绘制事件监听器
       markerShapeDrawingStore.addMarkerShapeEventListeners()
 
+      // 添加键盘事件监听
+      document.addEventListener('keydown', handleKeyDown)
+
       canvas.renderAll()
     }
   }, 200)
@@ -136,6 +148,9 @@ onMounted(async () => {
 
 
 onBeforeUnmount(() => {
+  // 移除键盘事件监听
+  document.removeEventListener('keydown', handleKeyDown)
+  
   // 移除形状绘制事件监听器
   markerShapeDrawingStore.removeMarkerShapeEventListeners()
   

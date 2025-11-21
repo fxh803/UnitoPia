@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Canvas, PencilBrush } from 'fabric'
-import { ref, watch, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { useSelectedModeStore } from '~/stores/selectedMode'
@@ -224,7 +224,14 @@ watch(() => closePathConfirm.value.show, (pathConfirmOpen) => {
   }
 })
 
-
+// 处理键盘删除事件
+const handleKeyDown = (e: KeyboardEvent) => {
+  // Delete 或 Backspace 键删除选中的对象
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    e.preventDefault()
+    objectActionsStore.deleteActiveObject()
+  }
+}
 
 onMounted(async () => {
   await nextTick()
@@ -264,6 +271,9 @@ onMounted(async () => {
     initializeEmptySlide()
     addCanvasEventListeners()
     
+    // 添加键盘事件监听
+    document.addEventListener('keydown', handleKeyDown)
+    
     // 初始化时自动激活第一个工具栏的第一个按钮
     await nextTick()
     const initialMode = selectedMode.value
@@ -275,6 +285,11 @@ onMounted(async () => {
     }
   }
 
+})
+
+onBeforeUnmount(() => {
+  // 移除键盘事件监听
+  document.removeEventListener('keydown', handleKeyDown)
 })
 
 
