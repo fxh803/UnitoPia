@@ -177,7 +177,6 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         showDeleteBtn.value = false
         showClosePathBtn.value = false
         showGroupBtn.value = false
-        // currentPathObj.value = null
     }
 
     return {

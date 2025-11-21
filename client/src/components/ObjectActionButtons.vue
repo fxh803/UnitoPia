@@ -163,7 +163,6 @@ const groupBtnPos = computed(() => calculateButtonPosition(-30))
 
 .more-btn:hover {
     background-color: #4b5563;
-    /* transform: translate(-50%, -50%) scale(1.1); */
 }
 
 .wheel-overlay {

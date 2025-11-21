@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, onMounted, nextTick } from 'vue'
 import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import ColorPicker from './ColorPicker.vue'
 import { storeToRefs } from 'pinia' 
@@ -6,7 +7,6 @@ import * as fabric from 'fabric'
 import { Canvas, Group } from 'fabric'
 import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
 import { useMarkerStore } from '~/stores/marker'
-import { nextTick } from 'vue'
 
 const markerCanvasModeStore = useMarkerCanvasModeStore()
 const {mode} = storeToRefs(markerCanvasModeStore)

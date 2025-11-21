@@ -82,7 +82,6 @@ export const useCanvasStore = defineStore('canvas', () => {
         objectActionsStore.setCurrentPathObj()
         objectActionsStore.updateActionBtnVisble()
         objectActionsStore.updateActionBtnPosition()
-        console.log('1')
         // 如果选中的是marker，更新透明度
         const activeObject = canvasInstance.getActiveObject()
         if (activeObject && activeObject.get('dataType') === 'marker') {
@@ -93,7 +92,6 @@ export const useCanvasStore = defineStore('canvas', () => {
         objectActionsStore.setCurrentPathObj()
         objectActionsStore.updateActionBtnVisble()
         objectActionsStore.updateActionBtnPosition()
-        console.log('2')
         // 如果选中的是marker，更新透明度
         const activeObject = canvasInstance.getActiveObject()
         if (activeObject && activeObject.get('dataType') === 'marker') {

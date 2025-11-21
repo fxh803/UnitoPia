@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref } from 'vue'
 import { useColorPickerStore } from '~/stores/colorpicker'
 
 const colorPickerStore = useColorPickerStore()

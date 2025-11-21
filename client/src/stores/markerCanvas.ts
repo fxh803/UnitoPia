@@ -92,13 +92,11 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
         askToClosePath(e.target)
       },
       'selection:created': () => {
-        console.log('selection:created')
         markerObjectActionsStore.setCurrentPathObj()
         markerObjectActionsStore.updateActionBtnVisble()
         markerObjectActionsStore.updateActionBtnPosition()
       },
       'selection:updated': () => {
-        console.log('selection:updated')
         markerObjectActionsStore.setCurrentPathObj()
         markerObjectActionsStore.updateActionBtnVisble()
         markerObjectActionsStore.updateActionBtnPosition()
