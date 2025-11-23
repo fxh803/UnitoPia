@@ -228,6 +228,19 @@ watch(() => closePathConfirm.value.show, (pathConfirmOpen) => {
 const handleKeyDown = (e: KeyboardEvent) => {
   // Delete 或 Backspace 键删除选中的对象
   if (e.key === 'Delete' || e.key === 'Backspace') {
+    // 如果焦点在输入框、文本域等可编辑元素上，不阻止默认行为，允许正常删除文本
+    const target = e.target as HTMLElement
+    const isEditable = target.tagName === 'INPUT' || 
+                       target.tagName === 'TEXTAREA' || 
+                       target.isContentEditable ||
+                       target.closest('input') ||
+                       target.closest('textarea') ||
+                       target.closest('[contenteditable="true"]')
+    
+    if (isEditable) {
+      return // 允许在输入框中正常使用 backspace/delete
+    }
+    
     e.preventDefault()
     objectActionsStore.deleteActiveObject()
   }
