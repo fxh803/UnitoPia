@@ -149,8 +149,10 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     // 跳过预览形状
     if (path.get('isPreview')) return
     
-    // 跳过上传的形状
-    if (path.get('isUploaded')) return
+    // 只有mode为draw或rect或ellipse的状态才询问是否闭合路径
+    const markerCanvasModeStore = useMarkerCanvasModeStore()
+    if (markerCanvasModeStore.mode !== 'draw' && markerCanvasModeStore.mode !== 'rect' && markerCanvasModeStore.mode !== 'ellipse') return
+     
     
     // 获取对象在画布上的位置
     const zoom = canvasInstance.getZoom()

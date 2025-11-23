@@ -225,10 +225,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
         return
       }
-      if(path.get('dataType') === 'background'){ 
-        return
-      }
-      if(path.get('dataType') === 'marker'){ 
+      if(path.get('dataType') !== undefined){ 
         return
       }
       // 根据当前选择的模式设置dataType
@@ -576,9 +573,11 @@ export const useCanvasStore = defineStore('canvas', () => {
     
     // 跳过预览形状
     if (path.get('isPreview')) return
-    
-    // 跳过上传的形状
-    if (path.get('isUploaded')) return
+
+    //跳过mode不是draw或rect或ellipse的状态
+    const canvasModeStore = useCanvasModeStore()
+    if (canvasModeStore.mode !== 'draw' && canvasModeStore.mode !== 'rect' && canvasModeStore.mode !== 'ellipse') return
+
     
     // 只有当对象是 container 类型时才触发
     if (path.get('dataType') !== 'container') return
@@ -661,6 +660,16 @@ export const useCanvasStore = defineStore('canvas', () => {
     const canvasInstance = canvasRef.value?.()
     if (canvasInstance) {
       try {
+        const containerObjects = await enlivenAllContainerObjects()
+        containerObjects.forEach((obj: any) => {
+          obj.set({
+            selectable: true,
+            evented: true,
+            dataType: 'container'
+          })
+          canvasInstance.add(obj)
+        })
+
         // 遍历 paper 上所有对象，只保存 dataType 为 'marker' 的对象信息
         const allPaperObjects = paper.project.activeLayer.children
         const markerIndices: number[] = []
@@ -697,7 +706,7 @@ export const useCanvasStore = defineStore('canvas', () => {
           } 
           
         })
-  
+        
         // 重新渲染画布
         canvasInstance.renderAll()
   
@@ -705,6 +714,56 @@ export const useCanvasStore = defineStore('canvas', () => {
         console.error('加载 SVG 结果失败:', error)
       }
     }
+  }
+
+  // 从当前 overview 的所有 slide 中获取所有 container 对象并进行 enlivenObjects
+  async function enlivenAllContainerObjects() {
+    const { currentOverviewIndex, overviews } = storeToRefs(collageSeriesStore)
+    const currentOverview = overviews.value[currentOverviewIndex.value]
+    
+    if (!currentOverview || !currentOverview.collageSeries || currentOverview.collageSeries.length === 0) {
+      console.warn('当前 overview 不存在或没有 slides')
+      return []
+    }
+
+    const allContainerObjects: any[] = []
+
+    // 遍历当前 overview 的所有 slides
+    for (const slide of currentOverview.collageSeries) {
+      try {
+        // 解析 slide 的 JSON 数据
+        const slideData = typeof slide.json === 'string' ? JSON.parse(slide.json) : slide.json
+        
+        if (!slideData.objects || !Array.isArray(slideData.objects)) {
+          continue
+        }
+
+        // 收集所有 container 对象的 JSON
+        const containerJsonArray: any[] = []
+        
+        slide.dataTypeArray.forEach((dataType: string, index: number) => {
+          if (dataType === 'container' && slideData.objects[index]) {
+            containerJsonArray.push(slideData.objects[index])
+          }
+        })
+
+        // 如果有 container 对象，使用 enlivenObjects 处理
+        if (containerJsonArray.length > 0) {
+          try {
+            const enlivenedObjects = await fabric.util.enlivenObjects(containerJsonArray, 'fabric')
+            if (enlivenedObjects && enlivenedObjects.length > 0) {
+              allContainerObjects.push(...enlivenedObjects)
+            }
+          } catch (enlivenError) {
+            console.error(`处理 slide ${slide.slideId} 的 container 对象时出错:`, enlivenError)
+          }
+        }
+      } catch (parseError) {
+        console.error(`解析 slide ${slide.slideId} 的 JSON 时出错:`, parseError)
+      }
+    }
+
+    return allContainerObjects
   }
 
   return {
@@ -728,6 +787,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     handleDrop,
     askToClosePath,
     handleClosePathConfirm,
-    renderResult
+    renderResult,
+    enlivenAllContainerObjects
   }
 })

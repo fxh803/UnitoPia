@@ -89,8 +89,7 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
       originY: 'center',
       selectable: false,
       evented: false,
-      dataType: 'container',
-      isUploaded: true
+      dataType: 'container'
     })
     
     // 计算合适的缩放比例

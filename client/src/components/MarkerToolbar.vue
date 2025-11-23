@@ -110,8 +110,7 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
       originX: 'center',
       originY: 'center',
       selectable: false,
-      evented: false,
-      isUploaded: true
+      evented: false
     })
     
     // 计算合适的缩放比例
@@ -158,8 +157,7 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
       originX: 'center',
       originY: 'center',
       selectable: false,
-      evented: false,
-      isUploaded: true
+      evented: false
     })
     
     // 计算合适的缩放比例
