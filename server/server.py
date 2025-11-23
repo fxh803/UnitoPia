@@ -120,10 +120,9 @@ def process_data():
             mask = base64_to_image(collage_data["container"])
             mask_array = np.array(mask)  
             # 检测RGB不为白色的区域
-            r, g, b = mask_array[:, :, 0], mask_array[:, :, 1], mask_array[:, :, 2]
-            is_white = (r >= 250) & (g >= 250) & (b >= 250)
-            mask_binary_array = np.where(is_white, 1, 0) 
-            binary_image = Image.fromarray((mask_binary_array * 255).astype(np.uint8))
+            alpha = mask_array[:, :, 3]
+            binary = np.where(alpha > 0, 0, 255).astype(np.uint8)
+            binary_image = Image.fromarray(binary)
             container_path = f"./workdir/{str(id)}_{i}/container.png"
             binary_image.save(container_path)
             json_data["collage"][i]["container_config"]["container"] = container_path 
