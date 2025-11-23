@@ -30,7 +30,6 @@ export const useAnimationStore = defineStore('animation', () => {
   const replayTimer = ref(null)
   const time_interval = ref(2000)
   const replaying = ref(false)
-  const hoverDataBinding = ref(null)
   const totalOverview = ref(0)
   const now_overview_idx = ref(0)
   const isUpdatingAnimation = ref(false) // 锁标志，防止并发执行
@@ -75,7 +74,6 @@ export const useAnimationStore = defineStore('animation', () => {
     process_id.value = null
     replayTimer.value = null
     replaying.value = false
-    hoverDataBinding.value = null
     now_overview_idx.value = 0
     totalOverview.value = 0
     time_interval.value = 2000
@@ -256,7 +254,6 @@ export const useAnimationStore = defineStore('animation', () => {
             }
           });
           raster.onMouseEnter = (event: any) => {
-            hoverDataBinding.value = raster.dataBinding
             const hoverInfoPanelStore = useHoverInfoPanelStore()
             hoverInfoPanelStore.handleRasterHover(event, raster)
           }
@@ -298,7 +295,6 @@ export const useAnimationStore = defineStore('animation', () => {
           }
         });
         raster.onMouseEnter = (event: any) => {
-          hoverDataBinding.value = raster.dataBinding
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterHover(event, raster)
         }
@@ -440,7 +436,6 @@ export const useAnimationStore = defineStore('animation', () => {
           }
         });
         raster.onMouseEnter = (event: any) => {
-          hoverDataBinding.value = raster.dataBinding
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterHover(event, raster)
         }
@@ -479,7 +474,6 @@ export const useAnimationStore = defineStore('animation', () => {
           }
         });
         raster.onMouseEnter = (event: any) => {
-          hoverDataBinding.value = raster.dataBinding
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterHover(event, raster)
         }
@@ -584,7 +578,6 @@ export const useAnimationStore = defineStore('animation', () => {
     replayTimer,
     time_interval,
     replaying,
-    hoverDataBinding,
     totalOverview,
     now_overview_idx,
     // 计算属性

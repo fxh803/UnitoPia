@@ -362,7 +362,6 @@ async function startProgressTimer() {
       // 解析 JSON 响应
       const result = await response.json()
       if (result.progress) {
-        console.log(result.progress)
         result.progress["now_overview_idx"] = now_overview_idx.value
         result.progress["process_id"] = process_id.value
         result.progress["collage_result_type"] = collage_result_type.value
@@ -593,7 +592,7 @@ function getDataBinding (){
 
       // 使用 Fabric.js 加载 SVG
       const loadedSVG = await fabric.loadSVGFromString(paperSvgString)
-
+      console.log(loadedSVG)
       // 获取拍平的 data
       const flattenedData = getDataBinding()
 

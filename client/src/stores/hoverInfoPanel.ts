@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Canvas } from 'fabric'
+import { useAnimationStore } from '~/stores/animation'
 
 export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
   const showPanel = ref(false)
