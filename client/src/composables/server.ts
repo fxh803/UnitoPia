@@ -10,7 +10,7 @@ import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useCanvasStore } from '~/stores/canvas'
 import { useContainerStore } from '~/stores/container'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
-import paper from 'paper'
+
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -484,7 +484,8 @@ export async function sendDataToServer(): Promise<boolean> {
     }
     collaging.value = false
     // 所有overview都处理完成后，停止拼贴处理状态并触发重绘
-    await renderResult()
+    const canvasStore = useCanvasStore()
+    await canvasStore.renderResult()
 
     return true
   } catch (error) {
@@ -565,71 +566,5 @@ export async function handleMarkerDropCanvas(markerId: string,pos: [number,numbe
     console.error('获取处理状态失败:', response.statusText)
   }
 }
-function getDataBinding (){
-  const hoverInfoPanelStore = useHoverInfoPanelStore()
-  const allData = hoverInfoPanelStore.allData
 
-  // 将所有 data 拍平成一维数组
-  const flattenedData: Array<any> = []
 
-  // 遍历所有 overview
-  for (const overview of allData) {
-    // 遍历每个 overview 的所有 slides
-    for (const slide of overview.slides) {
-      // 遍历每个 slide 的所有 dataBinding
-      for (const binding of slide.dataBinding) {
-        // 将每个 dataBinding 中的 data 数组拍平合并
-        if (binding.data && Array.isArray(binding.data)) {
-          flattenedData.push(...binding.data)
-        }
-      }
-    }
-  }
-
-  return flattenedData
-}
- async function renderResult (){
-  const collageSeriesStore = useCollageSeriesStore()
-  collageSeriesStore.addNewSlide()
-  const canvasStore = useCanvasStore()
-  const animationStore = useAnimationStore()
-  const { process_id } = storeToRefs(animationStore)
-
-  // 获取canvas实例
-  const canvasInstance = canvasStore.canvasRef?.()
-  if (canvasInstance) {
-    try {
-      // 遍历 paper 上所有对象，将它们的 dataType 保存成数组
-      const dataTypeList = paper.project.activeLayer.children.map(obj => obj.dataType)
-      // 将当前 paper.js 画布导出为 SVG
-      const paperSvgString = paper.project.exportSVG({ asString: true })
-
-      // 使用 Fabric.js 加载 SVG
-      const loadedSVG = await fabric.loadSVGFromString(paperSvgString)
-      console.log(loadedSVG)
-      // 获取拍平的 data
-      const flattenedData = getDataBinding()
-
-      // 将所有 SVG 对象添加到画布，保持原始位置和大小
-      loadedSVG.objects.forEach((obj: any, index: number) => {
-        // 按索引分配拍平的 data
-        const dataType = dataTypeList[index]
-        const data = (dataType === 'marker') ? (flattenedData[index] || null) : undefined
-
-        obj.set({
-          selectable: true,
-          evented: true,
-          dataType: dataType,
-          ...(dataType === 'marker' ? { data } : {})
-        })
-        canvasInstance.add(obj)
-      })
-
-      // 重新渲染画布
-      canvasInstance.renderAll()
-
-    } catch (error) {
-      console.error('加载 SVG 结果失败:', error)
-    }
-  }
-}

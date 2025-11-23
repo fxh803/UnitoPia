@@ -8,7 +8,9 @@ import { useDataScaleStore } from '~/stores/dataScale'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
+import { useAnimationStore } from '~/stores/animation'
 import { Group } from 'fabric'
+import paper from 'paper'
 import { handleMarkerDropCanvas, pharseData } from '~/composables/server'
 import * as fabric from 'fabric'
 export const useCanvasStore = defineStore('canvas', () => {
@@ -627,6 +629,83 @@ export const useCanvasStore = defineStore('canvas', () => {
       position: { x: 0, y: 0 }
     }
   }
+  function getDataBinding (){
+    const hoverInfoPanelStore = useHoverInfoPanelStore()
+    const allData = hoverInfoPanelStore.allData
+  
+    // 将所有 data 拍平成一维数组
+    const flattenedData: Array<any> = []
+  
+    // 遍历所有 overview
+    for (const overview of allData) {
+      // 遍历每个 overview 的所有 slides
+      for (const slide of overview.slides) {
+        // 遍历每个 slide 的所有 dataBinding
+        for (const binding of slide.dataBinding) {
+          // 将每个 dataBinding 中的 data 数组拍平合并
+          if (binding.data && Array.isArray(binding.data)) {
+            flattenedData.push(...binding.data)
+          }
+        }
+      }
+    }
+  
+    return flattenedData
+  }
+
+  async function renderResult (){
+    collageSeriesStore.addNewSlide() 
+    const animationStore = useAnimationStore()
+    const { process_id } = storeToRefs(animationStore)
+    // 获取canvas实例
+    const canvasInstance = canvasRef.value?.()
+    if (canvasInstance) {
+      try {
+        // 遍历 paper 上所有对象，只保存 dataType 为 'marker' 的对象信息
+        const allPaperObjects = paper.project.activeLayer.children
+        const markerIndices: number[] = []
+        allPaperObjects.forEach((obj, index) => {
+          if (obj.dataType === 'marker') {
+            markerIndices.push(index)
+          }
+        })
+        console.log(markerIndices)
+        // 将当前 paper.js 画布导出为 SVG
+        const paperSvgString = paper.project.exportSVG({ asString: true })
+  
+        // 使用 Fabric.js 加载 SVG
+        const loadedSVG = await fabric.loadSVGFromString(paperSvgString)
+        console.log(loadedSVG)
+        // 获取拍平的 data
+        const flattenedData = getDataBinding()
+  
+        // 遍历所有 SVG 对象，只给 marker 类型的对象设置 dataType 和 data
+        let markerDataIndex = 0
+        loadedSVG.objects.forEach((obj: any, index: number) => {
+          // 检查当前索引是否对应 marker 对象 
+          if (markerIndices.includes(index)) {
+            console.log(index)
+            const data = flattenedData[markerDataIndex] || null
+            obj.set({
+              selectable: true,
+              evented: true,
+              dataType: 'marker',
+              data: data
+            })
+            markerDataIndex++
+            canvasInstance.add(obj)
+          } 
+          
+        })
+  
+        // 重新渲染画布
+        canvasInstance.renderAll()
+  
+      } catch (error) {
+        console.error('加载 SVG 结果失败:', error)
+      }
+    }
+  }
 
   return {
     canvasRef,
@@ -648,6 +727,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     handleDragOver,
     handleDrop,
     askToClosePath,
-    handleClosePathConfirm
+    handleClosePathConfirm,
+    renderResult
   }
 })
