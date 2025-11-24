@@ -19,6 +19,7 @@ interface ProcessedData {
     pos: Array<{ x: number, y: number }>
     width: number[]
     height: number[]
+    angle: number[] // 弧度制
   }> // base64 字符串数组
   container: string // 整个画布的 base64（隐藏除 container 元素以外的对象）
   emitter: Array<{ x: number; y: number }>
@@ -143,6 +144,7 @@ function processMarker(tempCanvas: Canvas) {
     pos: Array<{ x: number, y: number }>
     widths: number[]
     heights: number[]
+    angles: number[]
   }> = []
 
   for (const markerId of uniqueMarkerIds) {
@@ -150,6 +152,7 @@ function processMarker(tempCanvas: Canvas) {
     const positions: Array<{ x: number, y: number }> = []
     const widths: number[] = []
     const heights: number[] = []
+    const angles: number[] = []
     let thumbnail = ''
 
     for (const obj of canvasObjects) {
@@ -168,6 +171,11 @@ function processMarker(tempCanvas: Canvas) {
         const scaleY = obj.scaleY || 1
         widths.push(scaleX*baseSize/80) //这里传的是对于正方形bbox的缩放系数
         heights.push(scaleY*baseSize/80)
+        
+        // 记录角度（Fabric.js 中 angle 是度数，转换为弧度）
+        const angleDegrees = obj.get('angle') || 0
+        const angleRadians = angleDegrees * Math.PI / 180
+        angles.push(angleRadians)
 
         // 只生成一次thumbnail（使用第一个对象）
         if (!thumbnail) {
@@ -188,7 +196,8 @@ function processMarker(tempCanvas: Canvas) {
       markerId,
       pos: positions,
       width: widths,
-      height:heights
+      height:heights,
+      angle:angles
     })
   }
 

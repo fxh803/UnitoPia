@@ -698,15 +698,32 @@ export const useCanvasStore = defineStore('canvas', () => {
           if (markerIndices.includes(index)) {
             console.log(index)
             const data = flattenedData[markerDataIndex] || null
+            
+            // 先添加到画布，以便正确获取尺寸和位置
+            canvasInstance.add(obj)
+            obj.setCoords()
+            
+            // 获取对象的边界框中心点（基于当前 origin）
+            const centerPoint = obj.getCenterPoint()
+            
+            // 设置 origin 为 center，并设置位置为中心点
+            // 这样对象的视觉位置不会改变
             obj.set({
+              originX: 'center',
+              originY: 'center',
+              left: centerPoint.x,
+              top: centerPoint.y,
               selectable: true,
               evented: true,
               dataType: 'marker',
               data: data,
               markerId: markerId
             })
+            
+            // 更新坐标以确保位置正确
+            obj.setCoords()
+            
             markerDataIndex++
-            canvasInstance.add(obj)
           } 
           
         })

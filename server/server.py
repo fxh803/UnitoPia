@@ -55,6 +55,7 @@ def process_data():
             marker_string = marker_data['thumbnail']
             init_pos = [[point["x"]/canvas_width, point["y"]/canvas_height] for point in marker_data['pos']]
             init_size = [[w, h] for w, h in zip(marker_data['width'], marker_data['height'])]
+            init_angle = [angle for angle in marker_data['angle']]
             # 完善SVG字符串
             marker_string, svg_width, svg_height = complete_svg(marker_string)
             # 首先检查是否有任何marker包含image元素
@@ -87,7 +88,7 @@ def process_data():
                 json_data["collage"][i]["marker_config"][j]["marker"] = [marker_path]
 
             json_data["collage"][i]["marker_config"][j]["init_pos"] = init_pos
-            json_data["collage"][i]["marker_config"][j]["init_angle"] = [0]*len(init_pos)
+            json_data["collage"][i]["marker_config"][j]["init_angle"] = init_angle
             json_data["collage"][i]["marker_config"][j]["init_size"] = init_size
 
             visualEncoding = None
