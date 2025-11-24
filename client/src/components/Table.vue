@@ -135,7 +135,7 @@ const handleClearData = () => {
       <!-- 表格内容 -->
       <div class="flex-1 overflow-hidden">
           <vxe-table :data="tableStore.tableData" :scroll-y="{ enabled: true }" :scroll-x="{ enabled: true }" height="100%"
-            :cell-config="{ height: 30 }" :headerCellConfig="{ height: 90 }" show-header-overflow show-overflow size="small" border
+            :cell-config="{ height: 30 }" :headerCellConfig="{ height: 75 }" show-header-overflow show-overflow size="small" border
             :cell-class-name="cellClassName" :auto-resize="true">
           <vxe-column v-for="(item, index) in tableStore.tableColumns" :key="index" :field="item" :title="item" row-resize 
             header-align="center"
@@ -171,7 +171,7 @@ const handleClearData = () => {
                 </div>
                 <!-- 缩放滑块：一直占据位置但隐藏直到需要出现 -->
                 <div 
-                  :class="{ 'invisible': columnMapping.column !== item || !columnMapping.channel }"
+                  v-if="columnMapping.column === item && columnMapping.channel"
                   class="flex items-center justify-center gap-2 w-full transform translate-x-2"
                 >
                   <input 
