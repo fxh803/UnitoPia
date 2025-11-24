@@ -134,24 +134,31 @@ const handleClearData = () => {
       style="min-width: 0; min-height: 0; max-width: 100%; max-height: 100%;">
       <!-- 表格内容 -->
       <div class="flex-1 overflow-hidden">
-        <vxe-table :data="tableStore.tableData" :scroll-y="{ enabled: true }" :scroll-x="{ enabled: true }" height="100%"
-          :cell-config="{ height: 30 }" :headerCellConfig="{ height: 60}" show-header-overflow show-overflow size="small" border
-          :cell-class-name="cellClassName" :auto-resize="true">
+          <vxe-table :data="tableStore.tableData" :scroll-y="{ enabled: true }" :scroll-x="{ enabled: true }" height="100%"
+            :cell-config="{ height: 30 }" :headerCellConfig="{ height: 90 }" show-header-overflow show-overflow size="small" border
+            :cell-class-name="cellClassName" :auto-resize="true">
           <vxe-column v-for="(item, index) in tableStore.tableColumns" :key="index" :field="item" :title="item" row-resize 
-            :min-width="item.toLowerCase() === 'index' || item.toLowerCase() === 'idx' ? 40 : 130">
+            header-align="center"
+            :min-width="item.toLowerCase() === 'index' || item.toLowerCase() === 'idx' ? 40 : 140">
             <!-- 自定义表头：包含列名、下拉菜单和缩放滑块 -->
             <template #header>
               <div class="flex flex-col items-center w-full gap-1 py-1">
-                <!-- 列名和下拉菜单 -->
-                <div class="flex items-center justify-center gap-2 w-full">
-                  <div class="text-xs font-semibold truncate">{{ item }}</div>
+                <!-- 第一行：列名 -->
+                <div class="text-[13px] font-bold truncate text-center w-full">{{ item }}</div>
+                <!-- 分隔线 -->
+                <div class="w-full border-t border-gray-300"></div>
+                <!-- 第二行：Encoding + 下拉菜单 -->
+                <div
+                  v-if="item.toLowerCase() !== 'index' && item.toLowerCase() !== 'idx'"
+                  class="flex items-center justify-center gap-1 w-full text-[12px] text-gray-500"
+                >
+                  <span>Encoding:</span>
                   <el-select
-                    v-if="item.toLowerCase() !== 'index' && item.toLowerCase() !== 'idx'"
                     :model-value="getColumnMappingValue(item)"
                     @update:model-value="(value) => handleColumnMappingChange(item, value)"
                     @click.stop
                     size="small"
-                    style="width: 80px"
+                    style="width: 50px;"
                     placeholder="Select"
                   >
                     <el-option
@@ -162,8 +169,11 @@ const handleClearData = () => {
                     />
                   </el-select>
                 </div>
-                <!-- 缩放滑块：只在有映射时显示 -->
-                <div v-if="columnMapping.column === item && columnMapping.channel" class="flex items-center justify-center gap-2 w-full transform translate-x-2">
+                <!-- 缩放滑块：一直占据位置但隐藏直到需要出现 -->
+                <div 
+                  :class="{ 'invisible': columnMapping.column !== item || !columnMapping.channel }"
+                  class="flex items-center justify-center gap-2 w-full transform translate-x-2"
+                >
                   <input 
                     type="range" 
                     :value="columnMapping.channel === 'width' ? widthScale : columnMapping.channel === 'height' ? heightScale : sizeScale"
@@ -243,5 +253,8 @@ const handleClearData = () => {
 .scale-slider::-moz-range-thumb:hover {
   transform: scale(1.2);
   background: #2563eb;
+}
+.vxe-cell--title{
+  width: 100% !important;
 }
 </style>
