@@ -194,6 +194,10 @@ const handleDeleteMarker = (markerId: string) => {
               <img v-if="marker.thumbnail" :src="marker.thumbnail" alt="Thumbnail" class="w-full h-full object-cover" />
               <span v-else class="text-gray-400 text-xs">Preview</span>
             </div>
+            <!-- 显示筛选后的 marker 数量 -->
+            <div class="text-center mt-1">
+              <span class="text-xs text-gray-500">{{ marker.cols ? marker.cols.size : 0 }} markers</span>
+            </div>
           </div>
 
           <!-- 右侧：数据绑定操作 - 垂直布局 -->
