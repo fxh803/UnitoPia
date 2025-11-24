@@ -305,27 +305,27 @@ def complete_svg(marker_string):
 
 
 def contains_image_element(svg_string):
-    """检查SVG字符串是否包含image元素"""
     try:
-        root = ET.fromstring(svg_string)
-        
-        # 定义命名空间
-        namespaces = {'svg': 'http://www.w3.org/2000/svg'}
-        
-        # 递归查找所有image元素 - 使用多种方式查找
-        images = []
-        # 方式1：使用命名空间
-        images.extend(root.findall('.//svg:image', namespaces))
-        # 方式2：不使用命名空间（处理没有命名空间的情况）
-        images.extend(root.findall('.//image'))
-        
-        # 去重
-        images = list(set(images))
-        
-        print(f"找到 {len(images)} 个image元素")
-        return len(images) > 0
-    except ET.ParseError:
+        # 将字符串解析为 XML 树（注意编码为 bytes）
+        root = ET.fromstring(svg_string.encode('utf-8'))
+    except ET.XMLSyntaxError as e:
+        print(f"[错误] SVG 字符串不是有效的 XML: {e}")
         return False
+
+    # 使用 XPath 查找所有的 <image> 标签（无论是否在命名空间下）
+    image_tags = root.findall('.//image')
+    if not image_tags:
+        # 方法2: 使用命名空间查找
+        namespaces = {'svg': 'http://www.w3.org/2000/svg'}
+        image_tags = root.findall('.//svg:image', namespaces)
+    if not image_tags:
+        # 方法3: 使用 XPath（如果支持）
+        try:
+            image_tags = root.xpath('//image | //svg:image', namespaces={'svg': 'http://www.w3.org/2000/svg'})
+        except:
+            pass
+    print('image_tags',image_tags)
+    return len(image_tags) > 0
 
 
 def convert_shapes_to_paths(svg_string):

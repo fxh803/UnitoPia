@@ -403,7 +403,7 @@ export async function sendDataToServer(): Promise<boolean> {
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
     const data = await collectAllSlidesData()
-
+    console.log(data)
     // 将 dataBinding 数据存储到 hoverInfoPanel store
     const hoverInfoPanelStore = useHoverInfoPanelStore()
     const collageSeriesStore = useCollageSeriesStore()

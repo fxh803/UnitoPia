@@ -660,6 +660,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     const canvasInstance = canvasRef.value?.()
     if (canvasInstance) {
       try {
+        //先放container对象
         const containerObjects = await enlivenAllContainerObjects()
         containerObjects.forEach((obj: any) => {
           obj.set({
@@ -671,6 +672,8 @@ export const useCanvasStore = defineStore('canvas', () => {
         })
 
         // 遍历 paper 上所有对象，只保存 dataType 为 'marker' 的对象信息
+        // 为每个 marker 生成唯一的 markerId
+        const markerId = `marker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
         const allPaperObjects = paper.project.activeLayer.children
         const markerIndices: number[] = []
         allPaperObjects.forEach((obj, index) => {
@@ -699,7 +702,8 @@ export const useCanvasStore = defineStore('canvas', () => {
               selectable: true,
               evented: true,
               dataType: 'marker',
-              data: data
+              data: data,
+              markerId: markerId
             })
             markerDataIndex++
             canvasInstance.add(obj)

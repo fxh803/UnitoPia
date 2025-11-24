@@ -41,13 +41,6 @@ def process_data():
             })
 
         ##########################   marker ########################
-        # 首先检查是否有任何marker包含image元素
-        has_image_markers = False
-        for marker_data in collage_data["markers"]:
-            marker_string = marker_data['thumbnail'] 
-            if contains_image_element(marker_string):
-                has_image_markers = True
-                break
         
         # 处理所有markers
         for j, marker_data in enumerate(collage_data["markers"]):
@@ -64,7 +57,10 @@ def process_data():
             init_size = [[w, h] for w, h in zip(marker_data['width'], marker_data['height'])]
             # 完善SVG字符串
             marker_string, svg_width, svg_height = complete_svg(marker_string)
-            
+            # 首先检查是否有任何marker包含image元素
+            has_image_markers = False
+            if contains_image_element(marker_string):
+                has_image_markers = True 
             if has_image_markers:
                 # 如果任何一个marker包含image元素，所有marker都保存为PNG
                 png_path = f"./workdir/{str(id)}_{i}/markers/"+str(marker_id)+".png"
