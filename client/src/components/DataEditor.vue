@@ -32,7 +32,7 @@ const { collaging ,result_data} = storeToRefs(animationStore)
       <div class="flex-1 min-h-0 flex flex-col">
         <!-- 工具栏 -->
         <div class="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-50 h-8 z-10 flex-shrink-0 shadow-sm">
-          <span class="text-[14px] text-gray-600 font-bold">Data Editor</span>
+          <span class="text-[14px] text-gray-600 font-bold">Mark Editor</span>
         </div>
         
         <!-- 内容区域 -->

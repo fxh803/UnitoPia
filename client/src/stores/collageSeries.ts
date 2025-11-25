@@ -419,9 +419,10 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     // 恢复自定义属性 
                     // console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
                     restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, dataArray)
-                    updateCurrentSlide()
+                    // updateCurrentSlide()
+
                     stopListen.value = false
-                }, 0)
+                }, 50)
             })
         } else {
             // 确保空白画布也有白色背景
