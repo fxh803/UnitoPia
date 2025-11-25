@@ -117,7 +117,7 @@ const handleClearData = () => {
     </div>
 
     <!-- 上传区域 - 只在没有数据时显示 -->
-    <div v-if="tableStore.tableData.length === 0 && !tableStore.isLoading" class="flex-1 w-full p-5">
+    <div v-if="tableStore.tableData.length === 0 && !tableStore.isLoading" class="flex-1 w-full p-5 bg-white">
       <div
         class="border-2 h-full w-full border-dashed border-gray-300 rounded-lg  transition-colors cursor-pointer flex flex-col justify-center items-center gap-4"
         :class="{

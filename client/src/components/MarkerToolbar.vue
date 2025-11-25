@@ -305,6 +305,8 @@ const saveMarkers = async () => {
       </div>
     </div>
     
+    <!-- 分割线 -->
+    <div class="toolbar-divider" />
     <!-- 自由绘制按钮 -->
     <button
       class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
@@ -405,6 +407,9 @@ const saveMarkers = async () => {
     >
       <span class="i-carbon-upload" />
     </button>
+
+    <!-- 分割线 -->
+    <div class="toolbar-divider" />
     
     <!-- 保存按钮 -->
     <button
@@ -490,6 +495,11 @@ const saveMarkers = async () => {
   writing-mode: bt-lr; /* IE */
   -webkit-appearance: slider-vertical; /* WebKit */
   appearance: slider-vertical;
+}
+
+.toolbar-divider {
+  height: 28px;
+  border-left: 2px dashed #8a8a8a;
 }
 
 </style>

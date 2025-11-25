@@ -154,14 +154,15 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
       </div>
       <!-- 收起按钮 - 放在左上角 -->
       <button @click="toggleCollapse"
-        class="absolute top-3 left-3 z-20 bg-white hover:bg-gray-100 transition-all duration-200 p-1.5 rounded"
+        class="absolute top-3px left-2 z-20 bg-white hover:bg-gray-100 transition-all duration-200 p-1.5 rounded"
         :title="isCollapsed ? 'Expand' : 'Collapse'">
         <div class="w-5 h-5 text-black transition-all duration-300"
           :class="isCollapsed ? 'i-carbon:open-panel-right' : 'i-carbon:open-panel-filled-right'"></div>
       </button>
 
       <!-- 标题 -->
-      <div class="w-full min-h-30px mb-2 border-b border-gray-200 ">
+      <div  class="w-full h-22px mb-2 border-b border-gray-200 flex items-center justify-center">
+        <div v-if="!isCollapsed" class="text-[14px] text-gray-600 font-bold transform translate-y--5px">Visualization Gallery</div>
       </div>
 
       <div v-if="!isCollapsed" class="w-full px-2 flex flex-col h-full overflow-y-auto">
@@ -244,11 +245,13 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
         </div>
         <!-- 添加新总览按钮 -->
         <div class="flex justify-center mb-3">
-          <button @click="handleAddNewOverview"
-              class="w-12 border-2 border-dashed border-gray-300 rounded bg-gray-50 flex min-h-12 items-center justify-center hover:bg-gray-100 transition-colors"
-              title="添加新总览">
-              <div class="text-gray-400 text-2xl">+</div>
-            </button>
+          <button
+            @click="handleAddNewOverview"
+            class="w-12 h-12 border-2 border-dashed border-gray-300 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors"
+            title="添加新总览"
+          >
+            <div class="text-gray-400 text-2xl leading-none transform translate-y-[-1px]">+</div>
+          </button>
         </div>
       </div>
       
