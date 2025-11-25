@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Canvas, PencilBrush } from 'fabric'
-import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { useSelectedModeStore } from '~/stores/selectedMode'
@@ -205,9 +205,7 @@ watch(brushWidth, (val) => {
 })
 
 // 监听路径闭合确认对话框和画笔大小面板状态，临时禁用绘制
-const isClosePathConfirmOpen = computed(() => closePathConfirm.value.show)
-
-watch([isClosePathConfirmOpen, isMainBrushSizePanelOpen], ([pathConfirmOpen, brushSizePanelOpen]) => {
+watch([() => closePathConfirm.value.show, isMainBrushSizePanelOpen], ([pathConfirmOpen, brushSizePanelOpen]) => {
   if (!canvas) return
   
   const shouldStopDrawing = pathConfirmOpen || brushSizePanelOpen
