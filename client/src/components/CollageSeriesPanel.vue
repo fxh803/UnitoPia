@@ -168,9 +168,9 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
       <div v-if="!isCollapsed" class="w-full px-2 flex flex-col h-full overflow-y-auto">
         <!-- 总览列表 -->
         <div v-for="(overview, overviewIdx) in overviews" :key="overview.overviewId"
-          class="border rounded p-2 flex flex-col mb-4 group">
+          class="border-2 rounded p-2 flex flex-col mb-4 group border-dashed border-gray-400">
           <!-- 总览区域 - 更大的slide -->
-          <div class="mb-4 relative">
+          <div class="mb-1 relative">
             <div class="border rounded flex h-32 items-center justify-center bg-gray-50">
               <img :src="overview.preview" class="max-h-full max-w-full object-contain" alt="总览预览" />
             </div>
@@ -190,7 +190,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
 
           <!-- 拼贴系列列表区域 -->
           <transition name="slide-fade">
-            <div v-show="!collapsedOverviews.has(overviewIdx)" class="flex-1 overflow-y-auto">
+            <div v-show="!collapsedOverviews.has(overviewIdx)" class=" mt-3 flex-1 overflow-y-auto">
             <div v-for="(item, slideIdx) in overview.collageSeries" :key="item.slideId"
               class="relative mb-3 m-l-5 m-r-5 border rounded flex h-28 items-center justify-center cursor-pointer"
               :class="[
@@ -244,7 +244,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
           </transition>
         </div>
         <!-- 添加新总览按钮 -->
-        <div class="flex justify-center mb-3">
+        <div class="flex flex-col items-center mb-3">
           <button
             @click="handleAddNewOverview"
             class="w-12 h-12 border-2 border-dashed border-gray-300 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors"
@@ -252,6 +252,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
           >
             <div class="text-gray-400 text-2xl leading-none transform translate-y-[-1px]">+</div>
           </button>
+          <div class="text-xs text-gray-400 text-center mt-2">new a unitvis</div>
         </div>
       </div>
       
