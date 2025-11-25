@@ -78,7 +78,7 @@ export const useContainerStore = defineStore('container', () => {
                 source: item.container,
                 position: paper.view.center,
                 slideIndex: item.slideIndex,
-                overviewIdx: item.overviewIdx,
+                overviewIdx: 0,//由于只做一个overview，所以overviewIdx为0
                 opacity: 0,
                 dataType: 'container',
                 initialized:false,

@@ -17,7 +17,8 @@ function updateBackground() {
             obj.remove()
         }
     })
-    const currentOverview = collageSeriesStore.overviews[animationStore.now_overview_idx]
+    //这里只更新激活的overview的background，不会跟据动画改变背景
+    const currentOverview = collageSeriesStore.overviews[collageSeriesStore.currentOverviewIndex]
     const overviewId = currentOverview?.overviewId 
     // 如果background存在，绘制到画布上
     if (backgroundStore.getCurrentOverviewBackground(overviewId)) {
