@@ -319,7 +319,7 @@ onBeforeUnmount(() => {
       <!-- 一级工具栏：模式选择 - 放在头部 -->
       <FirstToolbar />
       <!-- 新增canvas-wrapper，包裹canvas和button -->
-      <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
+      <div ref="canvasWrapperRef" class="canvas-wrapper transform translate-x-5" style="position: relative;">
         <!-- 画布本体 -->
         <canvas ref="canvasEl" class="border border-[#e6e6e6] rounded-2xl" />
         <paperCanvas v-if="collaging || result_data.length > 0" :key="paperCanvasKey" />
