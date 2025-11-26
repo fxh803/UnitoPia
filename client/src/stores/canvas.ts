@@ -223,17 +223,14 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
         return
       }
-      if(path.get('dataType') !== undefined){ 
+      if(path.get('dataType') === undefined){ 
+        // 根据当前选择的模式设置dataType
+        path.set('dataType', selectedModeStore.selectedMode);
+        if (canvasModeStore.mode !== 'move') {
+          path.set('selectable', false)
+          path.set('evented', false)
+        }
         return
-      }
-      // 根据当前选择的模式设置dataType
-      path.set('dataType', selectedModeStore.selectedMode);
-
-      // 确保新添加的对象不可选（除非当前模式是 move）
-      // 如果当前模式是 move，会根据对象类型在 canvasModeStore.setMode 中设置
-      if (canvasModeStore.mode !== 'move') {
-        path.set('selectable', false)
-        path.set('evented', false)
       }
 
       // 应用当前模式的透明度规则
@@ -697,7 +694,16 @@ export const useCanvasStore = defineStore('canvas', () => {
             console.log(index)
             const data = flattenedData[markerDataIndex] || null
             
-            // 先添加到画布，以便正确获取尺寸和位置
+            // 先设置基本属性
+            obj.set({
+              selectable: true,
+              evented: true,
+              dataType: 'marker',
+              data: data,
+              markerId: markerId
+            })
+            
+            // 添加到画布
             canvasInstance.add(obj)
             obj.setCoords()
             
@@ -710,12 +716,7 @@ export const useCanvasStore = defineStore('canvas', () => {
               originX: 'center',
               originY: 'center',
               left: centerPoint.x,
-              top: centerPoint.y,
-              selectable: true,
-              evented: true,
-              dataType: 'marker',
-              data: data,
-              markerId: markerId
+              top: centerPoint.y
             })
             
             // 更新坐标以确保位置正确

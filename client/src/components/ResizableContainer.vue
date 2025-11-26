@@ -41,7 +41,7 @@ onMounted(() => {
   nextTick(() => {
     if (container.value) {
       const containerWidth = container.value.offsetWidth
-      const initialRightWidth = Math.max(minRightWidth.value, containerWidth * 0.6)
+      const initialRightWidth = Math.max(minRightWidth.value, containerWidth * 0.62)
       resizeHandleStore.updateRightWidth(initialRightWidth)
     }
   })
