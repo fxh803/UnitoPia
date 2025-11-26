@@ -10,7 +10,7 @@ import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useCanvasStore } from '~/stores/canvas'
 import { useContainerStore } from '~/stores/container'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
-
+import { ElMessage } from 'element-plus'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -86,6 +86,10 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         result.emitter = processEmitter(tempCanvas)
         result.container = processContainer(tempCanvas)
         result.dataBinding = processDataBinding(tempCanvas)
+        //如果result.markers中有一个markerId为result_marker，则终止逻辑
+        if (result.markers.some(marker => marker.markerId === 'result_marker')) {
+          return 'has_result_marker'
+        }
         // 注入当前 slide 的个性化设置
         const slideSettings = slide as any
         result.iterations = slideSettings.iterations ?? 150
@@ -412,6 +416,11 @@ export async function sendDataToServer(): Promise<boolean> {
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
     const data = await collectAllSlidesData()
+    if (data === 'has_result_marker') {
+      ElMessage.error('The unit visualization result cannot be included')  
+      collaging.value = false
+      return false
+    }
     console.log(data)
     // 将 dataBinding 数据存储到 hoverInfoPanel store
     const hoverInfoPanelStore = useHoverInfoPanelStore()

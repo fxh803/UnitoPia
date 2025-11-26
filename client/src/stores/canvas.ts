@@ -668,7 +668,7 @@ export const useCanvasStore = defineStore('canvas', () => {
 
         // 遍历 paper 上所有对象，只保存 dataType 为 'marker' 的对象信息
         // 为每个 marker 生成唯一的 markerId
-        const markerId = `marker-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        const markerId = `result_marker`
         const allPaperObjects = paper.project.activeLayer.children
         const markerIndices: number[] = []
         allPaperObjects.forEach((obj, index) => {
