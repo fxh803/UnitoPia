@@ -527,10 +527,10 @@ onBeforeUnmount(() => {
                     @dragover="(e) => handleMarkerDragOver(card.id, filterIndex, e)"
                     @dragleave="(e) => handleMarkerDragLeave(card.id, filterIndex, e)"
                       :class="[
-                        'w-8 h-8 border-2 border-dashed rounded flex items-center justify-center transition-all cursor-pointer',
+                        'w-8 h-8 border-2 border-dashed rounded flex items-center justify-center transition-all',
                         isDraggingOverMarkerDropZone[`${card.id}-${filterIndex}`]
                           ? 'border-blue-400 text-blue-600 bg-blue-50'
-                          : 'border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-400'
+                          : 'border-gray-300 text-gray-400'
                       ]"
                       title="Drag marker here"
                     >
@@ -543,7 +543,7 @@ onBeforeUnmount(() => {
               <!-- 添加条件按钮 -->
               <button
                 @click.stop="addFilterToCard(card.id)"
-                class="mt-3 w-full py-2 text-xs text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center gap-1 border-2 border-dashed border-gray-300 hover:border-blue-400"
+                class="mt-3 w-full py-2 text-xs text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center gap-1 border-2 border-dashed border-gray-300 hover:border-blue-400 cursor-pointer"
               >
                 <span class="i-carbon-add text-sm"></span>
                 <span>Add condition</span>
@@ -557,10 +557,10 @@ onBeforeUnmount(() => {
             @dragover="handleBottomDragOver"
             @dragleave="handleBottomDragLeave"
             :class="[
-              'border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer',
+              'border-2 border-dashed rounded-lg p-4 text-center transition-all',
               isDraggingOverBottomDropZone 
                 ? 'border-blue-400 bg-blue-50 text-blue-600' 
-                : 'border-gray-300 text-gray-400 hover:border-blue-400'
+                : 'border-gray-300 text-gray-400'
             ]"
           >
             <p class="text-sm">Drag attribute to add new filter</p>
