@@ -10,7 +10,7 @@ const tableStore = useTableStore()
 const dataScaleStore = useDataScaleStore()
 
 // 标签页状态：'table' 或 'mapping'
-const activeTab = ref<'table' | 'mapping'>('table')
+const activeTab = ref<'table' | 'mapping'>('mapping')
 
 // 处理清除数据
 const handleClearData = () => {
@@ -41,17 +41,6 @@ const switchTab = (tab: 'table' | 'mapping') => {
         <!-- 标签页切换 -->
         <div class="flex items-center gap-1" v-if="tableStore.tableData.length > 0">
           <button
-            @click="switchTab('table')"
-            :class="[
-              'px-3 py-1 text-xs font-medium rounded transition-colors',
-              activeTab === 'table' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-100'
-            ]"
-          >
-            Table
-          </button>
-          <button
             @click="switchTab('mapping')"
             :class="[
               'px-3 py-1 text-xs font-medium rounded transition-colors',
@@ -62,6 +51,18 @@ const switchTab = (tab: 'table' | 'mapping') => {
           >
             Mapping
           </button>
+          <button
+            @click="switchTab('table')"
+            :class="[
+              'px-3 py-1 text-xs font-medium rounded transition-colors',
+              activeTab === 'table' 
+                ? 'bg-blue-500 text-white' 
+                : 'bg-white text-gray-600 hover:bg-gray-100'
+            ]"
+          >
+            Table
+          </button>
+          
         </div>
         <!-- 清除按钮 -->
         <div class="flex h-full gap-1 transform">
@@ -83,8 +84,8 @@ const switchTab = (tab: 'table' | 'mapping') => {
 
     <!-- 内容区域 - 根据标签页显示不同内容 -->
     <template v-if="tableStore.tableData.length > 0">
-      <TableData v-if="activeTab === 'table'" />
       <DataMapping v-if="activeTab === 'mapping'" />
+      <TableData v-if="activeTab === 'table'" />
     </template>
   </div>
 </template>

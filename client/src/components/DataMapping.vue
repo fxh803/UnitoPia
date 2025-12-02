@@ -12,6 +12,9 @@ const { markers } = storeToRefs(markerStore)
 // 拖拽状态
 const isDraggingFilter = ref(false)
 const dragImageElement = ref<HTMLElement | null>(null)
+const isDraggingOverDropZone = ref(false)
+const isDraggingOverBottomDropZone = ref(false)
+const isDraggingOverMarkerDropZone = ref<Record<string, boolean>>({})
 
 // 生成唯一 ID
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -150,10 +153,45 @@ const handleDrop = (e: DragEvent, cardId?: string) => {
   }
 }
 
-// 处理拖拽悬停
+// 处理拖拽悬停（顶部区域）
 const handleDragOver = (e: DragEvent) => {
   e.preventDefault()
   e.dataTransfer!.dropEffect = 'copy'
+  isDraggingOverDropZone.value = true
+}
+
+// 处理拖拽悬停（底部区域）
+const handleBottomDragOver = (e: DragEvent) => {
+  e.preventDefault()
+  e.dataTransfer!.dropEffect = 'copy'
+  isDraggingOverBottomDropZone.value = true
+}
+
+// 处理拖拽离开（顶部区域）
+const handleDragLeave = (e: DragEvent) => {
+  // 检查是否真的离开了拖拽区域（而不是进入子元素）
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = e.clientX
+  const y = e.clientY
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    isDraggingOverDropZone.value = false
+  }
+}
+
+// 处理拖拽离开（底部区域）
+const handleBottomDragLeave = (e: DragEvent) => {
+  // 检查是否真的离开了拖拽区域（而不是进入子元素）
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = e.clientX
+  const y = e.clientY
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    isDraggingOverBottomDropZone.value = false
+  }
+}
+
+// 处理拖拽结束
+const handleDragEnd = () => {
+  isDraggingOverDropZone.value = false
 }
 
 // 删除 Column 卡片
@@ -211,6 +249,29 @@ const handleMarkerDrop = (cardId: string, filterIndex: number, e: DragEvent) => 
   const markerId = e.dataTransfer?.getData('text/plain')
   if (markerId) {
     assignMarkerToFilter(cardId, filterIndex, markerId)
+  }
+  // 重置悬停状态
+  const zoneKey = `${cardId}-${filterIndex}`
+  isDraggingOverMarkerDropZone.value[zoneKey] = false
+}
+
+// 处理 marker 拖拽悬停
+const handleMarkerDragOver = (cardId: string, filterIndex: number, e: DragEvent) => {
+  e.preventDefault()
+  e.dataTransfer!.dropEffect = 'copy'
+  const zoneKey = `${cardId}-${filterIndex}`
+  isDraggingOverMarkerDropZone.value[zoneKey] = true
+}
+
+// 处理 marker 拖拽离开
+const handleMarkerDragLeave = (cardId: string, filterIndex: number, e: DragEvent) => {
+  // 检查是否真的离开了拖拽区域（而不是进入子元素）
+  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+  const x = e.clientX
+  const y = e.clientY
+  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
+    const zoneKey = `${cardId}-${filterIndex}`
+    isDraggingOverMarkerDropZone.value[zoneKey] = false
   }
 }
 
@@ -295,16 +356,16 @@ onBeforeUnmount(() => {
         <div v-if="tableColumns.length === 0" class="text-center py-8 text-gray-400 text-sm">
           No columns available
         </div>
-        <div v-else class="space-y-1">
+        <div v-else class="space-y-2">
           <div
             v-for="column in tableColumns"
             :key="column"
             draggable="true"
             @dragstart="handleColumnDragStart(column, $event)"
-            class="flex items-center gap-2 p-2 rounded cursor-move hover:bg-white transition-colors border border-transparent hover:border-gray-300"
+            class="flex items-center gap-2 p-2.5 rounded-lg cursor-move bg-white shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-blue-300 hover:bg-blue-50"
           >
             <span class="i-carbon-star text-xs text-gray-400"></span>
-            <span class="text-sm text-gray-700 flex-1">{{ column }}</span>
+            <span class="text-sm text-gray-700 flex-1 font-medium">{{ column }}</span>
           </div>
         </div>
       </div>
@@ -316,9 +377,15 @@ onBeforeUnmount(() => {
       <div class="flex-1 overflow-y-auto p-3">
         <div v-if="columnFilterCards.length === 0" class="h-full w-full flex items-center justify-center">
           <div
-            @drop="(e) => handleDrop(e)"
+            @drop="(e) => { handleDrop(e); isDraggingOverDropZone = false }"
             @dragover="handleDragOver"
-            class="w-full h-full border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-400"
+            @dragleave="handleDragLeave"
+            :class="[
+              'w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center transition-all',
+              isDraggingOverDropZone 
+                ? 'border-blue-400 bg-blue-50 text-blue-600' 
+                : 'border-gray-300 text-gray-400'
+            ]"
           >
             <p class="text-sm">Drag attribute to filter</p>
           </div>
@@ -430,8 +497,7 @@ onBeforeUnmount(() => {
                   <!-- Mark 列：分配 marker -->
                   <div 
                     class="flex items-center min-h-[32px]"
-                    @drop="(e) => handleMarkerDrop(card.id, filterIndex, e)"
-                    @dragover="handleDragOver"
+                    
                   >
                     <div
                       v-if="filter.markerId"
@@ -457,7 +523,15 @@ onBeforeUnmount(() => {
                     </div>
                     <div
                       v-else
-                      class="w-8 h-8 border-2 border-dashed border-gray-300 rounded flex items-center justify-center text-gray-400 hover:border-blue-400 hover:text-blue-400 transition-colors cursor-pointer"
+                      @drop="(e) => handleMarkerDrop(card.id, filterIndex, e)"
+                    @dragover="(e) => handleMarkerDragOver(card.id, filterIndex, e)"
+                    @dragleave="(e) => handleMarkerDragLeave(card.id, filterIndex, e)"
+                      :class="[
+                        'w-8 h-8 border-2 border-dashed rounded flex items-center justify-center transition-all cursor-pointer',
+                        isDraggingOverMarkerDropZone[`${card.id}-${filterIndex}`]
+                          ? 'border-blue-400 text-blue-600 bg-blue-50'
+                          : 'border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-400'
+                      ]"
                       title="Drag marker here"
                     >
                       <span class="i-carbon-add text-sm"></span>
@@ -479,9 +553,15 @@ onBeforeUnmount(() => {
           
           <!-- 底部拖拽区域 -->
           <div
-            @drop="(e) => handleDrop(e)"
-            @dragover="handleDragOver"
-            class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center text-gray-400 hover:border-blue-400 transition-colors cursor-pointer"
+            @drop="(e) => { handleDrop(e); isDraggingOverBottomDropZone = false }"
+            @dragover="handleBottomDragOver"
+            @dragleave="handleBottomDragLeave"
+            :class="[
+              'border-2 border-dashed rounded-lg p-4 text-center transition-all cursor-pointer',
+              isDraggingOverBottomDropZone 
+                ? 'border-blue-400 bg-blue-50 text-blue-600' 
+                : 'border-gray-300 text-gray-400 hover:border-blue-400'
+            ]"
           >
             <p class="text-sm">Drag attribute to add new filter</p>
           </div>
