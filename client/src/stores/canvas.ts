@@ -37,6 +37,18 @@ export const useCanvasStore = defineStore('canvas', () => {
   const objectActionsStore = useObjectActionsStore()
   const hoverInfoPanelStore = useHoverInfoPanelStore()
 
+  // 防抖更新当前 slide
+  let updateSlideTimer: ReturnType<typeof setTimeout> | null = null
+  const debouncedUpdateCurrentSlide = () => {
+    if (updateSlideTimer) {
+      clearTimeout(updateSlideTimer)
+    }
+    updateSlideTimer = setTimeout(() => {
+      collageSeriesStore.updateCurrentSlide()
+      updateSlideTimer = null
+    }, 300) // 300ms 防抖延迟
+  }
+
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
     canvasRef.value = canvas
@@ -139,13 +151,13 @@ export const useCanvasStore = defineStore('canvas', () => {
       },
       'object:added': (e) => {
         setDrawedObjectDataType(e)
-        collageSeriesStore.updateCurrentSlide()
+        debouncedUpdateCurrentSlide()
         adjustLayer()
         // 询问是否闭合路径
         askToClosePath(e.target)
       },
       'object:removed': () => {
-        collageSeriesStore.updateCurrentSlide()
+        debouncedUpdateCurrentSlide()
       },
       'mouse:over': (e) => {
         console.log('mouse:over',e.target)

@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { ref, onBeforeUnmount } from 'vue'
+import { ref, onBeforeUnmount, type Ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTableStore, type ConditionOperator } from '~/stores/table'
 import { useMarkerStore } from '~/stores/marker'
+import { useDataScaleStore } from '~/stores/dataScale'
 
 const tableStore = useTableStore()
 const markerStore = useMarkerStore()
+const dataScaleStore = useDataScaleStore()
 const { tableColumns, tableData, columnFilterCards } = storeToRefs(tableStore)
 const { markers } = storeToRefs(markerStore)
+const { columnMapping, widthScale, heightScale, sizeScale } = storeToRefs(dataScaleStore)
+const { setColumnMapping, setWidthScale, setHeightScale, setSizeScale } = dataScaleStore
 
 // 拖拽状态
 const isDraggingFilter = ref(false)
@@ -21,6 +25,67 @@ const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().
 
 // 导入类型
 import type { SingleFilter, ColumnFilterCard } from '~/stores/table'
+
+// 工具函数：获取卡片
+const getCard = (cardId: string) => columnFilterCards.value.find(c => c.id === cardId)
+
+// 工具函数：创建拖拽图像
+const createDragImage = (thumbnail: string) => {
+  const dragDiv = document.createElement('div')
+  dragDiv.style.cssText = `
+    position: absolute;
+    top: -1000px;
+    left: -1000px;
+    width: 80px;
+    height: 80px;
+    padding: 8px;
+    background: white;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10000;
+  `
+  const img = document.createElement('img')
+  img.src = thumbnail
+  img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; border-radius: 4px;'
+  dragDiv.appendChild(img)
+  document.body.appendChild(dragDiv)
+  return dragDiv
+}
+
+// 工具函数：清理拖拽图像
+const cleanupDragImage = () => {
+  if (dragImageElement.value && document.body.contains(dragImageElement.value)) {
+    document.body.removeChild(dragImageElement.value)
+    dragImageElement.value = null
+  }
+}
+
+// 工具函数：检查是否离开拖拽区域
+const isOutsideRect = (e: DragEvent, element: HTMLElement): boolean => {
+  const rect = element.getBoundingClientRect()
+  const { clientX: x, clientY: y } = e
+  return x < rect.left || x > rect.right || y < rect.top || y > rect.bottom
+}
+
+// 计算属性：获取当前 scale 值
+const getCurrentScale = (channel: string | null) => {
+  if (channel === 'width') return widthScale.value
+  if (channel === 'height') return heightScale.value
+  if (channel === 'size') return sizeScale.value
+  return 1
+}
+
+// 计算属性：设置当前 scale 值
+const setCurrentScale = (channel: string | null, value: number) => {
+  if (channel === 'width') setWidthScale(value)
+  else if (channel === 'height') setHeightScale(value)
+  else if (channel === 'size') setSizeScale(value)
+}
 
 // 判断列是否为数值型
 const isNumericColumn = (column: string): boolean => {
@@ -153,41 +218,24 @@ const handleDrop = (e: DragEvent, cardId?: string) => {
   }
 }
 
-// 处理拖拽悬停（顶部区域）
-const handleDragOver = (e: DragEvent) => {
+// 通用拖拽悬停处理
+const createDragOverHandler = (stateRef: Ref<boolean>) => (e: DragEvent) => {
   e.preventDefault()
   e.dataTransfer!.dropEffect = 'copy'
-  isDraggingOverDropZone.value = true
+  stateRef.value = true
 }
 
-// 处理拖拽悬停（底部区域）
-const handleBottomDragOver = (e: DragEvent) => {
-  e.preventDefault()
-  e.dataTransfer!.dropEffect = 'copy'
-  isDraggingOverBottomDropZone.value = true
-}
-
-// 处理拖拽离开（顶部区域）
-const handleDragLeave = (e: DragEvent) => {
-  // 检查是否真的离开了拖拽区域（而不是进入子元素）
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  const x = e.clientX
-  const y = e.clientY
-  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-    isDraggingOverDropZone.value = false
+// 通用拖拽离开处理
+const createDragLeaveHandler = (stateRef: Ref<boolean>) => (e: DragEvent) => {
+  if (isOutsideRect(e, e.currentTarget as HTMLElement)) {
+    stateRef.value = false
   }
 }
 
-// 处理拖拽离开（底部区域）
-const handleBottomDragLeave = (e: DragEvent) => {
-  // 检查是否真的离开了拖拽区域（而不是进入子元素）
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  const x = e.clientX
-  const y = e.clientY
-  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-    isDraggingOverBottomDropZone.value = false
-  }
-}
+const handleDragOver = createDragOverHandler(isDraggingOverDropZone)
+const handleBottomDragOver = createDragOverHandler(isDraggingOverBottomDropZone)
+const handleDragLeave = createDragLeaveHandler(isDraggingOverDropZone)
+const handleBottomDragLeave = createDragLeaveHandler(isDraggingOverBottomDropZone)
 
 // 处理拖拽结束
 const handleDragEnd = () => {
@@ -204,13 +252,12 @@ const removeCard = (cardId: string) => {
 
 // 添加筛选条件到卡片
 const addFilterToCard = (cardId: string) => {
-  const card = columnFilterCards.value.find(c => c.id === cardId)
-  card?.filters.push({ operator: '=', value: '', markerId: null, data: [], rows: [] })
+  getCard(cardId)?.filters.push({ operator: '=', value: '', markerId: null, data: [], rows: [] })
 }
 
 // 删除卡片中的筛选条件
 const removeFilterFromCard = (cardId: string, filterIndex: number) => {
-  const card = columnFilterCards.value.find(c => c.id === cardId)
+  const card = getCard(cardId)
   if (!card) return
   
   card.filters.splice(filterIndex, 1)
@@ -221,24 +268,20 @@ const removeFilterFromCard = (cardId: string, filterIndex: number) => {
 
 // 更新筛选条件
 const updateFilter = (cardId: string, filterIndex: number, updates: Partial<SingleFilter>) => {
-  const card = columnFilterCards.value.find(c => c.id === cardId)
-  if (!card) return
-  
-  const filter = card.filters[filterIndex]
+  const card = getCard(cardId)
+  const filter = card?.filters[filterIndex]
   if (filter) {
     Object.assign(filter, updates)
-    // 更新该 filter 的数据
     updateFilterData(card, filter)
   }
 }
 
 // 分配 marker 到 filter
 const assignMarkerToFilter = (cardId: string, filterIndex: number, markerId: string | null) => {
-  const card = columnFilterCards.value.find(c => c.id === cardId)
+  const card = getCard(cardId)
   const filter = card?.filters[filterIndex]
   if (filter) {
     filter.markerId = markerId
-    // 更新该 filter 的数据
     updateFilterData(card, filter)
   }
 }
@@ -265,80 +308,35 @@ const handleMarkerDragOver = (cardId: string, filterIndex: number, e: DragEvent)
 
 // 处理 marker 拖拽离开
 const handleMarkerDragLeave = (cardId: string, filterIndex: number, e: DragEvent) => {
-  // 检查是否真的离开了拖拽区域（而不是进入子元素）
-  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-  const x = e.clientX
-  const y = e.clientY
-  if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) {
-    const zoneKey = `${cardId}-${filterIndex}`
-    isDraggingOverMarkerDropZone.value[zoneKey] = false
+  if (isOutsideRect(e, e.currentTarget as HTMLElement)) {
+    isDraggingOverMarkerDropZone.value[`${cardId}-${filterIndex}`] = false
   }
 }
 
 // 处理 filter 拖拽开始
 const handleFilterDragStart = (cardId: string, filterIndex: number, e: DragEvent) => {
-  const card = columnFilterCards.value.find(c => c.id === cardId)
+  const card = getCard(cardId)
   const filter = card?.filters[filterIndex]
-  // 检查是否有 markerId、数据和 dataTransfer
-  if (!filter || !filter.markerId || !filter.data || filter.data.length === 0 || !e.dataTransfer) return
+  if (!filter || !filter.markerId || !filter.data?.length || !e.dataTransfer) return
 
-  // 获取 marker 数据
   const marker = markers.value.find(m => m.id === filter.markerId)
-  if (marker && marker.jsonData) {
+  if (marker?.jsonData) {
     e.dataTransfer.setData('application/json', JSON.stringify(marker.jsonData))
     e.dataTransfer.setData('text/plain', filter.markerId)
-    
-    // 创建自定义拖拽图像
-    const dragDiv = document.createElement('div')
-    dragDiv.style.cssText = `
-      position: absolute;
-      top: -1000px;
-      left: -1000px;
-      width: 80px;
-      height: 80px;
-      padding: 8px;
-      background: white;
-      border: 2px solid var(--primary-color);
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      z-index: 10000;
-    `
-    
-    // 添加缩略图
-    const img = document.createElement('img')
-    img.src = marker.thumbnail
-    img.style.cssText = 'width: 100%; height: 100%; object-fit: contain; border-radius: 4px;'
-    dragDiv.appendChild(img)
-    
-    // 添加到 DOM 并设置拖拽图像
-    document.body.appendChild(dragDiv)
-    dragImageElement.value = dragDiv
-    e.dataTransfer.setDragImage(dragDiv, -10, -10)
+    dragImageElement.value = createDragImage(marker.thumbnail)
+    e.dataTransfer.setDragImage(dragImageElement.value, -10, -10)
   }
-  
   isDraggingFilter.value = true
 }
 
 // 处理 filter 拖拽结束
 const handleFilterDragEnd = () => {
   isDraggingFilter.value = false
-  // 清理拖拽图像元素
-  if (dragImageElement.value && document.body.contains(dragImageElement.value)) {
-    document.body.removeChild(dragImageElement.value)
-    dragImageElement.value = null
-  }
+  cleanupDragImage()
 }
 
 onBeforeUnmount(() => {
-  // 清理拖拽图像元素
-  if (dragImageElement.value && document.body.contains(dragImageElement.value)) {
-    document.body.removeChild(dragImageElement.value)
-    dragImageElement.value = null
-  }
+  cleanupDragImage()
 })
 </script>
 
@@ -398,14 +396,43 @@ onBeforeUnmount(() => {
             @dragover="handleDragOver"
             class="border border-gray-200 rounded-lg bg-white overflow-hidden"
           >
-            <!-- 卡片头部：列名 -->
-            <div class="p-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
-              <div class="flex items-center gap-2">
+            <!-- 卡片头部：列名和映射设置 -->
+            <div class="p-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-2">
+              <div class="flex items-center gap-2 flex-1">
                 <span class="text-sm font-bold text-gray-700">{{ card.column }}</span>
+                <el-select
+                  :model-value="columnMapping.column === card.column ? columnMapping.channel : ''"
+                  @update:model-value="(value) => setColumnMapping(card.column, value === '' ? null : value)"
+                  size="small"
+                  placeholder="Mapping"
+                  style="width: 100px;"
+                  @click.stop
+                >
+                  <el-option label="None" value="" />
+                  <el-option label="Width" value="width" />
+                  <el-option label="Height" value="height" />
+                  <el-option label="Size" value="size" />
+                </el-select>
+                <!-- 根据映射显示对应的 scale 滑动条 -->
+                <div v-if="columnMapping.column === card.column && columnMapping.channel" class="flex items-center gap-2 flex-1" style="max-width: 200px;">
+                  <el-slider
+                    :model-value="getCurrentScale(columnMapping.channel)"
+                    :min="0.1"
+                    :max="5"
+                    :step="0.1"
+                    @update:model-value="(value) => setCurrentScale(columnMapping.channel, value)"
+                    size="small"
+                    style="flex: 1;"
+                    @click.stop
+                  />
+                  <span class="text-xs text-gray-500 font-mono whitespace-nowrap" style="min-width: 40px;">
+                    {{ getCurrentScale(columnMapping.channel).toFixed(2) }}
+                  </span>
+                </div>
               </div>
               <button
                 @click="removeCard(card.id)"
-                class="text-gray-400 hover:text-red-500 transition-colors"
+                class="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
                 title="Remove column"
               >
                 <span class="i-carbon-close text-sm"></span>
@@ -447,8 +474,8 @@ onBeforeUnmount(() => {
                       @click.stop
                     >
                       <el-option label="=" value="=" />
-                      <el-option label=">" value=">" />
-                      <el-option label="<" value="<" />
+                      <el-option v-if="isNumericColumn(card.column)" label=">" value=">" />
+                      <el-option v-if="isNumericColumn(card.column)" label="<" value="<" />
                     </el-select>
                     <!-- 根据列类型显示不同的输入控件 -->
                     <el-select

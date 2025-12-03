@@ -125,7 +125,12 @@ export const useDataScaleStore = defineStore('dataScale', () => {
   watch(() => columnMapping.value.channel, () => {
     changeMappingChannel()
   })
-  watch(()=>columnMapping.value.column, () => {
+  watch(()=>columnMapping.value.column, (newColumn, oldColumn) => {
+    // 如果切换了列（从一列切换到另一列，或从有列切换到无列），删除所有 marker
+    // 只有在之前有列映射，且新列与旧列不同时才删除
+    if (oldColumn !== null && oldColumn !== undefined && newColumn !== oldColumn) {
+      removeAllMarkers()
+    }
     changeMappingChannel()
   })
 
@@ -142,6 +147,21 @@ export const useDataScaleStore = defineStore('dataScale', () => {
   // 设置大小缩放基数
   function setSizeScale(scale: number) {
     sizeScale.value = scale
+  }
+
+  // 删除画布上所有 marker 对象
+  function removeAllMarkers() {
+    const canvas = canvasRef.value?.()
+    if (!canvas) return
+
+    const objects = canvas.getObjects().concat()
+    objects.forEach((obj: any) => {
+      if (obj.get('dataType') === 'marker') {
+        canvas.remove(obj)
+      }
+    })
+    canvas.discardActiveObject()
+    canvas.renderAll()
   }
 
   // 设置列的映射通道
