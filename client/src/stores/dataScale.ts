@@ -195,8 +195,8 @@ export const useDataScaleStore = defineStore('dataScale', () => {
 
     // 定义归一化范围（用于宽模式下的高和高模式下的宽）
     const minDisplaySize = 20  // 最小显示尺寸
-    const maxDisplaySize = 100  // 最大显示尺寸
-    const defaultSize = 60  // 默认尺寸
+    const maxDisplaySize = 70  // 最大显示尺寸
+    const defaultSize = 45  // 默认尺寸
 
     // 只用一个列表记录选中列的数据（包括非数值列全1的处理后的数据）
     const columnValues: number[] = []

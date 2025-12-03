@@ -135,7 +135,8 @@ def process_data():
             json_data["collage"][i]["emitter_config"]["control_points"] = [
                 [point["x"]/canvas_width, point["y"]/canvas_height] for point in collage_data["emitter"]
             ]
-            json_data["collage"][i]["emitter_config"]["emitter_type"] = collage_data["emitter_type"]
+            if collage_data["emitter_type"] != "":
+                json_data["collage"][i]["emitter_config"]["emitter_type"] = collage_data["emitter_type"]
         ##########################   forces ########################
         if collage_data["forces"] and len(collage_data["forces"]) > 0:
             force_type = collage_data["forces"][0]["type"]
