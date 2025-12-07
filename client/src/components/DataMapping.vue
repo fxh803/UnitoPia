@@ -90,10 +90,10 @@ const setCurrentScale = (channel: string | null, value: number) => {
 // 判断列是否为数值型
 const isNumericColumn = (column: string): boolean => {
   if (!tableData.value || !column) return false
-  
+
   let numericCount = 0
   let totalCount = 0
-  
+
   tableData.value.forEach(row => {
     const value = row[column]
     if (value !== undefined && value !== null && value !== '') {
@@ -104,9 +104,20 @@ const isNumericColumn = (column: string): boolean => {
       }
     }
   })
-  
+
   // 如果超过 80% 的值都是数字，则认为是数值型
   return totalCount > 0 && numericCount / totalCount >= 0.8
+}
+
+// 获取列类型对应的图标
+const getColumnIcon = (column: string): string => {
+  if (isNumericColumn(column)) {
+    // 连续数值型：使用折线图图标
+    return 'i-carbon-chart-line'
+  } else {
+    // 离散类型型：使用分类图标
+    return 'i-carbon-category'
+  }
 }
 
 // 获取列的唯一值
@@ -124,15 +135,15 @@ const getColumnUniqueValues = (column: string) => {
 // 检查单个筛选条件是否匹配
 const matchesFilter = (row: any, column: string, filter: SingleFilter): boolean => {
   if (!column || !filter.value) return false
-  
+
   const cellValue = row[column]
   const filterValue = filter.value
-  
+
   // 尝试将值转换为数字进行比较
   const cellNum = Number(cellValue)
   const filterNum = Number(filterValue)
   const isNumeric = !isNaN(cellNum) && !isNaN(filterNum) && cellValue !== '' && filterValue !== ''
-  
+
   if (isNumeric) {
     // 数值比较
     switch (filter.operator) {
@@ -149,7 +160,7 @@ const matchesFilter = (row: any, column: string, filter: SingleFilter): boolean 
       return String(cellValue || '') === filterValue
     }
   }
-  
+
   return false
 }
 
@@ -160,17 +171,17 @@ const updateFilterData = (card: ColumnFilterCard, filter: SingleFilter) => {
     filter.rows = []
     return
   }
-  
+
   const matchedData: any[] = []
   const matchedRows: number[] = []
-  
+
   tableData.value.forEach((row, index) => {
     if (matchesFilter(row, card.column, filter)) {
       matchedData.push(row)
       matchedRows.push(index)
     }
   })
-  
+
   filter.data = matchedData
   filter.rows = matchedRows
 }
@@ -259,7 +270,7 @@ const addFilterToCard = (cardId: string) => {
 const removeFilterFromCard = (cardId: string, filterIndex: number) => {
   const card = getCard(cardId)
   if (!card) return
-  
+
   card.filters.splice(filterIndex, 1)
   if (card.filters.length === 0) {
     removeCard(cardId)
@@ -362,7 +373,7 @@ onBeforeUnmount(() => {
             @dragstart="handleColumnDragStart(column, $event)"
             class="flex items-center gap-2 p-2.5 rounded-lg cursor-move bg-white shadow-sm hover:shadow-md transition-all border border-gray-200 hover:border-blue-300 hover:bg-blue-50"
           >
-            <span class="i-carbon-star text-xs text-gray-400"></span>
+            <span :class="[getColumnIcon(column), 'text-xs text-gray-400']"></span>
             <span class="text-sm text-gray-700 flex-1 font-medium">{{ column }}</span>
           </div>
         </div>
@@ -380,8 +391,8 @@ onBeforeUnmount(() => {
             @dragleave="handleDragLeave"
             :class="[
               'w-full h-full border-2 border-dashed rounded-lg flex items-center justify-center transition-all',
-              isDraggingOverDropZone 
-                ? 'border-blue-400 bg-blue-50 text-blue-600' 
+              isDraggingOverDropZone
+                ? 'border-blue-400 bg-blue-50 text-blue-600'
                 : 'border-gray-300 text-gray-400'
             ]"
           >
@@ -396,16 +407,25 @@ onBeforeUnmount(() => {
             @dragover="handleDragOver"
             class="border border-gray-200 rounded-lg bg-white overflow-hidden"
           >
-            <!-- 卡片头部：列名和映射设置 -->
-            <div class="p-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2 flex-1">
-                <span class="text-sm font-bold text-gray-700">{{ card.column }}</span>
+            <div class="flex">
+              <!-- 左侧：列名和映射设置 -->
+              <div class="w-26 p-3 border-r border-gray-200 bg-gray-50 flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-bold text-gray-700">{{ card.column }}</span>
+                  <button
+                    @click="removeCard(card.id)"
+                    class="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                    title="Remove column"
+                  >
+                    <span class="i-carbon-close text-sm"></span>
+                  </button>
+                </div>
                 <el-select
                   :model-value="columnMapping.column === card.column ? columnMapping.channel : ''"
                   @update:model-value="(value) => setColumnMapping(card.column, value === '' ? null : value)"
                   size="small"
                   placeholder="Mapping"
-                  style="width: 100px;"
+                  style="width: 100%;"
                   @click.stop
                 >
                   <el-option label="None" value="" />
@@ -414,7 +434,7 @@ onBeforeUnmount(() => {
                   <el-option label="Size" value="size" />
                 </el-select>
                 <!-- 根据映射显示对应的 scale 滑动条 -->
-                <div v-if="columnMapping.column === card.column && columnMapping.channel" class="flex items-center gap-2 flex-1" style="max-width: 200px;">
+                <div v-if="columnMapping.column === card.column && columnMapping.channel" class="flex flex-col gap-2">
                   <el-slider
                     :model-value="getCurrentScale(columnMapping.channel)"
                     :min="0.1"
@@ -422,31 +442,22 @@ onBeforeUnmount(() => {
                     :step="0.1"
                     @update:model-value="(value) => setCurrentScale(columnMapping.channel, value)"
                     size="small"
-                    style="flex: 1;"
                     @click.stop
                   />
-                  <span class="text-xs text-gray-500 font-mono whitespace-nowrap" style="min-width: 40px;">
+                  <span class="text-xs text-gray-500 font-mono text-center">
                     {{ getCurrentScale(columnMapping.channel).toFixed(2) }}
                   </span>
                 </div>
               </div>
-              <button
-                @click="removeCard(card.id)"
-                class="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
-                title="Remove column"
-              >
-                <span class="i-carbon-close text-sm"></span>
-              </button>
-            </div>
 
-            <!-- 卡片内容：表头和筛选条件行 -->
-            <div class="p-3">
-              <!-- 表头 -->
-              <div class="grid grid-cols-3 gap-4 mb-2 pb-2 border-b border-gray-200">
-                <div class="text-xs font-bold text-gray-700">Condition</div>
-                <div class="text-xs font-bold text-gray-700">Data</div>
-                <div class="text-xs font-bold text-gray-700 flex items-center">Mark</div>
-              </div>
+              <!-- 右侧：表头和筛选条件行 -->
+              <div class="flex-1 p-3">
+                <!-- 表头 -->
+                <div class="grid grid-cols-3 gap-4 mb-2 pb-2 border-b border-gray-200">
+                  <div class="text-xs font-bold text-gray-700">Condition</div>
+                  <div class="text-xs font-bold text-gray-700">Data</div>
+                  <div class="text-xs font-bold text-gray-700 flex items-center">Mark</div>
+                </div>
 
               <!-- 筛选条件行 -->
               <div class="space-y-2">
@@ -454,9 +465,9 @@ onBeforeUnmount(() => {
                   v-for="(filter, filterIndex) in card.filters"
                   :key="filterIndex"
                   :class="[
-                    'grid grid-cols-3 gap-4 items-center p-2 rounded transition-all',
+                    'grid grid-cols-3 gap-4 items-center rounded transition-all',
                     filter.markerId && filter.data && filter.data.length > 0
-                      ? 'cursor-move hover:bg-gray-50 border border-transparent hover:border-blue-300' 
+                      ? 'cursor-move hover:bg-gray-50 border border-transparent hover:border-blue-300'
                       : '',
                     isDraggingFilter && filter.markerId && filter.data && filter.data.length > 0 ? 'border-blue-400 bg-blue-50' : ''
                   ]"
@@ -470,7 +481,7 @@ onBeforeUnmount(() => {
                       :model-value="filter.operator"
                       @update:model-value="(value) => updateFilter(card.id, filterIndex, { operator: value as ConditionOperator })"
                       size="small"
-                      style="width: 60px;"
+                      style="width: 50px; min-width: 50px; flex-shrink: 0;"
                       @click.stop
                     >
                       <el-option label="=" value="=" />
@@ -483,7 +494,6 @@ onBeforeUnmount(() => {
                       :model-value="filter.value"
                       @update:model-value="(value) => updateFilter(card.id, filterIndex, { value })"
                       size="small"
-                      style="width: 140px;"
                       placeholder="Select value"
                       filterable
                       @click.stop
@@ -500,18 +510,10 @@ onBeforeUnmount(() => {
                       :model-value="filter.value"
                       @update:model-value="(value) => updateFilter(card.id, filterIndex, { value })"
                       size="small"
-                      style="width: 140px;"
                       placeholder="Enter number"
                       type="number"
                       @click.stop
                     />
-                    <button
-                      @click="removeFilterFromCard(card.id, filterIndex)"
-                      class="text-gray-400 hover:text-red-500 transition-colors"
-                      title="Remove filter"
-                    >
-                      <span class="i-carbon-close text-xs"></span>
-                    </button>
                   </div>
 
                   <!-- Data 列：显示匹配的实体数量 -->
@@ -522,9 +524,9 @@ onBeforeUnmount(() => {
                   </div>
 
                   <!-- Mark 列：分配 marker -->
-                  <div 
+                  <div
                     class="flex items-center min-h-[32px]"
-                    
+
                   >
                     <div
                       v-if="filter.markerId"
@@ -542,7 +544,7 @@ onBeforeUnmount(() => {
                       </div>
                       <button
                         @click.stop="assignMarkerToFilter(card.id, filterIndex, null)"
-                        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/marker:opacity-100 transition-opacity z-10"
+                        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/marker:opacity-100 transition-opacity z-20 pointer-events-auto"
                         title="Remove marker"
                       >
                         <span class="i-carbon-close text-xs"></span>
@@ -567,17 +569,18 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <!-- 添加条件按钮 -->
-              <button
-                @click.stop="addFilterToCard(card.id)"
-                class="mt-3 w-full py-2 text-xs text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center gap-1 border-2 border-dashed border-gray-300 hover:border-blue-400 cursor-pointer"
-              >
-                <span class="i-carbon-add text-sm"></span>
-                <span>Add condition</span>
-              </button>
+                <!-- 添加条件按钮 -->
+                <button
+                  @click.stop="addFilterToCard(card.id)"
+                  class="mt-3 w-full py-2 text-xs text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center gap-1 border-2 border-dashed border-gray-300 hover:border-blue-400 cursor-pointer"
+                >
+                  <span class="i-carbon-add text-sm"></span>
+                  <span>Add condition</span>
+                </button>
+              </div>
             </div>
           </div>
-          
+
           <!-- 底部拖拽区域 -->
           <div
             @drop="(e) => { handleDrop(e); isDraggingOverBottomDropZone = false }"
@@ -585,8 +588,8 @@ onBeforeUnmount(() => {
             @dragleave="handleBottomDragLeave"
             :class="[
               'border-2 border-dashed rounded-lg p-4 text-center transition-all',
-              isDraggingOverBottomDropZone 
-                ? 'border-blue-400 bg-blue-50 text-blue-600' 
+              isDraggingOverBottomDropZone
+                ? 'border-blue-400 bg-blue-50 text-blue-600'
                 : 'border-gray-300 text-gray-400'
             ]"
           >
