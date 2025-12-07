@@ -102,7 +102,7 @@ export const useDataScaleStore = defineStore('dataScale', () => {
         } else if (mappingChannel === 'height') {
           scaleY = normalizedValue / currentSize
           scaleY *= heightScale.value
-        } else if (mappingChannel === 'size') {
+        } else {
           scaleX = normalizedValue / currentSize
           scaleY = normalizedValue / currentSize
           scaleX *= sizeScale.value
@@ -131,7 +131,6 @@ export const useDataScaleStore = defineStore('dataScale', () => {
     if (oldColumn !== null && oldColumn !== undefined && newColumn !== oldColumn) {
       removeAllMarkers()
     }
-    changeMappingChannel()
   })
 
   // 设置宽度缩放基数
@@ -166,11 +165,6 @@ export const useDataScaleStore = defineStore('dataScale', () => {
 
   // 设置列的映射通道
   function setColumnMapping(columnName: string, channel: 'width' | 'height' | 'size' | null) {
-    // 如果设置为 null，直接清除映射
-    if (channel === null) {
-      columnMapping.value = { column: null, channel: null }
-      return
-    }
 
     // 设置新的映射（由于三者互斥，直接覆盖即可）
     columnMapping.value = { column: columnName, channel }
@@ -186,7 +180,7 @@ export const useDataScaleStore = defineStore('dataScale', () => {
     prevSizeScale.value = 1
   }
   // 计算归一化参数和归一化函数
-  function getNormalizationParams(cardId: string) {
+  function getNormalizationParams() {
     const data = pharseData()
 
     // 获取映射的列名和通道
@@ -202,13 +196,14 @@ export const useDataScaleStore = defineStore('dataScale', () => {
     const columnValues: number[] = []
 
     data.forEach((row: any) => {
-      if (mappedColumn && row[mappedColumn] !== undefined) {
+      // 如果 mappingChannel 为 null，或者没有 mappedColumn，或者 row[mappedColumn] 为 undefined，都使用 1
+      if (mappedChannel && mappedColumn && row[mappedColumn] !== undefined) {
         const value = parseFloat(row[mappedColumn])
         // 如果是非数值列，视为 1
         const numValue = !isNaN(value) && value > 0 ? value : 1
         columnValues.push(numValue)
       } else {
-        // 如果没有映射，默认使用 1
+        // 如果没有映射通道或映射列，默认使用 1
         columnValues.push(1)
       }
     })
