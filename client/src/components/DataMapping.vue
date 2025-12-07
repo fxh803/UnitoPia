@@ -20,6 +20,9 @@ const isDraggingOverDropZone = ref(false)
 const isDraggingOverBottomDropZone = ref(false)
 const isDraggingOverMarkerDropZone = ref<Record<string, boolean>>({})
 
+// 本地存储 slider 的值（用于实时显示，不触发 store 更新）
+const localScaleValue = ref<number | null>(null)
+
 // 生成唯一 ID
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
@@ -71,6 +74,8 @@ const isOutsideRect = (e: DragEvent, element: HTMLElement): boolean => {
 
 // 计算属性：获取当前 scale 值
 const getCurrentScale = (channel: string | null) => {
+  // 如果有本地值（拖动中），优先返回本地值
+  if (localScaleValue.value !== null) return localScaleValue.value
   if (channel === 'width') return widthScale.value
   if (channel === 'height') return heightScale.value
   if (channel === 'size') return sizeScale.value
@@ -452,7 +457,8 @@ onBeforeUnmount(() => {
                     :min="0.1"
                     :max="5"
                     :step="0.1"
-                    @update:model-value="(value) => setCurrentScale(columnMapping.channel, value)"
+                    @update:model-value="(value) => { localScaleValue = value }"
+                    @change="(value) => { localScaleValue = null; setCurrentScale(columnMapping.channel, value) }"
                     size="small"
                     @click.stop
                   />
