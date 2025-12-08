@@ -175,9 +175,9 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
               <img :src="overview.preview" class="max-h-full max-w-full object-contain" alt="总览预览" />
             </div>
             <!-- 收起/展开按钮 -->
-            <button 
+            <button
               class="absolute top-1 left-1 z-10 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-gray-100 transition-colors"
-              @click.stop="toggleOverviewCollapse(overviewIdx)" 
+              @click.stop="toggleOverviewCollapse(overviewIdx)"
               :title="collapsedOverviews.has(overviewIdx) ? '展开' : '收起'">
               <div class="w-3 h-3 text-gray-600 transition-transform duration-200"
                 :class="collapsedOverviews.has(overviewIdx) ? 'i-carbon-chevron-right' : 'i-carbon-chevron-down'"></div>
@@ -194,10 +194,12 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
             <div v-for="(item, slideIdx) in overview.collageSeries" :key="item.slideId"
               class="relative mb-3 m-l-5 m-r-5 border rounded flex h-28 items-center justify-center cursor-pointer"
               :class="[
-                overviewIdx === currentOverviewIndex && slideIdx === currentSlideIndex
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-[#e6e6e6] bg-[#f5f5f5]'
-              ]" 
+                (item as any).isResult === true
+                  ? 'border-green-500 bg-green-50'
+                  : overviewIdx === currentOverviewIndex && slideIdx === currentSlideIndex
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-[#e6e6e6] bg-[#f5f5f5]'
+              ]"
               @click="handleClick(overviewIdx, slideIdx)"
               @mouseenter="handleMouseEnter(overviewIdx, slideIdx)"
               @mouseleave="handleMouseLeave">
@@ -255,7 +257,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
           <div class="text-xs text-gray-400 text-center mt-2">new a unitvis</div>
         </div>
       </div>
-      
+
     </aside>
   </div>
 </template>

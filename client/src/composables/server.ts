@@ -62,13 +62,18 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
 
       // 遍历当前总览的所有幻灯片
       for (let slideIdx = 0; slideIdx < overview.collageSeries.length; slideIdx++) {
+        const slide = overview.collageSeries[slideIdx]
+        // 跳过 isResult 为 true 的 slide
+        if ((slide as any).isResult === true) {
+          continue
+        }
+
         const result: ProcessedData = {
           markers: [],
           container: '',
           emitter: null,
           forces: []
         }
-        const slide = overview.collageSeries[slideIdx]
         const canvas = collageSeriesStore.canvasRef?.()
         //新建临时画布
         // 画布大小与原fabric画布一致
@@ -88,10 +93,6 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         result.emitter = processEmitter(tempCanvas)
         result.container = processContainer(tempCanvas)
         result.dataBinding = processDataBinding(tempCanvas)
-        //如果result.markers中有一个markerId为result_marker，则终止逻辑
-        if (result.markers.some(marker => marker.markerId === 'result_marker')) {
-          return 'has_result_marker'
-        }
         // 注入当前 slide 的个性化设置
         const slideSettings = slide as any
         result.iterations = slideSettings.iterations ?? 150
@@ -420,11 +421,6 @@ export async function sendDataToServer(): Promise<boolean> {
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
     const data = await collectAllSlidesData()
-    if (data === 'has_result_marker') {
-      ElMessage.error('The unit visualization result cannot be included')
-      collaging.value = false
-      return false
-    }
     console.log(data)
     // 将 dataBinding 数据存储到 hoverInfoPanel store
     const hoverInfoPanelStore = useHoverInfoPanelStore()

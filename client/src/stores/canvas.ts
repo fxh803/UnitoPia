@@ -699,7 +699,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   }
 
   async function renderResult() {
-    collageSeriesStore.addNewSlide()
+    collageSeriesStore.addNewSlide(true)
     const animationStore = useAnimationStore()
     const { process_id } = storeToRefs(animationStore)
     // 获取canvas实例

@@ -16,15 +16,24 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             dataTypeArray: any[],
             markerIdArray: any[],
             forceTypeArray: any[],
-            dataArray: any[]
+            dataArray: any[],
+            // 每个 slide 的个性化设置
+            iterations?: number,
+            render_size?: number,
+            rotation?: boolean,
+            hole?: boolean,
+            orientation?: 'free' | 'center',
+            margin?: number,
+            emitter_type?: string,
+            isResult?: boolean
         }[]
     }
-    
+
     // 总览状态
     const overviews = ref<Overview[]>([])
     const currentOverviewIndex = ref(0)
     const currentSlideIndex = ref(0)
-    
+
     // 为了保持向后兼容，保留 collageSeries 作为计算属性
     const collageSeries = computed(() => {
         if (overviews.value.length === 0) return []
@@ -39,7 +48,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const randomId = Math.random().toString(36).substr(2, 9)
         return `slide-${timestamp}-${randomId}`
     }
-    
+
     // 生成唯一的总览 ID
     function generateOverviewId(): string {
         const timestamp = Date.now()
@@ -64,7 +73,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         })
         const slideId = generateSlideId()
         const overviewId = generateOverviewId()
-        
+
         // 创建第一个总览，包含一个空白幻灯片
         overviews.value = [{
             overviewId,
@@ -82,7 +91,9 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     render_size: 1000,
                     rotation: true,
                     hole: false,
-                    orientation: 'free'
+                    orientation: 'free',
+                    margin: 0,
+                    emitter_type: ''
                 }]
         }]
         currentOverviewIndex.value = 0
@@ -95,17 +106,17 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         const canvasInstance = canvasRef.value?.()
         if (!canvasInstance || overviews.value.length === 0) return
-        
+
         const currentOverview = overviews.value[currentOverviewIndex.value]
         if (!currentOverview || currentOverview.collageSeries.length === 0) return
 
         // 更新当前幻灯片的预览（保持原有逻辑）
         const currentSlide = currentOverview.collageSeries[currentSlideIndex.value]
-        
+
         // 临时保存所有对象的原始透明度
         const originalOpacities = new Map()
         canvasInstance.getObjects().forEach((obj: any) => {
-            originalOpacities.set(obj, obj.opacity)   
+            originalOpacities.set(obj, obj.opacity)
             obj.opacity = 1
         })
 
@@ -130,7 +141,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const forceTypeArray = objects.map((obj: any) => obj.get('forceType'))
         const dataArray = objects.map((obj: any) => obj.get('data'))
         // console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
-        
+
         currentSlide.json = json
         currentSlide.preview = preview
         currentSlide.dataTypeArray = dataTypeArray
@@ -146,7 +157,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     async function generateOverviewPreview() {
         const canvasInstance = canvasRef.value?.()
         if (!canvasInstance || overviews.value.length === 0) return
-        
+
         const currentOverview = overviews.value[currentOverviewIndex.value]
         if (!currentOverview || currentOverview.collageSeries.length === 0) return
 
@@ -162,7 +173,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     slideData.objects.forEach((obj: any, objIndex: number) => {
                         // 跳过背景对象 - 检查dataTypeArray而不是obj.dataType
                         if (slide.dataTypeArray[objIndex] === 'background') return
-                        
+
                         const mergedObj = {
                             ...obj,
                             slideIndex: slideIndex,
@@ -178,12 +189,12 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         // 如果有总览背景，添加到合并对象的最前面（最底层）
         const backgroundStore = useBackgroundStore()
-        const overviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId) 
+        const overviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
         if (overviewBackground) {
             try {
                 // 使用fabric.js的Promise方式加载背景图片
                 const fabricImg = await FabricImage.fromURL(overviewBackground)
-                
+
                 // 设置背景图片属性
                 fabricImg.set({
                     left: (canvasInstance.width || 400) / 2,
@@ -194,15 +205,15 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     evented: false,
                     dataType: 'background'
                 })
-                
+
                 // 计算合适的缩放比例，使图片完全适应画布
                 const canvasWidth = canvasInstance.width || 400
                 const canvasHeight = canvasInstance.height || 400
-                
+
                 const scaleX = canvasWidth / fabricImg.width
                 const scaleY = canvasHeight / fabricImg.height
                 const scale = Math.min(scaleX, scaleY)
-                
+
                 fabricImg.set({
                     scaleX: scale,
                     scaleY: scale
@@ -275,7 +286,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     }
 
     // 添加新幻灯片
-    async function addNewSlide() {
+    async function addNewSlide(isResult: boolean = false) {
         const canvasInstance = canvasRef.value?.()
         if (!canvasInstance || overviews.value.length === 0) return
         stopListen.value = true
@@ -347,7 +358,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
                 canvasInstance.add(fabricImg)
                 canvasInstance.renderAll()
-                
+
                 // 生成包含背景的preview
                 preview = canvasInstance.toDataURL({
                     format: 'png',
@@ -385,7 +396,10 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             render_size: 1000,
             rotation: true,
             hole: false,
-            orientation: 'free'
+            orientation: 'free',
+            margin: 0,
+            emitter_type: '',
+            isResult: isResult
         })
 
         currentSlideIndex.value = currentOverview.collageSeries.length - 1
@@ -396,10 +410,10 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     function handleCollageSeriesSelect(idx: number) {
         const canvasInstance = canvasRef.value?.()
         if (!canvasInstance || overviews.value.length === 0) return
-        
+
         const currentOverview = overviews.value[currentOverviewIndex.value]
         if (!currentOverview || !currentOverview.collageSeries[idx]) return
-        
+
         stopListen.value = true
         currentSlideIndex.value = idx
         const json = currentOverview.collageSeries[idx].json
@@ -416,7 +430,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     // 确保背景色为白色
                     canvasInstance.backgroundColor = '#ffffff'
                     canvasInstance.renderAll()
-                    // 恢复自定义属性 
+                    // 恢复自定义属性
                     // console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
                     restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, dataArray)
                     // updateCurrentSlide()
@@ -436,7 +450,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 复制幻灯片
     function handleDuplicateSlide(idx: number) {
         if (overviews.value.length === 0) return
-        
+
         const currentOverview = overviews.value[currentOverviewIndex.value]
         if (!currentOverview || idx < 0 || idx >= currentOverview.collageSeries.length) return
 
@@ -477,17 +491,17 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         }
 
         stopListen.value = false
- 
+
     }
 
     // 删除幻灯片
     function handleDeleteCollageSeries(idx: number) {
         if (overviews.value.length === 0) return
-        
+
         const currentOverview = overviews.value[currentOverviewIndex.value]
         if (!currentOverview || currentOverview.collageSeries.length <= 1) return // 至少保留一个幻灯片
 
-        // 如果删除的是当前幻灯片 
+        // 如果删除的是当前幻灯片
         if (idx === currentSlideIndex.value) {
             if (currentSlideIndex.value > 0) {
                 currentSlideIndex.value = Math.max(0, idx - 1)
@@ -559,7 +573,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         if (overviews.value.length === 0) return
         const currentOverview = overviews.value[currentOverviewIndex.value]
         if (!currentOverview || currentOverview.collageSeries.length === 0) return
-        
+
         stopListen.value = true
 
         // 使用for...of循环支持await，排除当前slide
@@ -575,7 +589,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 // 检查是否已经存在背景对象
                 const existingBackgroundIndex = slide.dataTypeArray.findIndex((dataType: any) =>
                     dataType === 'background'
-                ) 
+                )
                 // 如果存在背景对象，替换它；如果不存在，添加到最前面（最底层）
                 if (existingBackgroundIndex !== -1) {
                     slideData.objects[existingBackgroundIndex] = backgroundObject
@@ -617,7 +631,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         if (overviews.value.length === 0) return
         const currentOverview = overviews.value[currentOverviewIndex.value]
         if (!currentOverview || currentOverview.collageSeries.length === 0) return
-        
+
         stopListen.value = true
 
         // 使用for...of循环支持await，排除当前slide
@@ -709,7 +723,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const canvasInstance = canvasRef.value?.()
         let json = ''
         let preview = ''
-        
+
         if (canvasInstance) {
             json = JSON.stringify(canvasInstance.toJSON())
             preview = canvasInstance.toDataURL({
@@ -717,7 +731,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 multiplier: 2
             })
         }
-        
+
         const newOverview: Overview = {
             overviewId,
             preview: preview, // 初始预览就是第一个幻灯片的预览
@@ -731,7 +745,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     dataArray: []
                 }]
         }
-        
+
         overviews.value.push(newOverview)
         currentOverviewIndex.value = overviews.value.length - 1
         currentSlideIndex.value = 0
@@ -749,16 +763,16 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 删除总览
     function handleDeleteOverview(overviewIdx: number) {
         if (overviews.value.length <= 1) return // 至少保留一个总览
-        
+
         stopListen.value = true
-        
+
         // 获取要删除的总览ID，用于清理背景数据
         const overviewToDelete = overviews.value[overviewIdx]
         const overviewIdToDelete = overviewToDelete?.overviewId
-        
+
         // 计算删除后的新当前总览索引
         let newCurrentOverviewIndex = currentOverviewIndex.value
-        
+
         if (overviewIdx === currentOverviewIndex.value) {
             // 删除的是当前总览
             if (overviewIdx < overviews.value.length - 1) {
@@ -771,21 +785,21 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         } else if (overviewIdx < currentOverviewIndex.value) {
             // 删除的总览在当前总览之前，当前索引需要减1
             newCurrentOverviewIndex = currentOverviewIndex.value - 1
-        } 
+        }
         // 先删除总览
         overviews.value.splice(overviewIdx, 1)
-        
+
         // 清理被删除总览的背景数据
         if (overviewIdToDelete) {
             const backgroundStore = useBackgroundStore()
             backgroundStore.clearCurrentOverviewBackground(overviewIdToDelete)
         }
-        
+
         // 切换到新的当前总览
         currentOverviewIndex.value = newCurrentOverviewIndex
         currentSlideIndex.value = 0
         handleCollageSeriesSelect(0)
-        
+
         stopListen.value = false
     }
 
@@ -812,4 +826,4 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         handleDeleteOverview,
         generateOverviewPreview
     }
-}) 
+})
