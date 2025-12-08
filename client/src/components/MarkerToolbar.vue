@@ -2,7 +2,7 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import ColorPicker from './ColorPicker.vue'
-import { storeToRefs } from 'pinia' 
+import { storeToRefs } from 'pinia'
 import * as fabric from 'fabric'
 import { Canvas, Group } from 'fabric'
 import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
@@ -43,7 +43,7 @@ const maxBrushSize = 50
 const toggleDrawMenu = () => {
   showDrawMenu.value = !showDrawMenu.value
 }
- 
+
 
 // 点击外部关闭菜单
 onMounted(() => {
@@ -57,7 +57,7 @@ onMounted(() => {
       brushSizeStore.setMarkerBrushSizePanelOpen(false)
     }
   })
-  
+
   // 在 nextTick 后设置 mode 为 draw（第一个按钮）
   nextTick(() => {
     // 等待 canvas 初始化完成
@@ -68,14 +68,14 @@ onMounted(() => {
 })
 
 // Marker相关功能
-const clearCanvas = () => { 
+const clearCanvas = () => {
     markerCanvasModeStore.clearMarkers()
 }
 
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
   const files = target.files
-  
+
   if (files && files.length > 0) {
     // 批量处理多个文件
     Array.from(files).forEach((file) => {
@@ -83,8 +83,8 @@ const handleFileUpload = (event: Event) => {
         // 处理PNG文件
         const reader = new FileReader()
         reader.onload = (e) => {
-          const result = e.target?.result as string 
-          
+          const result = e.target?.result as string
+
           // 将图片添加到画布作为marker对象
           addImageToCanvas(result, file.name)
         }
@@ -93,8 +93,8 @@ const handleFileUpload = (event: Event) => {
         // 处理SVG文件
         const reader = new FileReader()
         reader.onload = async (e) => {
-          const svgString = e.target?.result as string 
-          
+          const svgString = e.target?.result as string
+
           // 将SVG添加到画布作为marker对象
           await addSVGToCanvas(svgString, file.name)
         }
@@ -104,25 +104,25 @@ const handleFileUpload = (event: Event) => {
       }
     })
   }
-  
+
   // 清空文件输入框，允许重复选择同一文件
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
 }
 
-const addImageToCanvas = (imageDataUrl: string, fileName: string) => { 
-  
+const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
+
   const canvasInstance = markerCanvasModeStore.getCanvas()
   if (!canvasInstance) {
     console.error('Canvas实例未找到')
     return
   }
-   
+
 
   // 使用fabric.js的Promise方式加载图片
-  fabric.FabricImage.fromURL(imageDataUrl).then((fabricImg) => { 
-    
+  fabric.FabricImage.fromURL(imageDataUrl).then((fabricImg) => {
+
     // 设置图片属性
     fabricImg.set({
       left: canvasInstance.width / 2,
@@ -132,44 +132,44 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
       selectable: false,
       evented: false
     })
-    
+
     // 计算合适的缩放比例
     const maxWidth = canvasInstance.width * 0.3
     const maxHeight = canvasInstance.height * 0.3
-    
+
     const scaleX = maxWidth / fabricImg.width
     const scaleY = maxHeight / fabricImg.height
     const scale = Math.min(scaleX, scaleY, 1)
-    
+
     fabricImg.set({
       scaleX: scale,
       scaleY: scale
     })
 
     // 将图片添加到画布
-    canvasInstance.add(fabricImg) 
+    canvasInstance.add(fabricImg)
     // 重新渲染画布
-    canvasInstance.renderAll() 
-    
+    canvasInstance.renderAll()
+
   }).catch((error) => {
     console.error('图片加载失败:', error)
   })
 }
 
-const addSVGToCanvas = async (svgString: string, fileName: string) => { 
-  
+const addSVGToCanvas = async (svgString: string, fileName: string) => {
+
   try {
     const canvasInstance = markerCanvasModeStore.getCanvas()
     if (!canvasInstance) {
       console.error('Canvas实例未找到')
       return
     }
-     
+
 
     // 使用 Fabric.js 加载 SVG
     const loadedSVG = await fabric.loadSVGFromString(svgString)
     const svgObject = fabric.util.groupSVGElements(loadedSVG.objects)
-    
+
     // 设置SVG对象属性
     svgObject.set({
       left: canvasInstance.width / 2,
@@ -179,27 +179,27 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
       selectable: false,
       evented: false
     })
-    
+
     // 计算合适的缩放比例
     const maxWidth = canvasInstance.width * 0.3
     const maxHeight = canvasInstance.height * 0.3
-    
+
     const scaleX = maxWidth / svgObject.width
     const scaleY = maxHeight / svgObject.height
     const scale = Math.min(scaleX, scaleY, 1)
-    
+
     svgObject.set({
       scaleX: scale,
       scaleY: scale
     })
 
     // 将SVG对象添加到画布
-    canvasInstance.add(svgObject) 
-    
+    canvasInstance.add(svgObject)
+
     // 重新渲染画布
     canvasInstance.renderAll()
-     
-    
+
+
   } catch (error) {
     console.error('SVG加载失败:', error)
   }
@@ -212,7 +212,7 @@ const triggerFileUpload = () => {
 
 // 保存当前画布上的所有 marker 对象
 const saveMarkers = async () => {
-  const canvasInstance = markerCanvasModeStore.getCanvas() 
+  const canvasInstance = markerCanvasModeStore.getCanvas()
   // 获取画布上所有对象
   const allObjects = canvasInstance.getObjects()
   //新建一个fabricjs的group，将所有objectsgroup一起
@@ -224,7 +224,7 @@ const saveMarkers = async () => {
   const thumbnailSize = 200
   const padding = 20
   const contentSize = thumbnailSize - padding * 2
-  
+
   const tempCanvas = document.createElement('canvas')
   tempCanvas.width = thumbnailSize
   tempCanvas.height = thumbnailSize
@@ -236,7 +236,7 @@ const saveMarkers = async () => {
   })
   const originWidth = group.width
   const originHeight = group.height
-  // 计算缩放比例，确保对象适合缩略图 
+  // 计算缩放比例，确保对象适合缩略图
   const scaleX = contentSize / Math.max(originWidth, 1)
   const scaleY = contentSize / Math.max(originHeight, 1)
   const scale = Math.min(scaleX, scaleY, 1) // 不超过原始大小
@@ -254,15 +254,15 @@ const saveMarkers = async () => {
   const thumbnail = tempFabricCanvas.toDataURL({ format: 'png', multiplier: 2, enableRetinaScaling: false as any })
    // 获取所有对象的 JSON 数据
    const jsonData = allObjects.map(obj => obj.toJSON())
-    
+
     // 保存到 store
     const markerData = {
       thumbnail,
       jsonData
     }
-    
-    const savedMarker = markerStore.addMarker(markerData) 
-    
+
+    const savedMarker = markerStore.addMarker(markerData)
+
     // 清理临时画布
     tempFabricCanvas.dispose()
 }
@@ -288,9 +288,9 @@ const saveMarkers = async () => {
       >
       <div class="i-carbon:settings-adjust"></div>
       </button>
-      
+
       <!-- 展开面板 - 在按钮上方垂直显示 -->
-      <div 
+      <div
         v-if="showBrushSizeMenu"
         class="absolute left-0 bottom-full mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 brush-size-menu"
       >
@@ -310,7 +310,7 @@ const saveMarkers = async () => {
         </div>
       </div>
     </div>
-    
+
     <!-- 分割线 -->
     <div class="toolbar-divider" />
     <!-- 自由绘制按钮 -->
@@ -321,12 +321,12 @@ const saveMarkers = async () => {
           ? 'bg-[var(--primary-color)] text-white'
           : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
-      title="自由绘制"
+      title="Free Draw"
       @click="() => setMode('draw')"
     >
       <span class="i-carbon-pen" />
     </button>
-    
+
     <!-- 形状绘制工具聚合按钮 -->
     <div class="relative draw-tool-menu">
       <button
@@ -336,7 +336,7 @@ const saveMarkers = async () => {
             ? 'bg-[var(--primary-color)] text-white'
             : 'bg-white text-black hover:bg-[#f5f5f5]'
         ]"
-        title="形状工具"
+        title="Shape Tools"
         @click="toggleDrawMenu"
       >
         <span v-if="mode === 'ellipse'" class="i-carbon-circle-outline" />
@@ -344,9 +344,9 @@ const saveMarkers = async () => {
         <!-- 右下角黑三角 -->
         <div class="absolute bottom-0 right-0 w-0 h-0 border-l-[5px] border-t-[5px] border-l-transparent border-t-black transform rotate-90"></div>
       </button>
-      
+
       <!-- 形状绘制工具上拉菜单 -->
-      <div 
+      <div
         v-if="showDrawMenu"
         class="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px] draw-tool-menu"
       >
@@ -359,7 +359,7 @@ const saveMarkers = async () => {
           <span class="i-carbon-circle-outline text-sm" />
           <span class="text-xs">ellipse</span>
         </button>
-        
+
         <!-- 矩形 -->
         <button
           class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-b-lg"
@@ -371,7 +371,7 @@ const saveMarkers = async () => {
         </button>
       </div>
     </div>
-    
+
     <!-- 移动模式按钮 -->
     <button
       class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
@@ -380,17 +380,17 @@ const saveMarkers = async () => {
           ? 'bg-[var(--primary-color)]'
           : 'bg-white hover:bg-[#f5f5f5]'
       ]"
-      title="移动模式"
+      title="Move Mode"
       @click="() => setMode('move')"
     >
-      <img 
-        src="/cc-hand.svg" 
-        class="w-4 h-4" 
+      <img
+        src="/cc-hand.svg"
+        class="w-4 h-4"
         :class="mode === 'move' ? 'brightness-0 invert' : ''"
-        alt="移动" 
+        alt="Move"
       />
     </button>
-    
+
     <!-- 橡皮擦按钮 -->
     <button
       class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
@@ -399,16 +399,16 @@ const saveMarkers = async () => {
           ? 'bg-[var(--primary-color)] text-white'
           : 'bg-white text-black hover:bg-[#f5f5f5]'
       ]"
-      title="橡皮擦"
+      title="Eraser"
       @click="() => setMode('erase')"
     >
       <span class="i-carbon-erase" />
     </button>
-    
+
     <!-- 上传Marker按钮 -->
     <button
       class="rounded flex h-7 w-7 items-center justify-center bg-white text-black hover:bg-[#f5f5f5] cursor-pointer"
-      title="上传标记"
+      title="Upload Marker"
       @click="triggerFileUpload"
     >
       <span class="i-carbon-upload" />
@@ -416,25 +416,26 @@ const saveMarkers = async () => {
 
     <!-- 分割线 -->
     <div class="toolbar-divider" />
-    
+
     <!-- 保存按钮 -->
     <button
       class="rounded flex h-7 w-7 items-center justify-center bg-white text-black hover:bg-[#f5f5f5] cursor-pointer"
-      title="保存标记"
+      title="Save Marker"
       @click="saveMarkers"
     >
       <span class="i-carbon-save" />
     </button>
-    
+
     <!-- 清除按钮 -->
     <button
       class="text-black rounded bg-white flex h-7 w-7 items-center justify-center hover:bg-[#f5f5f5] cursor-pointer"
-      title="清除标记"
+      title="Clear Canvas / Renew"
       @click="clearCanvas"
     >
-      <span class="i-carbon-trash-can" />
+      <!-- <span class="i-carbon-trash-can" /> -->
+      <div class="i-carbon:add-alt"></div>
     </button>
-    
+
     <!-- 隐藏的文件输入框 -->
     <input
       ref="fileInputRef"

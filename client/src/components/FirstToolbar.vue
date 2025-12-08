@@ -1,4 +1,4 @@
-<script setup lang="ts"> 
+<script setup lang="ts">
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useAnimationStore } from '~/stores/animation'
 import { storeToRefs } from 'pinia'
@@ -21,7 +21,7 @@ const {setSelectedMode} = selectedModeStore
           : 'bg-white text-black hover:bg-[#f5f5f5]',
         collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
-      @click="setSelectedMode('container')" 
+      @click="setSelectedMode('container')"
     >
       <span class="i-carbon:area-custom flex-shrink-0 w-10 flex items-center justify-center" />
       <span class="text-sm font-medium whitespace-nowrap">Container</span>
@@ -34,7 +34,7 @@ const {setSelectedMode} = selectedModeStore
           : 'bg-white text-black hover:bg-[#f5f5f5]',
         collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
-      @click="setSelectedMode('emitter')" 
+      @click="setSelectedMode('emitter')"
     >
       <div class="i-carbon:anchor flex-shrink-0 w-10 flex items-center justify-center"></div>
       <span class="text-sm font-medium whitespace-nowrap">Emitter</span>
@@ -47,9 +47,19 @@ const {setSelectedMode} = selectedModeStore
           : 'bg-white text-black hover:bg-[#f5f5f5]',
         collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
-      @click="setSelectedMode('force')" 
+      @click="setSelectedMode('force')"
     >
-      <span class="i-carbon:radio-button flex-shrink-0 w-10 flex items-center justify-center" />
+      <span class="flex-shrink-0 w-10 flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48" class="w-5 h-5">
+          <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+            <path d="M20 8L24 4M24 4L28 8M24 4V16"/>
+            <path d="M20 40L24 44M24 44L28 40M24 44V32"/>
+            <path d="M40 20L44 24M44 24L40 28M44 24H32"/>
+            <path d="M8 20L4 24M4 24L8 28M4 24H16"/>
+            <circle cx="24" cy="24" r="2"/>
+          </g>
+        </svg>
+      </span>
       <span class="text-sm font-medium whitespace-nowrap">Force</span>
     </button>
   </div>
@@ -83,4 +93,3 @@ const {setSelectedMode} = selectedModeStore
   width: auto;
 }
 </style>
- 
