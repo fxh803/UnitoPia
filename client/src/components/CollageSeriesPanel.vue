@@ -67,6 +67,27 @@ function handleClick(overviewIdx: number, slideIdx: number) {
   handleCollageSeriesSelect(slideIdx)
 }
 
+function handleOverviewClick(overviewIdx: number) {
+  selectedModeStore.setSelectedMode(null)
+  // 先切换到对应的总览
+  if (overviewIdx !== currentOverviewIndex.value) {
+    selectOverview(overviewIdx)
+  }
+
+  const overview = overviews.value[overviewIdx]
+  if (overview && overview.collageSeries.length > 0) {
+    // 查找结果 slide（结果必定在最后）
+    const lastSlide = overview.collageSeries[overview.collageSeries.length - 1]
+    if (lastSlide && (lastSlide as any).isResult === true) {
+      // 如果有结果，选中结果
+      handleCollageSeriesSelect(overview.collageSeries.length - 1)
+    } else {
+      // 没有结果，选中第一个
+      handleCollageSeriesSelect(0)
+    }
+  }
+}
+
 function handleDelete(overviewIdx: number, slideIdx: number) {
   // 先切换到对应的总览
   if (overviewIdx !== currentOverviewIndex.value) {
@@ -171,7 +192,8 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
           class="border-2 rounded p-2 flex flex-col mb-4 group border-dashed border-gray-400">
           <!-- 总览区域 - 更大的slide -->
           <div class="mb-1 relative">
-            <div class="border rounded flex h-32 items-center justify-center bg-gray-50">
+            <div class="border rounded flex h-32 items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+              @click="handleOverviewClick(overviewIdx)">
               <img :src="overview.preview" class="max-h-full max-w-full object-contain" alt="总览预览" />
             </div>
             <!-- 收起/展开按钮 -->
