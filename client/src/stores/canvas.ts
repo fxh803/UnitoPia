@@ -119,22 +119,26 @@ export const useCanvasStore = defineStore('canvas', () => {
     if (!canvasInstance) return
 
     canvasInstance.on({
-      'selection:created': () => {
+      'selection:created': (e) => {
         objectActionsStore.setCurrentPathObj()
         objectActionsStore.updateActionBtnVisble()
         objectActionsStore.updateActionBtnPosition()
         handleMarkerSelect()
+        hoverInfoPanelStore.handleSelection(e, canvasInstance)
       },
-      'selection:updated': () => {
+      'selection:updated': (e) => {
         objectActionsStore.setCurrentPathObj()
         objectActionsStore.updateActionBtnVisble()
         objectActionsStore.updateActionBtnPosition()
         handleMarkerSelect()
+        hoverInfoPanelStore.handleSelection(e, canvasInstance)
       },
       'selection:cleared': () => {
         objectActionsStore.hideBtns()
         // 取消选中时，恢复所有marker的透明度
         restoreAllMarkerOpacity()
+        // 隐藏信息面板
+        hoverInfoPanelStore.handleSelectionCleared()
       },
       'object:moving': () => {
         objectActionsStore.hideBtns()
@@ -193,11 +197,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
         handleMarkerHoverOpacity(e.target, { isMouseOut: true })
         // 处理鼠标离开 marker，隐藏信息面板
-        hoverInfoPanelStore.handleMarkerOut(e)
-      },
-      'mouse:move': (e) => {
-        // 处理画布鼠标移动，更新信息面板位置
-        hoverInfoPanelStore.handleCanvasMouseMove(e, canvasInstance)
+        hoverInfoPanelStore.handleMarkerOut(e, canvasInstance)
       }
     })
   }

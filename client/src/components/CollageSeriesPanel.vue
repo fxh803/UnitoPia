@@ -204,12 +204,12 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
               @mouseenter="handleMouseEnter(overviewIdx, slideIdx)"
               @mouseleave="handleMouseLeave">
               <!-- 删除按钮 -->
-              <button v-if="overview.collageSeries.length > 1 && hoveredOverviewIdx === overviewIdx && hoveredSlideIdx === slideIdx"
+              <button v-if="overview.collageSeries.length > 1 && hoveredOverviewIdx === overviewIdx && hoveredSlideIdx === slideIdx && !(item as any).isResult"
                 class="absolute top-1 right-1 z-10 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--delete-color)] hover:text-white transition-colors"
                 @click.stop="handleDelete(overviewIdx, slideIdx)" title="Delete">×</button>
 
               <!-- 复制按钮 -->
-              <button v-if="hoveredOverviewIdx === overviewIdx && hoveredSlideIdx === slideIdx"
+              <button v-if="hoveredOverviewIdx === overviewIdx && hoveredSlideIdx === slideIdx && !(item as any).isResult"
                 class="absolute top-1 z-10 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--primary-color)] hover:text-white transition-colors"
                 :class="overview.collageSeries.length > 1 ? 'right-8' : 'right-1'"
                 @click.stop="handleDuplicate(overviewIdx, slideIdx)" title="Duplicate">
@@ -217,7 +217,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
               </button>
 
               <!-- 设置按钮 -->
-              <button v-if="hoveredOverviewIdx === overviewIdx && hoveredSlideIdx === slideIdx"
+              <button v-if="hoveredOverviewIdx === overviewIdx && hoveredSlideIdx === slideIdx && !(item as any).isResult"
                 class="absolute top-1 right-14 z-10 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--primary-color)] hover:text-white transition-colors"
                 :class="overview.collageSeries.length > 1 ? 'right-14' : 'right-8'"
                 @click.stop="(e)=>toggleSettings(overviewIdx, slideIdx, e)" title="Settings">
@@ -226,7 +226,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
 
               <!-- 设置面板（锚定到当前卡片） -->
               <SettingsPanel
-                v-if="isSettingsOpen && settingsOverviewIdx === overviewIdx && settingsSlideIdx === slideIdx"
+                v-if="isSettingsOpen && settingsOverviewIdx === overviewIdx && settingsSlideIdx === slideIdx && !(item as any).isResult"
                 :overview-idx="overviewIdx"
                 :slide-idx="slideIdx"
                 :coords="panelCoords || undefined"
