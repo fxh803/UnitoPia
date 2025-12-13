@@ -125,8 +125,8 @@ onMounted(async () => {
   setTimeout(() => {
     if (canvasEl.value && canvasContainerRef.value) {
       const rect = canvasContainerRef.value.getBoundingClientRect()
-      const initialWidth = rect.width-16
-      const initialHeight = rect.height-16
+      const initialWidth = rect.width
+      const initialHeight = rect.height
       canvasWidth.value = initialWidth
       canvasHeight.value = initialHeight
       canvas = new Canvas(canvasEl.value, {
@@ -181,7 +181,7 @@ onBeforeUnmount(() => {
 <template>
   <!-- 画布区域 -->
   <div ref="canvasContainerRef" class="flex justify-center items-center bg-gray-100 min-h-0 w-full h-full relative overflow-hidden">
-    <canvas ref="canvasEl" class="w-full h-full border border-gray-300 rounded-lg shadow-sm" />
+    <canvas ref="canvasEl" class="w-full h-full border-r border-gray-200" />
 
     <!-- 实时预览图 - 左上角 -->
     <!-- <div v-if="previewDataUrl"

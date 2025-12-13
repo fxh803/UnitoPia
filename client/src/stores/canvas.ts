@@ -593,23 +593,58 @@ export const useCanvasStore = defineStore('canvas', () => {
     const dropX = e.clientX - canvasRect.left
     const dropY = e.clientY - canvasRect.top
 
-    if (canvasInstance) {
-      const objects = canvasInstance.getObjects().concat()
-      objects.forEach(obj => {
-        if (obj.get('dataType') === 'marker') {
-          canvasInstance.remove(obj)
-        }
-      })
-      canvasInstance.discardActiveObject()
-      canvasInstance.renderAll()
-    }
-
     // 统一使用列表格式处理
     if (isDropOnEmitter(dropX, dropY)) {
       handleEmitterDrop(dropX, dropY, markerIdList)
     } else {
       handleMarkerDrop(dropX, dropY, markerIdList)
     }
+  }
+
+  // 获取路径的起点和终点
+  function getPathStartAndEndPoints(path: any): { start: { x: number; y: number } | null, end: { x: number; y: number } | null } {
+    if (!path || !path.path || !Array.isArray(path.path)) {
+      return { start: null, end: null }
+    }
+
+    const pathData = path.path
+    let startPoint: { x: number; y: number } | null = null
+    let endPoint: { x: number; y: number } | null = null
+
+    // 遍历路径段，找到起点和终点
+    for (const segment of pathData) {
+      if (!Array.isArray(segment) || segment.length === 0) continue
+
+      const command = segment[0]
+
+      if (command === 'M') {
+        // 移动到点 - 这是起点
+        startPoint = { x: segment[1], y: segment[2] }
+      } else if (command === 'L') {
+        // 直线到点 - 更新终点
+        endPoint = { x: segment[1], y: segment[2] }
+      } else if (command === 'Q') {
+        // 二次贝塞尔曲线 - 最后一个坐标是终点
+        endPoint = { x: segment[3], y: segment[4] }
+      } else if (command === 'C') {
+        // 三次贝塞尔曲线 - 最后一个坐标是终点
+        endPoint = { x: segment[5], y: segment[6] }
+      } else if (command === 'Z' || command === 'z') {
+        // 闭合路径命令，终点就是起点
+        if (startPoint) {
+          endPoint = { ...startPoint }
+        }
+      }
+    }
+
+    return { start: startPoint, end: endPoint }
+  }
+
+  // 计算两点之间的距离
+  function calculateDistance(p1: { x: number; y: number }, p2: { x: number; y: number }): number {
+    const dx = p2.x - p1.x
+    const dy = p2.y - p1.y
+    return Math.sqrt(dx * dx + dy * dy)
   }
 
   // 询问是否闭合路径
@@ -624,9 +659,22 @@ export const useCanvasStore = defineStore('canvas', () => {
     const canvasModeStore = useCanvasModeStore()
     if (canvasModeStore.mode !== 'draw' && canvasModeStore.mode !== 'rect' && canvasModeStore.mode !== 'ellipse') return
 
-
     // 只有当对象是 container 类型时才触发
     if (path.get('dataType') !== 'container') return
+
+    // 对于 draw 模式，检查起点和终点距离
+    if (canvasModeStore.mode === 'draw' && path.type === 'path' && path.path) {
+      const { start, end } = getPathStartAndEndPoints(path)
+      
+      if (start && end) {
+        // 计算起点和终点的距离
+        const distance = calculateDistance(start, end)
+        // 如果距离大于 50 像素，不询问是否闭合路径
+        if (distance > 100) {
+          return
+        }
+      }
+    }
 
     // 获取对象在画布上的位置
     const zoom = canvasInstance.getZoom()
@@ -698,8 +746,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     return flattenedData
   }
 
-  async function renderResult() {
-    // 删除之前的旧结果 slide（结果必定在最后）
+  async function renderResult() { 
     const collageSeriesStore = useCollageSeriesStore()
     const { overviews, currentOverviewIndex, currentSlideIndex } = storeToRefs(collageSeriesStore)
     const currentOverview = overviews.value[currentOverviewIndex.value]
@@ -707,11 +754,7 @@ export const useCanvasStore = defineStore('canvas', () => {
       const lastSlide = currentOverview.collageSeries[currentOverview.collageSeries.length - 1]
       // 如果最后一个 slide 是结果，删除它
       if ((lastSlide as any).isResult === true) {
-        currentOverview.collageSeries.pop()
-        // 如果删除后当前索引超出范围，调整索引
-        if (currentSlideIndex.value >= currentOverview.collageSeries.length) {
-          currentSlideIndex.value = currentOverview.collageSeries.length - 1
-        }
+        currentOverview.collageSeries.pop()  
       }
     }
 

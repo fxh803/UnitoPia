@@ -141,6 +141,53 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     canvasInstance.off('object:removed')
   }
 
+  // 获取路径的起点和终点
+  function getPathStartAndEndPoints(path: any): { start: { x: number; y: number } | null, end: { x: number; y: number } | null } {
+    if (!path || !path.path || !Array.isArray(path.path)) {
+      return { start: null, end: null }
+    }
+
+    const pathData = path.path
+    console.log(pathData)
+    let startPoint: { x: number; y: number } | null = null
+    let endPoint: { x: number; y: number } | null = null
+
+    // 遍历路径段，找到起点和终点
+    for (const segment of pathData) {
+      if (!Array.isArray(segment) || segment.length === 0) continue
+
+      const command = segment[0]
+
+      if (command === 'M') {
+        // 移动到点 - 这是起点
+        startPoint = { x: segment[1], y: segment[2] }
+      } else if (command === 'L') {
+        // 直线到点 - 更新终点
+        endPoint = { x: segment[1], y: segment[2] }
+      } else if (command === 'Q') {
+        // 二次贝塞尔曲线 - 最后一个坐标是终点
+        endPoint = { x: segment[3], y: segment[4] }
+      } else if (command === 'C') {
+        // 三次贝塞尔曲线 - 最后一个坐标是终点
+        endPoint = { x: segment[5], y: segment[6] }
+      } else if (command === 'Z' || command === 'z') {
+        // 闭合路径命令，终点就是起点
+        if (startPoint) {
+          endPoint = { ...startPoint }
+        }
+      }
+    }
+
+    return { start: startPoint, end: endPoint }
+  }
+
+  // 计算两点之间的距离
+  function calculateDistance(p1: { x: number; y: number }, p2: { x: number; y: number }): number {
+    const dx = p2.x - p1.x
+    const dy = p2.y - p1.y
+    return Math.sqrt(dx * dx + dy * dy)
+  }
+
   // 询问是否闭合路径
   function askToClosePath(path: any) {
     const canvasInstance = canvasRef.value?.()
@@ -152,6 +199,20 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     // 只有mode为draw或rect或ellipse的状态才询问是否闭合路径
     const markerCanvasModeStore = useMarkerCanvasModeStore()
     if (markerCanvasModeStore.mode !== 'draw' && markerCanvasModeStore.mode !== 'rect' && markerCanvasModeStore.mode !== 'ellipse') return
+    
+    // 对于 draw 模式，检查起点和终点距离
+    if (markerCanvasModeStore.mode === 'draw' && path.type === 'path' && path.path) {
+      const { start, end } = getPathStartAndEndPoints(path)
+      
+      if (start && end) {
+        // 计算起点和终点的距离
+        const distance = calculateDistance(start, end)
+        // 如果距离大于 50 像素，不询问是否闭合路径
+        if (distance > 50) {
+          return
+        }
+      }
+    }
      
     
     // 获取对象在画布上的位置

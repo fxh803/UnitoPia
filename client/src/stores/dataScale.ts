@@ -86,7 +86,7 @@ export const useDataScaleStore = defineStore('dataScale', () => {
       if (obj.get('dataType') === 'marker') {
         // 获取归一化参数
         const { normalized, mappingChannel, defaultSize } = getNormalizationParams()
-
+        console.log(normalized, mappingChannel, defaultSize)
         const currentWidth = obj.width || obj.getScaledWidth()
         const currentHeight = obj.height || obj.getScaledHeight()
         const normalizedValue = normalized[i - 1]
