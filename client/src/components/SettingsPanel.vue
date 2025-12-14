@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, defineProps, defineEmits } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, defineProps, defineEmits, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 
@@ -12,12 +12,21 @@ const collageSeriesStore = useCollageSeriesStore()
 const { overviews } = storeToRefs(collageSeriesStore)
 
 const panelRef = ref<HTMLElement | null>(null)
+const panelSize = ref({ width: 384, height: 500 }) // 默认尺寸
+
 const handleGlobalClick = (e: MouseEvent) => {
   const target = e.target as Node
   if (panelRef.value && !panelRef.value.contains(target)) emit('close')
 }
-onMounted(() => {
+
+onMounted(async () => {
   window.addEventListener('click', handleGlobalClick)
+  // 获取面板实际尺寸
+  await nextTick()
+  if (panelRef.value) {
+    const rect = panelRef.value.getBoundingClientRect()
+    panelSize.value = { width: rect.width, height: rect.height }
+  }
 })
 onBeforeUnmount(() => {
   window.removeEventListener('click', handleGlobalClick)
@@ -31,10 +40,47 @@ const currentSlide = computed(() => {
 
 // 直接通过 store 的 overviews 修改对应 slide 字段，避免中间 computed 包装
 
-const coordsStyle = computed(() => ({
-  left: ((props.coords?.left ?? 0) + 0) + 'px',
-  top: ((props.coords?.top ?? 0) + 0) + 'px'
-}))
+const coordsStyle = computed(() => {
+  const padding = 16 // 距离边缘的最小间距
+  const panelWidth = panelSize.value.width
+  const panelHeight = panelSize.value.height
+  
+  let left = props.coords?.left ?? 0
+  let top = props.coords?.top ?? 0
+  
+  // 获取视口尺寸
+  const viewportWidth = window.innerWidth
+  const viewportHeight = window.innerHeight
+  
+  // 因为使用了 -translate-x-full，面板会向左偏移自身宽度
+  // 所以实际显示位置是 left - panelWidth
+  const actualLeft = left - panelWidth
+  
+  // 检测右边界：如果面板超出右边界，调整位置
+  if (left > viewportWidth - padding) {
+    left = viewportWidth - padding
+  }
+  
+  // 检测左边界：如果面板超出左边界，调整位置
+  if (actualLeft < padding) {
+    left = padding + panelWidth
+  }
+  
+  // 检测下边界：如果面板超出下边界，调整位置
+  if (top + panelHeight > viewportHeight - padding) {
+    top = Math.max(padding, viewportHeight - panelHeight - padding)
+  }
+  
+  // 检测上边界：如果面板超出上边界，调整位置
+  if (top < padding) {
+    top = padding
+  }
+  
+  return {
+    left: left + 'px',
+    top: top + 'px'
+  }
+})
 
 const handleClose = () => emit('close')
 </script>
