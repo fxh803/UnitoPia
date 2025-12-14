@@ -171,7 +171,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
       :class="isCollapsed ? 'w-13' : 'w-60'">
       <!-- 拼贴处理状态遮罩 -->
       <div v-if="collaging || result_data.length > 0"
-        class="absolute inset-0 bg-gray-300 bg-opacity-50 z-30 flex items-center justify-center">
+        class="absolute inset-0 bg-gray-300 bg-opacity-0 z-30 flex items-center justify-center cursor-not-allowed pointer-events-auto">
       </div>
       <!-- 收起按钮 - 放在左上角 -->
       <button @click="toggleCollapse"
