@@ -105,7 +105,7 @@ const currentSpeedMultiplier = computed(() => {
 
 <template>
   <div class="relative">
-    <header class="px-6 border-b border-gray-200 bg-white flex h-12 w-full shadow items-center z-20">
+    <header class="px-6 border-b border-gray-200 bg-[var(--primary-color)] flex h-12 w-full shadow items-center z-20">
       <h1 class="text-xl text-gray-800 font-bold flex items-center gap-2">
         <img src="/UNITVIZ2.svg" alt="UnitoPia Logo" class="h-8 w-auto" />
         UnitoPia
@@ -113,11 +113,8 @@ const currentSpeedMultiplier = computed(() => {
       
       <!-- 播放按钮 -->
       <button 
-        class="ml-50px flex items-center gap-2 px-6 h-full bg-white  text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
-        :class="[
-          collaging ? 'hover:bg-[var(--primary-color)]' : 'hover:bg-gray-100',
-          replaying ? 'opacity-50 cursor-not-allowed' : ''
-        ]"
+        class="ml-50px flex items-center gap-2 px-6 h-full bg-[var(--primary-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-hover-color)]"
+        :class="[replaying ? 'opacity-50 cursor-not-allowed' : '']"
         :disabled="replaying"
         @click="handleRun"
       >
@@ -136,8 +133,7 @@ const currentSpeedMultiplier = computed(() => {
       <!-- Replay 按钮 - 当result_data不为空时显示 -->
       <button 
         v-if="showReplayButton"
-        class="flex items-center gap-2 px-6 h-full bg-white  text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
-        :class="replaying ? 'hover:bg-[var(--delete-color)]' : 'hover:bg-gray-100'"
+        class="flex items-center gap-2 px-6 h-full bg-[var(--primary-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border-l border-gray-200 hover:bg-[var(--primary-hover-color)]"
         @click="handleReplay"
       >
         <div 
@@ -153,7 +149,7 @@ const currentSpeedMultiplier = computed(() => {
       
       <!-- Export 按钮 -->
       <button v-show="showExportButton" 
-      class="flex items-center gap-2 px-6 h-full bg-white hover:bg-gray-100 text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
+      class="flex items-center gap-2 px-6 h-full bg-[var(--primary-color)] hover:bg-[var(--primary-hover-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border-l border-gray-200"
       :class="[ 
           replaying ? 'opacity-50 cursor-not-allowed' : ''
         ]">
@@ -164,7 +160,7 @@ const currentSpeedMultiplier = computed(() => {
       <!-- Back to Edit 按钮 -->
       <button 
         v-show="showBackToEditButton"
-        class="flex items-center gap-2 px-6 h-full bg-white hover:bg-gray-100 text-gray-800 transition-colors duration-200 font-medium border-l border-gray-200"
+        class="flex items-center gap-2 px-6 h-full bg-[var(--primary-color)] hover:bg-[var(--primary-hover-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border-l border-gray-200"
         :class="[
           replaying ? 'opacity-50 cursor-not-allowed' : ''
         ]"

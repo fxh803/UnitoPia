@@ -1,8 +1,16 @@
 :root {
-  /* 主题蓝色 */
-  --primary-color: #0d99ff;
-  --primary-hover-color: #0b8ae6;
-  --primary-light-color: #e6f3ff;
+  /* 主题主色（Header / 主按钮） */
+  --primary-color: #ffcc00;
+  --primary-hover-color: #ffd633;
+  
+  /* 浅色背景（面板 / 画布外围） */
+  --primary-light-color: #fffef8;
+  
+  /* 工具栏 / 条带背景和边框 */
+  --toolbar-bg-color: #ffe991;
+  
+  /* 标题文字颜色（Header / 面板标题） */
+  --title-color: #111111;
   
   /* 删除相关颜色 */
   --delete-color: #F24E1E;

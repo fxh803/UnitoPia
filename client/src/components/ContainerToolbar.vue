@@ -153,11 +153,11 @@ const triggerFileUpload = () => {
     <!-- 画笔大小调节按钮 - 仅在绘制/擦除模式下显示 -->
     <div v-if="mode === 'draw' || mode === 'erase'" class="relative brush-size-menu">
       <button
-        class="rounded flex h-10 w-10 items-center justify-center cursor-pointer relative"
+        class="rounded flex h-10 w-10 items-center justify-center cursor-pointer relative text-black"
         :class="[
           showBrushSizeMenu
-            ? 'bg-[var(--primary-color)] text-white'
-            : 'bg-white text-black hover:bg-[#f5f5f5]'
+            ? 'bg-[var(--primary-color)]'
+            : 'bg-white  hover:bg-[#f5f5f5]'
         ]"
         title="Brush Size"
         @click="toggleBrushSizeMenu"
@@ -186,11 +186,11 @@ const triggerFileUpload = () => {
       </div>
     </div>
     <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer text-black"
       :class="[
         mode === 'draw'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]'
       ]"
       title="Draw"
       @click="() => setMode('draw')"
@@ -210,16 +210,15 @@ const triggerFileUpload = () => {
       <img 
         src="/cc-hand.svg" 
         class="w-5 h-5" 
-        :class="mode === 'move' ? 'brightness-0 invert' : ''"
         alt="Move" 
       />
     </button>
     <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer text-black"
       :class="[
         mode === 'erase'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]'
       ]"
       title="Eraser"
       @click="() => setMode('erase')"
@@ -229,11 +228,11 @@ const triggerFileUpload = () => {
     <!-- 形状绘制工具聚合按钮 -->
     <div class="relative shape-tool-menu">
       <button
-        class="rounded flex h-10 w-10 items-center justify-center cursor-pointer relative"
+        class="rounded flex h-10 w-10 items-center justify-center cursor-pointer relative text-black"
         :class="[
           (mode === 'rect' || mode === 'ellipse')
-            ? 'bg-[var(--primary-color)] text-white'
-            : 'bg-white text-black hover:bg-[#f5f5f5]'
+            ? 'bg-[var(--primary-color)]'
+            : 'bg-white hover:bg-[#f5f5f5]'
         ]"
         title="形状工具"
         @click="toggleShapeMenu"

@@ -347,6 +347,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .canvas-with-grid {
+  background-color: var(--primary-light-color);
   background-image: url('/transparency_grid.svg');
   background-size: 500px 500px;
   background-repeat: repeat;

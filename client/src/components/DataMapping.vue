@@ -353,9 +353,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex-1 flex overflow-hidden">
+  <div class="flex-1 flex overflow-hidden bg-[var(--primary-light-color)]">
     <!-- 左侧：列名列表 -->
-    <div class="w-38 border-r border-gray-200 bg-gray-50 flex flex-col">
+    <div class="w-38 border-r border-gray-200 bg-[var(--primary-light-color)] flex flex-col">
       <div class="p-3 border-b border-gray-200">
         <p v-if="tableStore.fileName" class="text-sm font-bold text-gray-700
         ">
@@ -604,7 +604,7 @@ onBeforeUnmount(() => {
                   :class="[
                     isDraggingOverDropZone
                       ? 'border-blue-400 bg-blue-50 text-blue-600'
-                      : 'border-gray-300 text-gray-400 bg-white'
+                      : 'border-gray-300 text-gray-400 bg-[#f6fdf3]'
                   ]"
                 >
                   <span class="i-carbon-add text-sm"></span>

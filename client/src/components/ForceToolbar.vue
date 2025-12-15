@@ -28,19 +28,19 @@ const handleAddFieldForce = async () => {
 
 <template>
   <div
-    class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow left-0 absolute z-10" style="top: 356px;">
+    class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow left-0 absolute z-10 text-black" style="top: 356px;">
     <button class="rounded flex h-10 w-10 items-center justify-center cursor-pointer" :class="[
         mode === 'force'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]'
     ]" title="Add Force Point" @click="() => setMode('force')">
       <span class="i-carbon:map-identify" />
     </button>
 
     <button class="rounded flex h-10 w-10 items-center justify-center cursor-pointer" :class="[
       forceType === 'fieldForce'
-        ? 'bg-[#e5e5e5] text-black'
-        : 'bg-white text-black hover:bg-[#f5f5f5] '
+        ? 'bg-[#e5e5e5]'
+        : 'bg-white hover:bg-[#f5f5f5]'
     ]" title="Add Field Force" @click="handleAddFieldForce">
       <div class="i-carbon:switch-layer-2"></div>
     </button>
@@ -58,7 +58,6 @@ const handleAddFieldForce = async () => {
       <img 
         src="/cc-hand.svg" 
         class="w-5 h-5" 
-        :class="mode === 'move' ? 'brightness-0 invert' : ''"
         alt="Move" 
       />
     </button>

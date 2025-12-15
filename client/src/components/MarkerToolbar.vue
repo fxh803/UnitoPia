@@ -277,11 +277,11 @@ const saveMarkers = async () => {
      <!-- 画笔大小调节按钮 - 仅在绘制/擦除模式下显示 -->
      <div v-if="mode === 'draw' || mode === 'erase'" class="relative brush-size-menu">
       <button
-        class="rounded flex h-7 w-7 items-center justify-center cursor-pointer relative"
+        class="rounded flex h-7 w-7 items-center justify-center cursor-pointer relative text-black"
         :class="[
           showBrushSizeMenu
-            ? 'bg-[var(--primary-color)] text-white'
-            : 'bg-white text-black hover:bg-[#f5f5f5]'
+            ? 'bg-[var(--primary-color)]'
+            : 'bg-white hover:bg-[#f5f5f5]'
         ]"
         title="Brush Size"
         @click="toggleBrushSizeMenu"
@@ -315,11 +315,11 @@ const saveMarkers = async () => {
     <div class="toolbar-divider" />
     <!-- 自由绘制按钮 -->
     <button
-      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
+      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer text-black"
       :class="[
         mode === 'draw'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]'
       ]"
       title="Free Draw"
       @click="() => setMode('draw')"
@@ -330,11 +330,11 @@ const saveMarkers = async () => {
     <!-- 形状绘制工具聚合按钮 -->
     <div class="relative draw-tool-menu">
       <button
-        class="rounded flex h-7 w-7 items-center justify-center cursor-pointer relative"
+        class="rounded flex h-7 w-7 items-center justify-center cursor-pointer relative text-black"
         :class="[
           (mode === 'rect' || mode === 'ellipse')
-            ? 'bg-[var(--primary-color)] text-white'
-            : 'bg-white text-black hover:bg-[#f5f5f5]'
+            ? 'bg-[var(--primary-color)]'
+            : 'bg-white hover:bg-[#f5f5f5]'
         ]"
         title="Shape Tools"
         @click="toggleDrawMenu"
@@ -386,18 +386,17 @@ const saveMarkers = async () => {
       <img
         src="/cc-hand.svg"
         class="w-4 h-4"
-        :class="mode === 'move' ? 'brightness-0 invert' : ''"
         alt="Move"
       />
     </button>
 
     <!-- 橡皮擦按钮 -->
     <button
-      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
+      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer text-black"
       :class="[
         mode === 'erase'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]'
       ]"
       title="Eraser"
       @click="() => setMode('erase')"

@@ -81,7 +81,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col bg-white overflow-x-auto">
+  <div class="h-full flex flex-col bg-[var(--primary-light-color)] overflow-x-auto">
     <!-- Marker 图案库 -->
     <div class="overflow-y-auto p-4">
       <!-- 垂直列表展示所有 markers -->

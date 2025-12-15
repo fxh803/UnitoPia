@@ -31,10 +31,10 @@ const switchTab = (tab: 'table' | 'mapping') => {
   <div class="h-full border-b border-gray-200 relative flex flex-col group">
     <!-- 工具栏 - 始终显示在顶部 -->
     <div 
-      class="flex justify-between items-center p-2 border-b border-gray-200 bg-gray-50 flex-shrink-0 shadow-sm z-10"
+      class="flex justify-between items-center p-2 h-8 bg-[var(--toolbar-bg-color)] flex-shrink-0 shadow-sm z-10"
     >
       <!-- 左侧：标题 -->
-      <span class="text-[14px] text-gray-600 font-bold">Data Table</span>
+      <span class="text-[14px] text-gray-700 font-bold">Data Table</span>
 
       <!-- 右侧：标签页切换和清除按钮 -->
       <div class="flex items-center gap-2">

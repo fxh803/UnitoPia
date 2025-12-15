@@ -13,11 +13,11 @@ const { clearAllBezierCurves } = bezierDrawingStore
 <template>
   <div class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow left-0 absolute z-10" style="top: 356px;">
     <button
-      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
+      class="rounded flex h-10 w-10 items-center justify-center cursor-pointer text-black"
       :class="[
         mode === 'bezier'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]'
       ]"
       title="Draw Bezier Curve"
       @click="() => setMode('bezier')"
@@ -38,7 +38,6 @@ const { clearAllBezierCurves } = bezierDrawingStore
       <img 
         src="/cc-hand.svg" 
         class="w-5 h-5" 
-        :class="mode === 'move' ? 'brightness-0 invert' : ''"
         alt="Move" 
       />
     </button>

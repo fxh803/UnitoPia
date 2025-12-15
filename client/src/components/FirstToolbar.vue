@@ -14,11 +14,11 @@ const {setSelectedMode} = selectedModeStore
   <!-- 一级工具栏：模式选择 -->
   <div v-show="!collaging&&!result_data.length>0" class="toolbar-container px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow left-0 absolute z-10" style="top: 150px;">
     <button
-      class="toolbar-btn rounded flex h-10 items-center cursor-pointer overflow-hidden transition-all"
+      class="toolbar-btn rounded flex h-10 items-center cursor-pointer overflow-hidden transition-all text-black"
       :class="[
         selectedMode === 'container'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]',
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]',
         collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
       @click="setSelectedMode('container')"
@@ -27,11 +27,11 @@ const {setSelectedMode} = selectedModeStore
       <span class="text-sm font-medium whitespace-nowrap">Container</span>
     </button>
     <button
-      class="toolbar-btn rounded flex h-10 items-center cursor-pointer overflow-hidden transition-all"
+      class="toolbar-btn rounded flex h-10 items-center cursor-pointer overflow-hidden transition-all text-black"
       :class="[
         selectedMode === 'emitter'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]',
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]',
         collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
       @click="setSelectedMode('emitter')"
@@ -40,11 +40,11 @@ const {setSelectedMode} = selectedModeStore
       <span class="text-sm font-medium whitespace-nowrap">Emitter</span>
     </button>
     <button
-      class="toolbar-btn rounded flex h-10 items-center cursor-pointer overflow-hidden transition-all"
+      class="toolbar-btn rounded flex h-10 items-center cursor-pointer overflow-hidden transition-all text-black"
       :class="[
         selectedMode === 'force'
-          ? 'bg-[var(--primary-color)] text-white'
-          : 'bg-white text-black hover:bg-[#f5f5f5]',
+          ? 'bg-[var(--primary-color)]'
+          : 'bg-white hover:bg-[#f5f5f5]',
         collaging ? 'opacity-50 cursor-not-allowed' : ''
       ]"
       @click="setSelectedMode('force')"

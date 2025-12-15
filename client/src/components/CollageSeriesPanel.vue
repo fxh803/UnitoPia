@@ -167,7 +167,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
   <div class="relative flex h-full">
     <!-- 面板内容 -->
     <aside
-      class="py-4 bg-white flex flex-col h-full items-center transition-all duration-300 shadow-left border-l border-gray-200 overflow-x-hidden relative"
+      class="py-4 bg-[var(--primary-light-color)] flex flex-col h-full items-center transition-all duration-300 shadow-left border-l border-gray-200 overflow-x-hidden relative"
       :class="isCollapsed ? 'w-13' : 'w-60'">
       <!-- 拼贴处理状态遮罩 -->
       <div v-if="collaging || result_data.length > 0"
@@ -182,7 +182,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
       </button>
 
       <!-- 标题 -->
-      <div  class="w-full h-22px mb-2 border-b border-gray-200 flex items-center justify-center">
+      <div  class="w-full h-22px mb-2 border-b border-gray-200 flex items-center justify-center bg-[var(--primary-light-color)]">
         <div v-if="!isCollapsed" class="text-[14px] text-gray-600 font-bold transform translate-y--5px">Visualization Gallery</div>
       </div>
 
