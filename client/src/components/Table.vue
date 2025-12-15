@@ -46,7 +46,7 @@ const switchTab = (tab: 'table' | 'mapping') => {
               'px-3 py-1 text-xs font-medium rounded transition-colors',
               activeTab === 'mapping' 
                 ? 'bg-blue-500 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-100'
+                : 'bg-[var(--primary-light-color)] text-gray-600 hover:bg-gray-100'
             ]"
           >
             Mapping
@@ -57,7 +57,7 @@ const switchTab = (tab: 'table' | 'mapping') => {
               'px-3 py-1 text-xs font-medium rounded transition-colors',
               activeTab === 'table' 
                 ? 'bg-blue-500 text-white' 
-                : 'bg-white text-gray-600 hover:bg-gray-100'
+                : 'bg-[var(--primary-light-color)] text-gray-600 hover:bg-gray-100'
             ]"
           >
             Table
