@@ -50,9 +50,9 @@ const canvasStore = useCanvasStore()
 const { mode } = storeToRefs(canvasModeStore)
 const { closePathConfirm } = storeToRefs(canvasStore)
 const { setMode } = canvasModeStore
-const { 
-  setDrawedObjectDataType, 
-  adjustLayer, 
+const {
+  setDrawedObjectDataType,
+  adjustLayer,
   removeObjectsByMarkerId,
   isDropOnEmitter,
   getBezierApproxLength,
@@ -207,9 +207,9 @@ watch(brushWidth, (val) => {
 // 监听路径闭合确认对话框和画笔大小面板状态，临时禁用绘制
 watch([() => closePathConfirm.value.show, isMainBrushSizePanelOpen], ([pathConfirmOpen, brushSizePanelOpen]) => {
   if (!canvas) return
-  
+
   const shouldStopDrawing = pathConfirmOpen || brushSizePanelOpen
-  
+
   if (shouldStopDrawing) {
     // 保存当前的绘制模式状态
     const wasDrawingMode = canvas.isDrawingMode
@@ -232,17 +232,17 @@ const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Delete' || e.key === 'Backspace') {
     // 如果焦点在输入框、文本域等可编辑元素上，不阻止默认行为，允许正常删除文本
     const target = e.target as HTMLElement
-    const isEditable = target.tagName === 'INPUT' || 
-                       target.tagName === 'TEXTAREA' || 
+    const isEditable = target.tagName === 'INPUT' ||
+                       target.tagName === 'TEXTAREA' ||
                        target.isContentEditable ||
                        target.closest('input') ||
                        target.closest('textarea') ||
                        target.closest('[contenteditable="true"]')
-    
+
     if (isEditable) {
       return // 允许在输入框中正常使用 backspace/delete
     }
-    
+
     e.preventDefault()
     objectActionsStore.deleteActiveObject()
   }
@@ -263,7 +263,7 @@ onMounted(async () => {
       width: canvasSize.value,
       height: canvasSize.value,
     })
-    
+
     const dpr = getDpr()
     const brush = new PencilBrush(canvas)
     brush.color = '#000'
@@ -281,14 +281,14 @@ onMounted(async () => {
     backgroundStore.setCanvas(() => canvas)
     canvasStore.setCanvas(() => canvas)
     dataScaleStore.setCanvas(() => canvas)
-    
+
     // 初始化空白幻灯片
     initializeEmptySlide()
     addCanvasEventListeners()
-    
+
     // 添加键盘事件监听
     document.addEventListener('keydown', handleKeyDown)
-    
+
     // 初始化时自动激活第一个工具栏的第一个按钮
     await nextTick()
     const initialMode = selectedMode.value
@@ -316,8 +316,17 @@ onBeforeUnmount(() => {
     <div ref="canvasAreaRef"
       class="p-2 pl-7 border-r border-[#e6e6e6] bg-[#f5f5f5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
       @dragover="handleDragOver" @drop="(e) => handleDrop(e, canvasEl)">
-      <!-- 一级工具栏：模式选择 - 放在头部 -->
-      <FirstToolbar />
+      <!-- 工具栏容器：垂直居中，包含所有工具栏 -->
+      <div class="absolute left-0 z-10 flex flex-col items-start gap-2" style="top: 50%; transform: translateY(-50%);">
+        <!-- 一级工具栏：模式选择 -->
+        <FirstToolbar />
+        <!-- Container工具栏：仅在container模式下显示 -->
+        <ContainerToolbar v-if="selectedMode === 'container'" />
+        <!-- Emitter工具栏：仅在emitter模式下显示 -->
+        <EmitterToolbar v-if="selectedMode === 'emitter'" />
+        <!-- Force工具栏：仅在force模式下显示 -->
+        <ForceToolbar v-if="selectedMode === 'force'" />
+      </div>
       <!-- 新增canvas-wrapper，包裹canvas和button -->
       <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
         <!-- 画布本体 -->
@@ -328,17 +337,11 @@ onBeforeUnmount(() => {
         <!-- Marker 悬浮信息面板 -->
         <hoverInfoPanel />
         <!-- 路径闭合确认对话框 -->
-        <ClosePathConfirm 
+        <ClosePathConfirm
           :confirm-state="canvasStore.closePathConfirm"
           :on-confirm="canvasStore.handleClosePathConfirm"
         />
       </div>
-      <!-- Container工具栏：仅在container模式下显示 -->
-      <ContainerToolbar v-if="selectedMode === 'container'" />
-      <!-- Emitter工具栏：仅在emitter模式下显示 -->
-      <EmitterToolbar v-if="selectedMode === 'emitter'" />
-      <!-- Force工具栏：仅在force模式下显示 -->
-      <ForceToolbar v-if="selectedMode === 'force'" />
     </div>
     <!-- 拼贴系列面板 - 移动到右侧 -->
     <CollageSeriesPanel />

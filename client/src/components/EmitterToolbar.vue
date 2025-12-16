@@ -3,7 +3,7 @@ import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useBezierDrawingStore } from '~/stores/bezierDrawing'
 import { storeToRefs } from 'pinia'
 
-const canvasModeStore = useCanvasModeStore() 
+const canvasModeStore = useCanvasModeStore()
 const bezierDrawingStore = useBezierDrawingStore()
 const { mode } = storeToRefs(canvasModeStore)
 const { setMode } = canvasModeStore
@@ -11,7 +11,7 @@ const { clearAllBezierCurves } = bezierDrawingStore
 </script>
 
 <template>
-  <div class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow left-0 absolute z-10" style="top: 356px;">
+  <div class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow">
     <button
       class="rounded flex h-10 w-10 items-center justify-center cursor-pointer text-black"
       :class="[
@@ -24,7 +24,7 @@ const { clearAllBezierCurves } = bezierDrawingStore
     >
     <div class="i-carbon:anchor"></div>
     </button>
-    
+
     <button
       class="rounded flex h-10 w-10 items-center justify-center cursor-pointer"
       :class="[
@@ -35,13 +35,13 @@ const { clearAllBezierCurves } = bezierDrawingStore
       title="Move"
       @click="() => setMode('move')"
     >
-      <img 
-        src="/cc-hand.svg" 
-        class="w-5 h-5" 
-        alt="Move" 
+      <img
+        src="/cc-hand.svg"
+        class="w-5 h-5"
+        alt="Move"
       />
     </button>
-    
+
     <button
       class="text-black rounded bg-white flex h-10 w-10 items-center justify-center hover:bg-[#f5f5f5] cursor-pointer"
       title="Clear All Bezier Curves"

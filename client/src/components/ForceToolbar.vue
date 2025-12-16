@@ -19,7 +19,7 @@ const handleAddFieldForce = async () => {
     } catch (error) {
       console.error('Failed to add field force:', error)
     }
-  }else{ 
+  }else{
     clearFieldForce()
   }
 
@@ -28,7 +28,7 @@ const handleAddFieldForce = async () => {
 
 <template>
   <div
-    class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow left-0 absolute z-10 text-black" style="top: 356px;">
+    class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow text-black">
     <button class="rounded flex h-10 w-10 items-center justify-center cursor-pointer" :class="[
         mode === 'force'
           ? 'bg-[var(--primary-color)]'
@@ -55,10 +55,10 @@ const handleAddFieldForce = async () => {
       title="Move"
       @click="() => setMode('move')"
     >
-      <img 
-        src="/cc-hand.svg" 
-        class="w-5 h-5" 
-        alt="Move" 
+      <img
+        src="/cc-hand.svg"
+        class="w-5 h-5"
+        alt="Move"
       />
     </button>
 

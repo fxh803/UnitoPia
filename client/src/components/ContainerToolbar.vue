@@ -5,7 +5,7 @@ import { storeToRefs } from 'pinia'
 import { FabricImage } from 'fabric'
 import { sendUploadContainerToServer } from '~/composables/server'
 import { useBrushSizeStore } from '~/stores/brushsize'
-const canvasModeStore = useCanvasModeStore() 
+const canvasModeStore = useCanvasModeStore()
 const { mode } = storeToRefs(canvasModeStore)
 const { setMode } = canvasModeStore
 
@@ -45,9 +45,9 @@ onMounted(() => {
       brushSizeStore.setMainBrushSizePanelOpen(false)
     }
   })
-}) 
+})
 
-const clearCanvas = () => { 
+const clearCanvas = () => {
     const canvasInstance = canvasModeStore.canvasRef?.()
     if (!canvasInstance) return
     // 复制一份对象数组，避免遍历时出错
@@ -55,11 +55,11 @@ const clearCanvas = () => {
     objects.forEach(obj => {
       if (obj.get('dataType') === 'container') {
         canvasInstance.remove(obj);
-      } 
+      }
     });
     canvasInstance.discardActiveObject();
     canvasInstance.renderAll();
-    // 背景色会自动保留，无需重新设置 
+    // 背景色会自动保留，无需重新设置
 }
 // 文件上传相关
 const fileInputRef = ref<HTMLInputElement>()
@@ -67,13 +67,13 @@ const fileInputRef = ref<HTMLInputElement>()
 const handleFileUpload = (event: Event) => {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
-  
+
   if (file && file.type === 'image/png') {
     // 创建文件读取器
     const reader = new FileReader()
     reader.onload = async (e) => {
-      const result = e.target?.result as string 
-      const processedImg = await sendUploadContainerToServer(result) 
+      const result = e.target?.result as string
+      const processedImg = await sendUploadContainerToServer(result)
       // 将图片添加到画布作为container对象
       addImageToCanvas(processedImg, file.name)
     }
@@ -81,26 +81,26 @@ const handleFileUpload = (event: Event) => {
   } else if (file) {
     alert('请选择PNG格式的图片文件')
   }
-  
+
   // 清空文件输入框，允许重复选择同一文件
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
 }
 
-const addImageToCanvas = (imageDataUrl: string, fileName: string) => { 
-  
+const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
+
   // 获取canvas实例
   const canvasInstance = canvasModeStore.canvasRef?.()
   if (!canvasInstance) {
     console.error('Canvas实例未找到')
     return
   }
-   
+
 
   // 使用fabric.js的Promise方式加载图片
-  FabricImage.fromURL(imageDataUrl).then((fabricImg) => { 
-    
+  FabricImage.fromURL(imageDataUrl).then((fabricImg) => {
+
     // 设置图片属性
     fabricImg.set({
       left: canvasInstance.width / 2,
@@ -111,32 +111,32 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
       evented: false,
       dataType: 'container'
     })
-    
+
     // 计算合适的缩放比例
     const canvasWidth = canvasInstance.width || 400
     const canvasHeight = canvasInstance.height || 400
     const maxWidth = canvasWidth * 0.8
     const maxHeight = canvasHeight * 0.8
-    
+
     const scaleX = maxWidth / fabricImg.width
     const scaleY = maxHeight / fabricImg.height
     const scale = Math.min(scaleX, scaleY, 1)
-    
+
     fabricImg.set({
       scaleX: scale,
       scaleY: scale
     })
 
     // 将图片添加到画布
-    canvasInstance.add(fabricImg) 
-    
+    canvasInstance.add(fabricImg)
+
     // 应用透明度规则
     selectedModeStore.handleModeSwitch('container')
-    
+
     // 重新渲染画布
     canvasInstance.renderAll()
-     
-    
+
+
   }).catch((error) => {
     console.error('图片加载失败:', error)
   })
@@ -149,7 +149,7 @@ const triggerFileUpload = () => {
 </script>
 
 <template>
-  <div class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow left-0 absolute z-10" style="top: 356px;">
+  <div class="px-2 py-4 border border-[#e6e6e6] rounded-tr-xl rounded-br-xl bg-white flex flex-col gap-3 shadow">
     <!-- 画笔大小调节按钮 - 仅在绘制/擦除模式下显示 -->
     <div v-if="mode === 'draw' || mode === 'erase'" class="relative brush-size-menu">
       <button
@@ -164,9 +164,9 @@ const triggerFileUpload = () => {
       >
       <div class="i-carbon:settings-adjust"></div>
       </button>
-      
+
       <!-- 展开面板 - 在按钮右侧显示 -->
-      <div 
+      <div
         v-if="showBrushSizeMenu"
         class="absolute left-full ml-2 top-0 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 min-w-[180px] brush-size-menu"
       >
@@ -207,10 +207,10 @@ const triggerFileUpload = () => {
       title="Move"
       @click="() => setMode('move')"
     >
-      <img 
-        src="/cc-hand.svg" 
-        class="w-5 h-5" 
-        alt="Move" 
+      <img
+        src="/cc-hand.svg"
+        class="w-5 h-5"
+        alt="Move"
       />
     </button>
     <button
@@ -242,9 +242,9 @@ const triggerFileUpload = () => {
         <!-- 右下角黑三角 -->
         <div class="absolute bottom-0 right-0 w-0 h-0 border-l-[5px] border-t-[5px] border-l-transparent border-t-black transform rotate-90"></div>
       </button>
-      
+
       <!-- 形状绘制工具上拉菜单 -->
-      <div 
+      <div
         v-if="showShapeMenu"
         class="absolute left-full top-0 ml-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px] shape-tool-menu"
       >
@@ -257,7 +257,7 @@ const triggerFileUpload = () => {
           <span class="i-carbon-circle-outline text-sm" />
           <span class="text-xs">ellipse</span>
         </button>
-        
+
         <!-- 矩形 -->
         <button
           class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-b-lg"
@@ -269,7 +269,7 @@ const triggerFileUpload = () => {
         </button>
       </div>
     </div>
-    
+
     <!-- PNG上传按钮 -->
     <button
       class="rounded flex h-10 w-10 items-center justify-center bg-white text-black hover:bg-[#f5f5f5] cursor-pointer"
@@ -278,7 +278,7 @@ const triggerFileUpload = () => {
     >
     <div class="i-carbon:upload"></div>
     </button>
-    
+
     <!-- 隐藏的文件输入框 -->
     <input
       ref="fileInputRef"
@@ -287,7 +287,7 @@ const triggerFileUpload = () => {
       class="hidden"
       @change="handleFileUpload"
     />
-    
+
     <button
       class="text-black rounded bg-white flex h-10 w-10 items-center justify-center hover:bg-[#f5f5f5] cursor-pointer"
       title="Clear Canvas"
@@ -296,7 +296,7 @@ const triggerFileUpload = () => {
       <span class="i-carbon-trash-can" />
     </button>
 
-    
+
     <div class="flex justify-center pt-2 border-t border-gray-200">
       <backgroundUploader />
     </div>
