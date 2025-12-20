@@ -11,12 +11,18 @@ export type ConditionOperator = '=' | '>' | '<'
 
 // 单个筛选条件
 export interface SingleFilter {
+  id?: string // filter 的唯一 ID，用作 cluster_id
   operator: ConditionOperator
   value: string
   markerId: string | null // 每个 filter 可以有自己的 marker
   data: TableData[] // 该 filter 筛选后的数据
   rows: number[] // 该 filter 筛选后的行索引
   isSelected?: boolean // 是否被选中
+  visualAttribute?: string | null // 要进行可视化的列名
+  encoding?: {
+    channel: 'width' | 'height' | 'size' | null
+    scale: number
+  } // 每个 filter 的 visual encoding 设置
 }
 
 // Column 筛选卡片接口

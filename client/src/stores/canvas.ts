@@ -11,8 +11,8 @@ import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 import { useAnimationStore } from '~/stores/animation'
 import { Group } from 'fabric'
 import paper from 'paper'
-import { handleMarkerDropCanvas, pharseData } from '~/composables/server'
-import { useTableStore } from '~/stores/table'
+import { handleMarkerDropCanvas } from '~/composables/server'
+import { useTableStore, type ColumnFilterCard } from '~/stores/table'
 import { useMarkerStore } from '~/stores/marker'
 import * as fabric from 'fabric'
 export const useCanvasStore = defineStore('canvas', () => {
@@ -446,20 +446,35 @@ export const useCanvasStore = defineStore('canvas', () => {
     return []
   }
 
-  async function addMarkers(markerIdList: string[], pos: Array<{ x: number, y: number }>) {
+  async function addMarkers(markerIdList: string[], pos: Array<{ x: number, y: number }>, clusterIdList: string[] = [], card: ColumnFilterCard | null = null) {
+    console.log('addMarkers', markerIdList, pos, clusterIdList, card)
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
 
     try {
-      // 使用 storeToRefs 解构 dataScaleStore 的响应式属性
-      const { columnMapping, widthScale, heightScale, sizeScale } = storeToRefs(dataScaleStore)
+      // 获取 table store 以访问 filter 信息
+      const tableStore = useTableStore()
 
       // 获取归一化参数
-      const { data, normalized, mappingChannel, defaultSize } = dataScaleStore.getNormalizationParams()
+      const { data, normalized, defaultSize } = dataScaleStore.getNormalizationParams(card)
 
       // 获取 marker store
       const markerStore = useMarkerStore()
       const markers = markerStore.markers
+
+      // 创建一个函数来根据 cluster_id 获取对应的 filter encoding
+      const getFilterEncoding = (clusterId: string) => {
+        if (!clusterId) return null
+        
+        // 遍历所有 card 的 filters，找到匹配的 filter
+        for (const card of tableStore.columnFilterCards) {
+          const filter = card.filters.find(f => f.id === clusterId)
+          if (filter && filter.encoding) {
+            return filter.encoding
+          }
+        }
+        return null
+      }
 
       for (let i = 0; i < pos.length; i++) {
         const p = pos[i]
@@ -469,17 +484,16 @@ export const useCanvasStore = defineStore('canvas', () => {
         const markerId = markerIdList[i]
         if (!markerId) continue
 
+        // 获取对应的 cluster_id
+        const clusterId = clusterIdList[i] || null
         const marker = markers.find(m => m.id === markerId)
-        if (!marker || !marker.jsonData) {
-          console.warn(`Marker not found or has no jsonData: ${markerId}`)
-          continue
-        }
-
         const objects = await fabric.util.enlivenObjects(marker.jsonData, 'fabric')
 
         if (objects && objects.length > 0) {
           const group = new Group(objects)
 
+          // 获取该 marker 对应的 filter encoding
+          const filterEncoding = clusterId ? getFilterEncoding(clusterId) : null
           // 先设置所有属性（包括dataType），然后再添加到画布
           group.set({
             left: currentDropX,
@@ -491,6 +505,7 @@ export const useCanvasStore = defineStore('canvas', () => {
             originX: 'center',
             originY: 'center',
             markerId: markerId,
+            clusterId: clusterId, // 设置 cluster_id
             data: data[i]
           })
 
@@ -504,21 +519,28 @@ export const useCanvasStore = defineStore('canvas', () => {
           const currentHeight = group.height || group.getScaledHeight()
           const normalizedValue = normalized[i]
           const currentSize = Math.max(currentWidth, currentHeight)
+          
+          // 使用 filter 的 encoding（每个 marker 都有对应的 filter encoding）
+          const channel: 'width' | 'height' | 'size' | null = filterEncoding?.channel ?? null
+          const scale = filterEncoding?.scale ?? 1
+          
           //一开始先按比例缩放
           let scaleX = defaultSize / currentSize
           let scaleY = defaultSize / currentSize
-          if (mappingChannel === 'width') {
+          
+          if (channel === 'width') {
             scaleX = normalizedValue / currentSize
-            scaleX *= widthScale.value
-          } else if (mappingChannel === 'height') {
+            scaleX *= scale
+          } else if (channel === 'height') {
             scaleY = normalizedValue / currentSize
-            scaleY *= heightScale.value
-          } else if (mappingChannel === 'size') {
+            scaleY *= scale
+          } else {
             scaleX = normalizedValue / currentSize
             scaleY = normalizedValue / currentSize
-            scaleX *= sizeScale.value
-            scaleY *= sizeScale.value
+            scaleX *= scale
+            scaleY *= scale
           }
+          
           group.set({
             scaleX: scaleX,
             scaleY: scaleY
@@ -539,22 +561,18 @@ export const useCanvasStore = defineStore('canvas', () => {
   }
 
   // 处理拖拽到emitter上的事件（统一使用marker列表）
-  function handleEmitterDrop(dropX: number, dropY: number, markerIdList: string[]) {
-    // 获取所有选中filter的数据
-    const allData = pharseData()
-
+  function handleEmitterDrop(dropX: number, dropY: number, markerIdList: string[], clusterIdList: string[], card: ColumnFilterCard | null = null) { 
     // 获取所有采样点（不分批，因为 getNormalizationParams 会对总数进行归一化计算）
-    const totalPoints = getEmitterSampledPoints(allData.length)
-
+    const totalPoints = getEmitterSampledPoints(markerIdList.length)
     // 添加markers（使用全部采样点）
-    addMarkers(markerIdList, totalPoints)
+    addMarkers(markerIdList, totalPoints, clusterIdList, card)
   }
 
-  async function handleMarkerDrop(dropX: number, dropY: number, markerIdList: string[]) {
+  async function handleMarkerDrop(dropX: number, dropY: number, markerIdList: string[], clusterIdList: string[], card: ColumnFilterCard | null = null) {
     // 对每个marker分别添加
-    const result = await handleMarkerDropCanvas([dropX, dropY])
+    const result = await handleMarkerDropCanvas([dropX, dropY], card)
     const pos = result.init_pos
-    addMarkers(markerIdList, pos)
+    addMarkers(markerIdList, pos, clusterIdList, card)
   }
 
   // 处理拖拽预览图到主画布
@@ -570,21 +588,29 @@ export const useCanvasStore = defineStore('canvas', () => {
     const cardId = e.dataTransfer?.getData('text/plain')
     if (!cardId) return
 
-    //把cardid对应的card 的选中的markerid进行数量倍数处理
+    // 获取 filter id 列表
+    const filterIdsJson = e.dataTransfer?.getData('application/json')
+    const filterIds: string[] = filterIdsJson ? JSON.parse(filterIdsJson) : []
+
     const tableStore = useTableStore()
-    tableStore.currentCardId = cardId
     const card = tableStore.columnFilterCards.find(c => c.id === cardId)
+    if (!card || filterIds.length === 0) return
+
     const markerIdList: string[] = []
-    if (card) {
-      const selectedMarkerIds = card.filters.filter(filter => filter.isSelected).map(filter => filter.markerId)
-      const selectedMarkerIdsCount = card.filters.filter(filter => filter.isSelected).map(filter => filter.rows.length)
-      for (let i = 0; i < selectedMarkerIds.length; i++) {
-        for (let j = 0; j < selectedMarkerIdsCount[i]; j++) {
-          markerIdList.push(selectedMarkerIds[i])
-        }
+    const clusterIdList: string[] = []
+    
+    // 根据 filter id 列表构建 markerIdList 和 clusterIdList
+    for (const filterId of filterIds) {
+      const filter = card.filters.find(f => f.id === filterId)
+      if (!filter?.markerId) continue
+      
+      // 根据 filter 的 rows 数量，为每个数据点添加对应的 cluster_id 和 markerId
+      for (let j = 0; j < filter.rows.length; j++) {
+        markerIdList.push(filter.markerId)
+        clusterIdList.push(filterId)
       }
-      console.log(markerIdList)
     }
+
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
 
@@ -595,9 +621,9 @@ export const useCanvasStore = defineStore('canvas', () => {
 
     // 统一使用列表格式处理
     if (isDropOnEmitter(dropX, dropY)) {
-      handleEmitterDrop(dropX, dropY, markerIdList)
+      handleEmitterDrop(dropX, dropY, markerIdList, clusterIdList, card)
     } else {
-      handleMarkerDrop(dropX, dropY, markerIdList)
+      handleMarkerDrop(dropX, dropY, markerIdList, clusterIdList, card)
     }
   }
 

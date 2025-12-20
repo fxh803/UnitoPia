@@ -2,7 +2,7 @@ import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { Canvas, FabricImage } from 'fabric'
 import * as fabric from 'fabric'
 import { storeToRefs } from 'pinia'
-import { useTableStore } from '~/stores/table'
+import { useTableStore, type ColumnFilterCard } from '~/stores/table'
 import { useAnimationStore } from '~/stores/animation'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useMarkerStore } from '~/stores/marker'
@@ -536,9 +536,7 @@ export async function sendUploadContainerToServer(stringBase64: string) {
   }
   return ''
 }
-export function pharseData() {
-  const tableStore = useTableStore()
-  const card = tableStore.columnFilterCards.find(c => c.id === tableStore.currentCardId)
+export function pharseData(card: ColumnFilterCard | null) {
   const combinedData: any[] = []
 
   if (!card) {
@@ -555,13 +553,13 @@ export function pharseData() {
   // 返回合并后的数据
   return combinedData
 }
-export async function handleMarkerDropCanvas(pos: [number,number]) {
+export async function handleMarkerDropCanvas(pos: [number,number], card: ColumnFilterCard | null = null) {
   const collageSeriesStore = useCollageSeriesStore()
   const canvas = collageSeriesStore.canvasRef?.()
   const container = processContainer(canvas)
 
 
-  const data = pharseData()
+  const data = pharseData(card)
   const response = await fetch(`${ip}/markerDropApi`, {
     method: 'POST',
     headers: {

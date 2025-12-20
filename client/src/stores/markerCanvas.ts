@@ -148,7 +148,6 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     }
 
     const pathData = path.path
-    console.log(pathData)
     let startPoint: { x: number; y: number } | null = null
     let endPoint: { x: number; y: number } | null = null
 

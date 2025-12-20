@@ -15,6 +15,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             preview: string,
             dataTypeArray: any[],
             markerIdArray: any[],
+            clusterIdArray: any[],
             forceTypeArray: any[],
             dataArray: any[],
             // 每个 slide 的个性化设置
@@ -84,6 +85,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     preview,
                     dataTypeArray: [],
                     markerIdArray: [],
+                    clusterIdArray: [],
                     forceTypeArray: [],
                     dataArray: [],
                     // 每个 slide 的个性化设置
@@ -134,18 +136,20 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             }
         })
 
-        // 保存所有对象的 dataType、markerId、forceType 和 data
+        // 保存所有对象的 dataType、markerId、clusterId、forceType 和 data
         const objects = canvasInstance.getObjects()
         const dataTypeArray = objects.map((obj: any) => obj.get('dataType'))
         const markerIdArray = objects.map((obj: any) => obj.get('markerId'))
+        const clusterIdArray = objects.map((obj: any) => obj.get('clusterId'))
         const forceTypeArray = objects.map((obj: any) => obj.get('forceType'))
         const dataArray = objects.map((obj: any) => obj.get('data'))
-        // console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
+        // console.log(dataTypeArray, markerIdArray, clusterIdArray, forceTypeArray, dataArray)
 
         currentSlide.json = json
         currentSlide.preview = preview
         currentSlide.dataTypeArray = dataTypeArray
         currentSlide.markerIdArray = markerIdArray
+        currentSlide.clusterIdArray = clusterIdArray
         currentSlide.forceTypeArray = forceTypeArray
         currentSlide.dataArray = dataArray
 
@@ -318,6 +322,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         let preview: string
         let dataTypeArray: any[] = []
         let markerIdArray: any[] = []
+        let clusterIdArray: any[] = []
         let forceTypeArray: any[] = []
         let dataArray: any[] = []
 
@@ -358,9 +363,10 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 // 更新JSON数据
                 json = JSON.stringify(slideData)
 
-                // 更新四个数组
+                // 更新五个数组
                 dataTypeArray.unshift('background')
                 markerIdArray.unshift(null)
+                clusterIdArray.unshift(null)
                 forceTypeArray.unshift(null)
                 dataArray.unshift(null)
 
@@ -397,6 +403,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             preview,
             dataTypeArray,
             markerIdArray,
+            clusterIdArray,
             forceTypeArray,
             dataArray,
             // 初始化个性化设置默认值
@@ -447,6 +454,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const jsonObj = typeof json === 'string' ? JSON.parse(json) : json
         const dataTypeArray = currentOverview.collageSeries[idx].dataTypeArray
         const markerIdArray = currentOverview.collageSeries[idx].markerIdArray || []
+        const clusterIdArray = currentOverview.collageSeries[idx].clusterIdArray || []
         const forceTypeArray = currentOverview.collageSeries[idx].forceTypeArray || []
         const dataArray = currentOverview.collageSeries[idx].dataArray || []
         // 清空当前画布
@@ -458,8 +466,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     canvasInstance.backgroundColor = '#fffef8'
                     canvasInstance.renderAll()
                     // 恢复自定义属性
-                    // console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
-                    restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, dataArray)
+                    // console.log(dataTypeArray, markerIdArray, clusterIdArray, forceTypeArray, dataArray)
+                    restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, clusterIdArray, forceTypeArray, dataArray)
                     // updateCurrentSlide()
 
                     stopListen.value = false
@@ -499,6 +507,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             preview: originalSlide.preview,
             dataTypeArray: [...originalSlide.dataTypeArray],
             markerIdArray: [...originalSlide.markerIdArray],
+            clusterIdArray: [...originalSlide.clusterIdArray],
             forceTypeArray: [...originalSlide.forceTypeArray],
             dataArray: [...(originalSlide.dataArray || [])],
             // 复制个性化设置
@@ -550,7 +559,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
 
     // 恢复自定义属性
-    function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any, markerIdArray: any[] = [], forceTypeArray: any[] = [], dataArray: any[] = []) {
+    function restoreCustomProperties(canvasInstance: Canvas, dataTypeArray: any, markerIdArray: any[] = [], clusterIdArray: any[] = [], forceTypeArray: any[] = [], dataArray: any[] = []) {
         const objects = canvasInstance.getObjects()
         // 遍历画布对象和JSON对象，恢复自定义属性
         objects.forEach((obj, index) => {
@@ -569,6 +578,9 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             }
             if (markerIdArray[index]) {
                 obj.set('markerId', markerIdArray[index])
+            }
+            if (clusterIdArray[index]) {
+                obj.set('clusterId', clusterIdArray[index])
             }
             if (forceTypeArray[index]) {
                 obj.set('forceType', forceTypeArray[index])
@@ -627,18 +639,20 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 // 更新slide的JSON数据
                 currentOverview.collageSeries[index].json = JSON.stringify(slideData)
 
-                // 更新四个数组，确保数据一致性
+                // 更新五个数组，确保数据一致性
                 if (existingBackgroundIndex !== -1) {
                     // 如果存在背景对象，更新对应位置的数组数据
                     slide.dataTypeArray[existingBackgroundIndex] = 'background'
-                    // markerId、forceType和data保持为null，因为背景对象没有这些属性
+                    // markerId、clusterId、forceType和data保持为null，因为背景对象没有这些属性
                     slide.markerIdArray[existingBackgroundIndex] = null
+                    slide.clusterIdArray[existingBackgroundIndex] = null
                     slide.forceTypeArray[existingBackgroundIndex] = null
                     slide.dataArray[existingBackgroundIndex] = null
                 } else {
                     // 如果不存在背景对象，在数组开头添加对应的数据
                     slide.dataTypeArray.unshift('background')
                     slide.markerIdArray.unshift(null)
+                    slide.clusterIdArray.unshift(null)
                     slide.forceTypeArray.unshift(null)
                     slide.dataArray.unshift(null)
                 }
@@ -687,6 +701,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                         // 从相关数组中移除对应的数据
                         slide.dataTypeArray.splice(backgroundIndex, 1)
                         slide.markerIdArray.splice(backgroundIndex, 1)
+                        slide.clusterIdArray.splice(backgroundIndex, 1)
                         slide.forceTypeArray.splice(backgroundIndex, 1)
                         slide.dataArray.splice(backgroundIndex, 1)
 
@@ -768,6 +783,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     preview,
                     dataTypeArray: [],
                     markerIdArray: [],
+                    clusterIdArray: [],
                     forceTypeArray: [],
                     dataArray: []
                 }]

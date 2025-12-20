@@ -1,23 +1,11 @@
 import { defineStore } from 'pinia'
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import type { Canvas } from 'fabric'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
-import { pharseData } from '~/composables/server'
+import { useTableStore, type ColumnFilterCard } from '~/stores/table'
 
 export const useDataScaleStore = defineStore('dataScale', () => {
-  // 宽度、高度和大小的缩放基数
-  const widthScale = ref(1)
-  const heightScale = ref(1)
-  const sizeScale = ref(1)
-  const prevWidthScale = ref(1)
-  const prevHeightScale = ref(1)
-  const prevSizeScale = ref(1)
-
-  // 列到通道的映射关系：由于 width、height、size 三者互斥，只需要存储一个键值对
-  const columnMapping = ref<{ column: string | null; channel: 'width' | 'height' | 'size' | null }>({
-    column: null,
-    channel: null
-  })
+ 
 
   const canvasRef = ref<(() => Canvas | null) | null>(null)
   const collageSeriesStore = useCollageSeriesStore()
@@ -26,187 +14,39 @@ export const useDataScaleStore = defineStore('dataScale', () => {
   function setCanvas(canvas: () => Canvas | null) {
     canvasRef.value = canvas
   }
-
-  // 更新所有 marker 的缩放
-  function updateAllMarkersScale() {
-    const canvas = canvasRef.value?.()
-    if (!canvas) return
-
-    const widthRatio = widthScale.value / prevWidthScale.value
-    const heightRatio = heightScale.value / prevHeightScale.value
-    const sizeRatio = sizeScale.value / prevSizeScale.value
-
-    const objects = canvas.getObjects()
-    objects.forEach((obj: any) => {
-      if (obj.get('dataType') === 'marker') {
-        const currentScaleX = obj.get('scaleX') || 1
-        const currentScaleY = obj.get('scaleY') || 1
-        const baseWidth = obj.width || 0
-        const baseHeight = obj.height || 0
-
-        let newScaleX = currentScaleX
-        let newScaleY = currentScaleY
-
-        // 根据当前映射通道状态应用不同的缩放逻辑
-        if (columnMapping.value.channel === 'size') {
-          // 如果是 size 通道，x 和 y 都乘以 sizeRatio
-          newScaleX = currentScaleX * sizeRatio
-          newScaleY = currentScaleY * sizeRatio
-        } else if (columnMapping.value.channel === 'width') {
-          // 如果是 width 通道，只乘 widthRatio
-          newScaleX = currentScaleX * widthRatio
-        } else if (columnMapping.value.channel === 'height') {
-          // 如果是 height 通道，只乘 heightRatio
-          newScaleY = currentScaleY * heightRatio
-        }
-
-        obj.set({
-          scaleX: newScaleX,
-          scaleY: newScaleY
-        })
-
-      }
-    })
-
-    canvas.renderAll()
-
-    // 更新旧值
-    prevWidthScale.value = widthScale.value
-    prevHeightScale.value = heightScale.value
-    prevSizeScale.value = sizeScale.value
-
-    // 立即保存当前幻灯片，确保 slide.json 是最新的
-    collageSeriesStore.updateCurrentSlide()
-  }
-
-  function changeMappingChannel() {
-    const canvas = canvasRef.value?.()
-    const objects = canvas.getObjects()
-    objects.forEach((obj: any, i) => {
-      if (obj.get('dataType') === 'marker') {
-        // 获取归一化参数
-        const { normalized, mappingChannel, defaultSize } = getNormalizationParams()
-        console.log(normalized, mappingChannel, defaultSize)
-        const currentWidth = obj.width || obj.getScaledWidth()
-        const currentHeight = obj.height || obj.getScaledHeight()
-        const normalizedValue = normalized[i - 1]
-        const currentSize = Math.max(currentWidth || 1, currentHeight || 1)
-
-        // 默认先根据 defaultSize 等比例缩放
-        let scaleX = defaultSize / currentSize
-        let scaleY = defaultSize / currentSize
-
-        if (mappingChannel === 'width') {
-          scaleX = normalizedValue / currentSize
-          scaleX *= widthScale.value
-        } else if (mappingChannel === 'height') {
-          scaleY = normalizedValue / currentSize
-          scaleY *= heightScale.value
-        } else {
-          scaleX = normalizedValue / currentSize
-          scaleY = normalizedValue / currentSize
-          scaleX *= sizeScale.value
-          scaleY *= sizeScale.value
-        }
-
-        obj.set({
-          scaleX,
-          scaleY
-        })
-
-      }
-    })
-    canvas.renderAll()
-  }
-  // 监听缩放系数变化
-  watch([widthScale, heightScale, sizeScale], () => {
-    updateAllMarkersScale()
-  })
-  watch(() => columnMapping.value.channel, () => {
-    changeMappingChannel()
-  })
-  watch(()=>columnMapping.value.column, (newColumn, oldColumn) => {
-    // 如果切换了列（从一列切换到另一列，或从有列切换到无列），删除所有 marker
-    // 只有在之前有列映射，且新列与旧列不同时才删除
-    if (oldColumn !== null && oldColumn !== undefined && newColumn !== oldColumn) {
-      removeAllMarkers()
-    }
-  })
-
-  // 设置宽度缩放基数
-  function setWidthScale(scale: number) {
-    widthScale.value = scale
-  }
-
-  // 设置高度缩放基数
-  function setHeightScale(scale: number) {
-    heightScale.value = scale
-  }
-
-  // 设置大小缩放基数
-  function setSizeScale(scale: number) {
-    sizeScale.value = scale
-  }
-
-  // 删除画布上所有 marker 对象
-  function removeAllMarkers() {
-    const canvas = canvasRef.value?.()
-    if (!canvas) return
-
-    const objects = canvas.getObjects().concat()
-    objects.forEach((obj: any) => {
-      if (obj.get('dataType') === 'marker') {
-        canvas.remove(obj)
-      }
-    })
-    canvas.discardActiveObject()
-    canvas.renderAll()
-  }
-
-  // 设置列的映射通道
-  function setColumnMapping(columnName: string, channel: 'width' | 'height' | 'size' | null) {
-
-    // 设置新的映射（由于三者互斥，直接覆盖即可）
-    columnMapping.value = { column: columnName, channel }
-  }
-
-  // 重置缩放基数
-  function resetScales() {
-    widthScale.value = 1
-    heightScale.value = 1
-    sizeScale.value = 1
-    prevWidthScale.value = 1
-    prevHeightScale.value = 1
-    prevSizeScale.value = 1
-  }
+  
   // 计算归一化参数和归一化函数
-  function getNormalizationParams() {
-    const data = pharseData()
-
-    // 获取映射的列名和通道
-    const mappedColumn = columnMapping.value.column
-    const mappedChannel = columnMapping.value.channel
-
-    // 定义归一化范围（用于宽模式下的高和高模式下的宽）
+  // 根据每个 filter 的 visualAttribute 提取对应的数据值
+  function getNormalizationParams(card: ColumnFilterCard | null) {
+    // 定义归一化范围
     const minDisplaySize = 20  // 最小显示尺寸
     const maxDisplaySize = 70  // 最大显示尺寸
     const defaultSize = 45  // 默认尺寸
 
-    // 只用一个列表记录选中列的数据（包括非数值列全1的处理后的数据）
+    // 提取所有选中 filter 的数据和对应的列值
+    const data: any[] = []
     const columnValues: number[] = []
-
-    data.forEach((row: any) => {
-      // 如果 mappingChannel 为 null，或者没有 mappedColumn，或者 row[mappedColumn] 为 undefined，都使用 1
-      if (mappedChannel && mappedColumn && row[mappedColumn] !== undefined) {
-        const value = parseFloat(row[mappedColumn])
-        // 如果是非数值列，视为 1
-        const numValue = !isNaN(value) && value > 0 ? value : 1
-        columnValues.push(numValue)
-      } else {
-        // 如果没有映射通道或映射列，默认使用 1
-        columnValues.push(1)
+    
+    if (card) {
+      for (const filter of card.filters) {
+        if (filter.isSelected && filter.data && filter.data.length > 0) {
+          const visualAttribute = filter.visualAttribute
+          
+          for (const row of filter.data) {
+            data.push(row)
+            
+            // 提取 visualAttribute 对应的值
+            if (visualAttribute && row[visualAttribute] !== undefined) {
+              const value = parseFloat(row[visualAttribute])
+              const numValue = !isNaN(value) && value > 0 ? value : 1
+              columnValues.push(numValue)
+            } else {
+              columnValues.push(1)
+            }
+          }
+        }
       }
-    })
+    }
 
     // 计算归一化参数
     const minValue = columnValues.length > 0 ? Math.min(...columnValues) : 1
@@ -214,7 +54,7 @@ export const useDataScaleStore = defineStore('dataScale', () => {
 
     // 归一化函数：将原始值映射到 [minDisplaySize, maxDisplaySize] 范围
     const normalize = (value: number, min: number, max: number): number => {
-      if (max === min) return (minDisplaySize + maxDisplaySize) / 2  // 如果所有值相同，返回中间值
+      if (max === min) return (minDisplaySize + maxDisplaySize) / 2
       return minDisplaySize + ((value - min) / (max - min)) * (maxDisplaySize - minDisplaySize)
     }
 
@@ -226,27 +66,148 @@ export const useDataScaleStore = defineStore('dataScale', () => {
     return {
       data,
       normalized,
-      mappingChannel: mappedChannel,
       defaultSize
     }
   }
 
 
-  return {
-    widthScale,
-    heightScale,
-    sizeScale,
-    columnMapping,
-    setCanvas,
-    setWidthScale,
-    setHeightScale,
-    setSizeScale,
-    setColumnMapping,
-    resetScales,
-    updateAllMarkersScale,
-    changeMappingChannel,
-    getNormalizationParams
+  // 更新特定 filter 的 marker 尺寸
+  function updateFilterMarkersScale(filterId: string) {
+    const canvas = canvasRef.value?.()
+    if (!canvas) return
 
+    const tableStore = useTableStore()
+    
+    // 找到对应的 filter 和 card
+    let targetFilter: any = null
+    let targetCard: ColumnFilterCard | null = null
+    
+    for (const card of tableStore.columnFilterCards) {
+      const filter = card.filters.find(f => f.id === filterId)
+      if (filter) {
+        targetFilter = filter
+        targetCard = card
+        break
+      }
+    }
+    
+    if (!targetFilter || !targetCard || !targetFilter.encoding || !targetFilter.data || targetFilter.data.length === 0) {
+      return
+    }
+
+    const encoding = targetFilter.encoding
+    const channel = encoding.channel
+    const scale = encoding.scale || 1
+    
+    if (!channel) {
+      // 如果没有 channel，使用默认尺寸
+      const defaultSize = 45
+      const objects = canvas.getObjects()
+      objects.forEach((obj: any) => {
+        if (obj.get('dataType') === 'marker' && obj.get('clusterId') === filterId) {
+          const currentWidth = obj.width || obj.getScaledWidth()
+          const currentHeight = obj.height || obj.getScaledHeight()
+          const currentSize = Math.max(currentWidth, currentHeight)
+          const newScale = defaultSize / currentSize
+          obj.set({
+            scaleX: newScale,
+            scaleY: newScale
+          })
+        }
+      })
+      canvas.renderAll()
+      collageSeriesStore.updateCurrentSlide()
+      return
+    }
+
+    // 计算该 filter 的 normalized 值
+    const minDisplaySize = 20
+    const maxDisplaySize = 70
+    const defaultSize = 45
+    
+    const visualAttribute = targetFilter.visualAttribute
+    const columnValues: number[] = []
+    
+    for (const row of targetFilter.data) {
+      if (visualAttribute && row[visualAttribute] !== undefined) {
+        const value = parseFloat(row[visualAttribute])
+        const numValue = !isNaN(value) && value > 0 ? value : 1
+        columnValues.push(numValue)
+      } else {
+        columnValues.push(1)
+      }
+    }
+    
+    const minValue = columnValues.length > 0 ? Math.min(...columnValues) : 1
+    const maxValue = columnValues.length > 0 ? Math.max(...columnValues) : 1
+    
+    const normalize = (value: number, min: number, max: number): number => {
+      if (max === min) return (minDisplaySize + maxDisplaySize) / 2
+      return minDisplaySize + ((value - min) / (max - min)) * (maxDisplaySize - minDisplaySize)
+    }
+    
+    const normalized = columnValues.map((value: number) => {
+      return normalize(value, minValue, maxValue)
+    })
+
+    // 更新画布上所有对应 filterId 的 marker
+    const objects = canvas.getObjects()
+    let dataIndex = 0
+    
+    objects.forEach((obj: any) => {
+      if (obj.get('dataType') === 'marker' && obj.get('clusterId') === filterId) {
+        const markerData = obj.get('data')
+        // 找到 marker 在 filter.data 中的索引
+        const indexInFilterData = targetFilter.data.findIndex((row: any) => {
+          // 通过比较数据行来找到对应的索引
+          return JSON.stringify(row) === JSON.stringify(markerData)
+        })
+        
+        if (indexInFilterData >= 0 && indexInFilterData < normalized.length) {
+          const normalizedValue = normalized[indexInFilterData]
+          // 获取对象的原始尺寸（未缩放前的尺寸）
+          const currentScaleX = obj.get('scaleX') || 1
+          const currentScaleY = obj.get('scaleY') || 1
+          const scaledWidth = obj.getScaledWidth()
+          const scaledHeight = obj.getScaledHeight()
+          const originalWidth = scaledWidth / currentScaleX
+          const originalHeight = scaledHeight / currentScaleY
+          const currentSize = Math.max(originalWidth, originalHeight)
+          
+          let scaleX = defaultSize / currentSize
+          let scaleY = defaultSize / currentSize
+          
+          if (channel === 'width') {
+            scaleX = normalizedValue / currentSize
+            scaleX *= scale
+          } else if (channel === 'height') {
+            scaleY = normalizedValue / currentSize
+            scaleY *= scale
+          } else if (channel === 'size') {
+            scaleX = normalizedValue / currentSize
+            scaleY = normalizedValue / currentSize
+            scaleX *= scale
+            scaleY *= scale
+          }
+          
+          obj.set({
+            scaleX: scaleX,
+            scaleY: scaleY
+          })
+          obj.setCoords()
+        }
+        dataIndex++
+      }
+    })
+
+    canvas.renderAll()
+    collageSeriesStore.updateCurrentSlide()
+  }
+
+  return { 
+    setCanvas, 
+    getNormalizationParams,
+    updateFilterMarkersScale
   }
 })
 

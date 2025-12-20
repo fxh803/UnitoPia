@@ -10,8 +10,6 @@ const markerStore = useMarkerStore()
 const dataScaleStore = useDataScaleStore()
 const { tableColumns, tableData, columnFilterCards } = storeToRefs(tableStore)
 const { markers } = storeToRefs(markerStore)
-const { columnMapping, widthScale, heightScale, sizeScale } = storeToRefs(dataScaleStore)
-const { setColumnMapping, setWidthScale, setHeightScale, setSizeScale } = dataScaleStore
 
 // 生成唯一 ID
 const generateId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
@@ -21,10 +19,6 @@ const isDraggingFilter = ref(false)
 const dragImageElement = ref<HTMLElement | null>(null)
 const isDraggingOverDropZone = ref(false)//从列名拖拽到卡片悬浮高亮
 const isDraggingOverMarkerDropZone = ref<Record<string, boolean>>({}) //marker悬浮高亮
-
-// 本地存储 slider 的值（用于实时显示，不触发 store 更新）
-const localScaleValue = ref<number | null>(null)
-
 
 // 工具函数：获取卡片
 const getCard = (cardId: string) => columnFilterCards.value.find(c => c.id === cardId) || null
@@ -70,23 +64,6 @@ const isOutsideRect = (e: DragEvent, element: HTMLElement): boolean => {
   const rect = element.getBoundingClientRect()
   const { clientX: x, clientY: y } = e
   return x < rect.left || x > rect.right || y < rect.top || y > rect.bottom
-}
-
-// 计算属性：获取当前 scale 值
-const getCurrentScale = (channel: string | null) => {
-  // 如果有本地值（拖动中），优先返回本地值
-  if (localScaleValue.value !== null) return localScaleValue.value
-  if (channel === 'width') return widthScale.value
-  if (channel === 'height') return heightScale.value
-  if (channel === 'size') return sizeScale.value
-  return 1
-}
-
-// 计算属性：设置当前 scale 值
-const setCurrentScale = (channel: string | null, value: number) => {
-  if (channel === 'width') setWidthScale(value)
-  else if (channel === 'height') setHeightScale(value)
-  else if (channel === 'size') setSizeScale(value)
 }
 
 // 判断列是否为数值型
@@ -221,7 +198,16 @@ const handleDrop = (e: DragEvent, cardId?: string) => {
   columnFilterCards.value.push({
     id: generateId('card'),
     column,
-    filters: [{ operator: '=', value: '', markerId: null, data: [], rows: [] }]
+    filters: [{ 
+      id: generateId('filter'),
+      operator: '=', 
+      value: '', 
+      markerId: null, 
+      data: [], 
+      rows: [],
+      visualAttribute: null,
+      encoding: { channel: null, scale: 1 }
+    }]
   })
 }
 
@@ -242,7 +228,24 @@ const handleDragLeave = (e: DragEvent) => {
 
 // 添加筛选条件到卡片
 const addFilterToCard = (cardId: string) => {
-  getCard(cardId)?.filters.push({ operator: '=', value: '', markerId: null, data: [], rows: [] })
+  getCard(cardId)?.filters.push({ 
+    id: generateId('filter'),
+    operator: '=', 
+    value: '', 
+    markerId: null, 
+    data: [], 
+    rows: [],
+    visualAttribute: null,
+    encoding: { channel: null, scale: 1 }
+  })
+}
+
+// 删除筛选条件
+const removeFilterFromCard = (cardId: string, filterIndex: number) => {
+  const card = getCard(cardId)
+  if (card && card.filters.length > 1) {
+    card.filters.splice(filterIndex, 1)
+  }
 }
 
 // 更新筛选条件
@@ -252,6 +255,23 @@ const updateFilter = (cardId: string, filterIndex: number, updates: Partial<Sing
   if (filter) {
     Object.assign(filter, updates)
     updateFilterData(card, filter)
+  }
+}
+
+// 更新筛选条件的 encoding
+const updateFilterEncoding = (cardId: string, filterIndex: number, updates: Partial<{ channel: 'width' | 'height' | 'size' | null, scale: number }>) => {
+  const card = getCard(cardId)
+  const filter = card?.filters[filterIndex]
+  if (filter) {
+    if (!filter.encoding) {
+      filter.encoding = { channel: null, scale: 1 }
+    }
+    Object.assign(filter.encoding, updates)
+    
+    // 如果更新了 scale 或 channel，更新画布上对应的 marker 尺寸
+    if (filter.id && (updates.scale !== undefined || updates.channel !== undefined)) {
+      dataScaleStore.updateFilterMarkersScale(filter.id)
+    }
   }
 }
 
@@ -330,6 +350,10 @@ const handleCardDragStart = (cardId: string, e: DragEvent) => {
 
   // 传递拖动的是哪个card
   e.dataTransfer.setData('text/plain', cardId)
+  
+  // 只传递选中的 filter id 列表
+  const filterIds = selected.map(s => s.filter.id)
+  e.dataTransfer.setData('application/json', JSON.stringify(filterIds))
 
   // 使用第一个选中 filter 的 marker 作为拖拽图像
   const firstMarker = markers.value.find(m => m.id === selected[0].markerId)
@@ -347,6 +371,26 @@ const handleFilterDragEnd = () => {
   cleanupDragImage()
 }
 
+// 获取卡片样式类
+const getCardClasses = (cardId: string) => {
+  const hasSelected = getSelectedFilters(cardId).length > 0
+  return [
+    'rounded-lg bg-white overflow-hidden transition-all border',
+    hasSelected ? 'cursor-move border-gray-200 hover:border-blue-400' : 'border-gray-200',
+    isDraggingFilter.value && hasSelected ? 'border-blue-400 bg-blue-50' : ''
+  ]
+}
+
+// 获取 filter 样式类
+const getFilterClasses = (cardId: string, filterIndex: number) => {
+  return [
+    'space-y-3 rounded-lg transition-all p-2 relative group',
+    isFilterSelected(cardId, filterIndex)
+      ? 'bg-blue-50 border-2 border-blue-300'
+      : 'bg-gray-50/50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+  ]
+}
+
 onBeforeUnmount(() => {
   cleanupDragImage()
 })
@@ -357,12 +401,8 @@ onBeforeUnmount(() => {
     <!-- 左侧：列名列表 -->
     <div class="w-38 border-r border-gray-200 bg-[var(--primary-light-color)] flex flex-col">
       <div class="p-3 border-b border-gray-200">
-        <p v-if="tableStore.fileName" class="text-sm font-bold text-gray-700
-        ">
-          {{ tableStore.fileName }}
-        </p>
+        <p v-if="tableStore.fileName" class="text-sm font-bold text-gray-700">{{ tableStore.fileName }}</p>
         <h3 class="text-xs text-gray-500 mt-1 truncate">Attributes</h3>
-        
       </div>
       <div class="flex-1 overflow-y-auto p-2">
         <div v-if="tableColumns.length === 0" class="text-center py-8 text-gray-400 text-sm">
@@ -385,250 +425,234 @@ onBeforeUnmount(() => {
 
     <!-- 右侧：筛选条件区域 -->
     <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- 筛选条件列表 -->
       <div class="flex-1 overflow-y-auto p-3 space-y-4">
+        <!-- 筛选卡片 -->
         <div
           v-for="card in columnFilterCards"
           :key="card.id"
-            :draggable="getSelectedFilters(card.id).length > 0"
-            @dragstart="(e) => handleCardDragStart(card.id, e)"
-            @dragend="handleFilterDragEnd"
-            :class="[
-              'rounded-lg bg-white overflow-hidden transition-all border',
-              getSelectedFilters(card.id).length > 0
-                ? 'cursor-move border-gray-200 hover:border-1 hover:border-blue-400'
-                : 'border-gray-200',
-              isDraggingFilter && getSelectedFilters(card.id).length > 0 ? 'border-blue-400 bg-blue-50' : ''
-            ]"
-          >
-            <div class="flex">
-              <!-- 左侧：列名和映射设置 -->
-              <div 
-                class="w-26 p-3 border-r border-gray-200 bg-gray-50 flex flex-col gap-3"
-              >
-                <div class="flex items-center">
-                  <span class="text-sm font-bold text-gray-700">{{ card.column }}</span>
-                </div>
-                <el-select
-                  :model-value="columnMapping.column === card.column ? columnMapping.channel : ''"
-                  @update:model-value="(value) => setColumnMapping(card.column, value === '' ? null : value)"
-                  size="small"
-                  placeholder="Mapping"
-                  style="width: 100%;"
-                  @click.stop
-                >
-                  <el-option label="None" value="" />
-                  <el-option label="Width" value="width" />
-                  <el-option label="Height" value="height" />
-                  <el-option label="Size" value="size" />
-                </el-select>
-                <!-- 根据映射显示对应的 scale 滑动条 -->
-                <div v-if="columnMapping.column === card.column && columnMapping.channel" class="flex flex-col gap-2">
-                  <el-slider
-                    :model-value="getCurrentScale(columnMapping.channel)"
-                    :min="0.1"
-                    :max="5"
-                    :step="0.1"
-                    @update:model-value="(value) => { localScaleValue = value }"
-                    @change="(value) => { localScaleValue = null; setCurrentScale(columnMapping.channel, value) }"
-                    size="small"
-                    @click.stop
-                  />
-                  <span class="text-xs text-gray-500 font-mono text-center">
-                    {{ getCurrentScale(columnMapping.channel).toFixed(2) }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- 右侧：表头和筛选条件行 -->
-              <div class="flex-1 p-3">
-                <!-- 表头 -->
-                  <div class="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 mb-2 pb-2 border-b border-gray-200">
-                    <div class="text-xs font-bold text-gray-700">Condition</div>
-                    <div class="text-xs font-bold text-gray-700">Data</div>
-                    <div class="text-xs font-bold text-gray-700">Mark</div>
-                    <div class="text-xs font-bold text-gray-700">Select</div>
-                  </div>
-
-                  <!-- 筛选条件行 -->
-                  <div class="space-y-2">
+          :draggable="getSelectedFilters(card.id).length > 0"
+          @dragstart="(e) => handleCardDragStart(card.id, e)"
+          @dragend="handleFilterDragEnd"
+          :class="getCardClasses(card.id)"
+        >
+          <div class="flex">
+            <div class="w-26 p-3 border-r border-gray-200 bg-gray-50">
+              <span class="text-sm font-bold text-gray-700">{{ card.column }}</span>
+            </div>
+            <div class="flex-1 p-3">
+              <div class="space-y-4">
                 <div
                   v-for="(filter, filterIndex) in card.filters"
                   :key="filterIndex"
-                  :class="[
-                    'grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-center rounded transition-all p-1',
-                    filter.markerId && filter.data && filter.data.length > 0
-                      ? 'hover:bg-gray-50 border border-transparent hover:border-blue-300'
-                      : 'border border-transparent',
-                    isFilterSelected(card.id, filterIndex) ? 'bg-blue-50 border-blue-300' : ''
-                  ]"
+                  :class="getFilterClasses(card.id, filterIndex)"
                 >
-                  <!-- Condition 列 -->
-                  <div class="flex items-center gap-1">
-                    <el-select
-                      :model-value="filter.operator"
-                      @update:model-value="(value) => updateFilter(card.id, filterIndex, { operator: value as ConditionOperator })"
-                      size="small"
-                      style="width: 50px; min-width: 50px; flex-shrink: 0;"
-                      @click.stop
-                    >
-                      <el-option label="=" value="=" />
-                      <el-option v-if="isNumericColumn(card.column)" label=">" value=">" />
-                      <el-option v-if="isNumericColumn(card.column)" label="<" value="<" />
-                    </el-select>
-                    <!-- 根据列类型显示不同的输入控件 -->
-                    <el-select
-                      v-if="!isNumericColumn(card.column)"
-                      :model-value="filter.value"
-                      @update:model-value="(value) => updateFilter(card.id, filterIndex, { value })"
-                      size="small"
-                      placeholder="Select value"
-                      filterable
-                      @click.stop
-                    >
-                      <el-option
-                        v-for="val in getColumnUniqueValues(card.column)"
-                        :key="val"
-                        :label="val"
-                        :value="val"
-                      />
-                    </el-select>
-                    <el-input
-                      v-else
-                      :model-value="filter.value"
-                      @update:model-value="(value) => updateFilter(card.id, filterIndex, { value })"
-                      size="small"
-                      placeholder="Enter number"
-                      type="number"
-                      @click.stop
-                    />
-                  </div>
-
-                  <!-- Data 列：显示匹配的实体数量 -->
-                  <div>
-                    <div class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                      {{ getFilterMatchedCount(filter) }} entities
-                    </div>
-                  </div>
-
-                  <!-- Mark 列：分配 marker -->
-                  <div
-                    class="flex items-center min-h-[32px] justify-center"
+                  <button
+                    v-if="card.filters.length > 1"
+                    @click.stop="removeFilterFromCard(card.id, filterIndex)"
+                    class="absolute top-2 right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+                    title="Delete filter"
                   >
-                    <div
-                      v-if="filter.markerId"
-                      class="relative w-8 h-8 group/marker"
-                    >
-                      <div
-                        class="w-full h-full border border-gray-300 rounded overflow-hidden cursor-pointer hover:border-blue-400 transition-colors"
-                        @click.stop
-                      >
-                        <img
-                          :src="markers.find(m => m.id === filter.markerId)?.thumbnail"
-                          alt="Marker"
-                          class="w-full h-full object-contain"
+                    <span class="i-carbon-close text-xs"></span>
+                  </button>
+
+                  <!-- 第一行：Condition, Data, Mark -->
+                  <div>
+                    <div class="grid grid-cols-3 gap-4 mb-2 pb-2 border-b border-gray-200">
+                      <div class="text-xs font-bold text-gray-700 min-w-0">Condition</div>
+                      <div class="text-xs font-bold text-gray-700 min-w-0">Data</div>
+                      <div class="text-xs font-bold text-gray-700 min-w-0">Mark</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 items-center p-1">
+                      <!-- Condition -->
+                      <div class="flex items-center gap-1 min-w-0">
+                        <el-select
+                          :model-value="filter.operator"
+                          @update:model-value="(v) => updateFilter(card.id, filterIndex, { operator: v as ConditionOperator })"
+                          size="small"
+                          style="width: 50px; min-width: 50px; flex-shrink: 0;"
+                          @click.stop
+                        >
+                          <el-option label="=" value="=" />
+                          <el-option v-if="isNumericColumn(card.column)" label=">" value=">" />
+                          <el-option v-if="isNumericColumn(card.column)" label="<" value="<" />
+                        </el-select>
+                        <el-select
+                          v-if="!isNumericColumn(card.column)"
+                          :model-value="filter.value"
+                          @update:model-value="(v) => updateFilter(card.id, filterIndex, { value: v })"
+                          size="small"
+                          placeholder="Select value"
+                          filterable
+                          @click.stop
+                        >
+                          <el-option v-for="val in getColumnUniqueValues(card.column)" :key="val" :label="val" :value="val" />
+                        </el-select>
+                        <el-input
+                          v-else
+                          :model-value="filter.value"
+                          @update:model-value="(v) => updateFilter(card.id, filterIndex, { value: v })"
+                          size="small"
+                          placeholder="Enter number"
+                          type="number"
+                          @click.stop
                         />
                       </div>
-                      <button
-                        @click.stop="assignMarkerToFilter(card.id, filterIndex, null)"
-                        class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/marker:opacity-100 transition-opacity z-20 pointer-events-auto"
-                        title="Remove marker"
-                      >
-                        <span class="i-carbon-close text-xs"></span>
-                      </button>
-                    </div>
-                    <div
-                      v-else
-                      @drop="(e) => handleMarkerDrop(card.id, filterIndex, e)"
-                    @dragover="(e) => handleMarkerDragOver(card.id, filterIndex, e)"
-                    @dragleave="(e) => handleMarkerDragLeave(card.id, filterIndex, e)"
-                      :class="[
-                        'w-8 h-8 border-2 border-dashed rounded flex items-center justify-center transition-all',
-                        isDraggingOverMarkerDropZone[`${card.id}-${filterIndex}`]
-                          ? 'border-blue-400 text-blue-600 bg-blue-50'
-                          : 'border-gray-300 text-gray-400'
-                      ]"
-                      title="Drag marker here"
-                    >
-                      <span class="i-carbon-add text-sm"></span>
+                      <!-- Data -->
+                      <div class="min-w-0">
+                        <div class="inline-flex items-center px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                          {{ getFilterMatchedCount(filter) }} entities
+                        </div>
+                      </div>
+                      <!-- Mark -->
+                      <div class="flex items-center min-h-[32px] justify-center min-w-0">
+                        <div v-if="filter.markerId" class="relative w-8 h-8 group/marker">
+                          <div class="w-full h-full border border-gray-300 rounded overflow-hidden cursor-pointer hover:border-blue-400 transition-colors" @click.stop>
+                            <img :src="markers.find(m => m.id === filter.markerId)?.thumbnail" alt="Marker" class="w-full h-full object-contain" />
+                          </div>
+                          <button
+                            @click.stop="assignMarkerToFilter(card.id, filterIndex, null)"
+                            class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover/marker:opacity-100 transition-opacity z-20"
+                            title="Remove marker"
+                          >
+                            <span class="i-carbon-close text-xs"></span>
+                          </button>
+                        </div>
+                        <div
+                          v-else
+                          @drop="(e) => handleMarkerDrop(card.id, filterIndex, e)"
+                          @dragover="(e) => handleMarkerDragOver(card.id, filterIndex, e)"
+                          @dragleave="(e) => handleMarkerDragLeave(card.id, filterIndex, e)"
+                          :class="[
+                            'w-8 h-8 border-2 border-dashed rounded flex items-center justify-center transition-all',
+                            isDraggingOverMarkerDropZone[`${card.id}-${filterIndex}`] ? 'border-blue-400 text-blue-600 bg-blue-50' : 'border-gray-300 text-gray-400'
+                          ]"
+                          title="Drag marker here"
+                        >
+                          <span class="i-carbon-add text-sm"></span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  <!-- Select 列：复选框 -->
-                  <div class="min-w-30px flex items-center justify-center">
-                    <input
-                      type="checkbox"
-                      :checked="isFilterSelected(card.id, filterIndex)"
-                      :disabled="!(filter.markerId && filter.data && filter.data.length > 0)"
-                      @change="toggleFilterSelection(card.id, filterIndex)"
-                      @click.stop
-                      :class="[
-                        'w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500',
-                        !(filter.markerId && filter.data && filter.data.length > 0) ? 'opacity-30 cursor-not-allowed' : ''
-                      ]"
-                    />
+                  <!-- 第二行：Visual Attribute, Visual Encodings, Select -->
+                  <div>
+                    <div class="grid grid-cols-3 gap-4 mb-2 pb-2 border-b border-gray-200">
+                      <div class="text-xs font-bold text-gray-700 min-w-0">Visual Attribute</div>
+                      <div class="text-xs font-bold text-gray-700 min-w-0">Visual Encodings</div>
+                      <div class="text-xs font-bold text-gray-700 min-w-0">Select</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 items-center p-1">
+                      <!-- Visual Attribute -->
+                      <div class="min-w-0">
+                        <el-select
+                          :model-value="filter.visualAttribute || ''"
+                          @update:model-value="(v) => updateFilter(card.id, filterIndex, { visualAttribute: v === '' ? null : v })"
+                          size="small"
+                          placeholder="Select column"
+                          filterable
+                          style="width: 100%;"
+                          @click.stop
+                        >
+                          <el-option label="None" value="" />
+                          <el-option v-for="col in tableColumns" :key="col" :label="col" :value="col" />
+                        </el-select>
+                      </div>
+                      <!-- Visual Encodings -->
+                      <div class="flex flex-col gap-2 min-w-0">
+                        <el-select
+                          :model-value="filter.encoding?.channel || ''"
+                          @update:model-value="(v) => updateFilterEncoding(card.id, filterIndex, { channel: v === '' ? null : v as 'width' | 'height' | 'size' })"
+                          size="small"
+                          placeholder="Mapping"
+                          style="width: 100%;"
+                          @click.stop
+                        >
+                          <el-option label="None" value="" />
+                          <el-option label="Width" value="width" />
+                          <el-option label="Height" value="height" />
+                          <el-option label="Size" value="size" />
+                        </el-select>
+                        <div v-if="filter.encoding?.channel" class="flex flex-col gap-1">
+                          <el-slider
+                            :model-value="filter.encoding?.scale || 1"
+                            :min="0.1"
+                            :max="5"
+                            :step="0.1"
+                            @update:model-value="(v) => updateFilterEncoding(card.id, filterIndex, { scale: v })"
+                            size="small"
+                            @click.stop
+                          />
+                          <span class="text-xs text-gray-500 font-mono text-center">{{ (filter.encoding?.scale || 1).toFixed(2) }}</span>
+                        </div>
+                      </div>
+                      <!-- Select -->
+                      <div class="flex items-center justify-center min-w-0">
+                        <input
+                          type="checkbox"
+                          :checked="isFilterSelected(card.id, filterIndex)"
+                          :disabled="!(filter.markerId && filter.data && filter.data.length > 0)"
+                          @change="toggleFilterSelection(card.id, filterIndex)"
+                          @click.stop
+                          :class="[
+                            'w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500',
+                            !(filter.markerId && filter.data && filter.data.length > 0) ? 'opacity-30 cursor-not-allowed' : ''
+                          ]"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
-                  </div>
-
-                <!-- 添加条件按钮 -->
-                <button
-                  @click.stop="addFilterToCard(card.id)"
-                  class="mt-3 w-full py-2 text-xs text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center gap-1 border-2 border-dashed border-gray-300 hover:border-blue-400 cursor-pointer"
-                >
-                  <span class="i-carbon-add text-sm"></span>
-                  <span>Add condition</span>
-                </button>
               </div>
-            </div>
-          </div>
-
-          <!-- 空白 drop zone -->
-          <div
-            class="rounded-lg bg-white overflow-hidden border border-gray-200"
-          >
-            <div class="flex">
-              <div 
-                class="w-26 p-1 border-r border-gray-200 bg-gray-50 flex flex-col gap-3"
-                @drop="(e) => { handleDrop(e); isDraggingOverDropZone = false }"
-                @dragover="handleDragOver"
-                @dragleave="handleDragLeave"
-                :class="[
-                  isDraggingOverDropZone
-                    ? 'border-blue-400 bg-blue-50'
-                    : ''
-                ]"
+              <button
+                @click.stop="addFilterToCard(card.id)"
+                class="mt-3 w-full py-2 text-xs text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center gap-1 border-2 border-dashed border-gray-300 hover:border-blue-400 cursor-pointer"
               >
-                <div
-                  class="flex items-center justify-center gap-2 p-2.5 mt-20px rounded-lg border-2 border-dashed transition-all"
-                  :class="[
-                    isDraggingOverDropZone
-                      ? 'border-blue-400 bg-blue-50 text-blue-600'
-                      : 'border-gray-300 text-gray-400 bg-[#f6fdf3]'
-                  ]"
-                >
-                  <span class="i-carbon-add text-sm"></span>
-                </div>
-                <p class="text-xs text-gray-400 text-center px-2">Drop an attribute to start</p>
+                <span class="i-carbon-add text-sm"></span>
+                <span>Add condition</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 空白 drop zone -->
+        <div class="rounded-lg bg-white overflow-hidden border border-gray-200">
+          <div class="flex">
+            <div
+              class="w-26 p-3 border-r border-gray-200 bg-gray-50 flex flex-col items-center justify-center"
+              @drop="(e) => { handleDrop(e); isDraggingOverDropZone = false }"
+              @dragover="handleDragOver"
+              @dragleave="handleDragLeave"
+              :class="isDraggingOverDropZone ? 'border-blue-400 bg-blue-50' : ''"
+            >
+              <div
+                class="flex items-center justify-center gap-2 p-2.5 w-20 rounded-lg border-2 border-dashed transition-all"
+                :class="isDraggingOverDropZone ? 'border-blue-400 bg-blue-50 text-blue-600' : 'border-gray-300 text-gray-400 bg-[#f6fdf3]'"
+              >
+                <span class="i-carbon-add text-sm"></span>
               </div>
-              <div class="flex-1 p-3">
-                <!-- 表头 -->
-                <div class="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 mb-2 pb-2 border-b border-gray-200">
-                  <div class="h-4 bg-gray-100 rounded skeleton-shimmer"></div>
-                  <div class="h-4 bg-gray-100 rounded skeleton-shimmer" style="animation-delay: 0.1s"></div>
-                  <div class="h-4 bg-gray-100 rounded skeleton-shimmer" style="animation-delay: 0.2s"></div>
-                  <div class="h-4 bg-gray-100 rounded skeleton-shimmer" style="animation-delay: 0.3s"></div>
-                </div>
-                <!-- 占位行 -->
-                <div class="grid grid-cols-[1fr_1fr_1fr_auto] gap-4 items-center rounded border border-gray-200 p-2">
-                  <div class="h-8 bg-gray-100 rounded skeleton-shimmer"></div>
-                  <div class="h-8 bg-gray-100 rounded skeleton-shimmer" style="animation-delay: 0.1s"></div>
-                  <div class="h-8 bg-gray-100 rounded skeleton-shimmer" style="animation-delay: 0.2s"></div>
-                  <div class="h-4 w-4 bg-gray-100 rounded skeleton-shimmer" style="animation-delay: 0.3s"></div>
-                </div>
+              <p class="text-xs text-gray-400 text-center mt-2">Drop an attribute to start</p>
+            </div>
+            <div class="flex-1 p-3">
+              <!-- 第一行标题 -->
+              <div class="grid grid-cols-3 gap-4 mb-2 pb-2 border-b border-gray-200">
+                <div v-for="i in 3" :key="i" class="h-4 bg-gray-100 rounded skeleton-shimmer" :style="`animation-delay: ${(i-1)*0.1}s`"></div>
+              </div>
+              <!-- 第一行内容 -->
+              <div class="grid grid-cols-3 gap-4 items-center p-1 mb-4">
+                <div v-for="i in 3" :key="i" class="h-8 bg-gray-100 rounded skeleton-shimmer" :style="`animation-delay: ${(i-1)*0.1}s`"></div>
+              </div>
+              <!-- 第二行标题 -->
+              <div class="grid grid-cols-3 gap-4 mb-2 pb-2 border-b border-gray-200">
+                <div v-for="i in 3" :key="i" class="h-4 bg-gray-100 rounded skeleton-shimmer" :style="`animation-delay: ${(i+2)*0.1}s`"></div>
+              </div>
+              <!-- 第二行内容 -->
+              <div class="grid grid-cols-3 gap-4 items-center p-1">
+                <div v-for="i in 2" :key="i" class="h-8 bg-gray-100 rounded skeleton-shimmer" :style="`animation-delay: ${(i+2)*0.1}s`"></div>
+                <div class="h-4 w-4 bg-gray-100 rounded skeleton-shimmer" style="animation-delay: 0.5s"></div>
               </div>
             </div>
           </div>
+        </div>
       </div>
     </div>
   </div>

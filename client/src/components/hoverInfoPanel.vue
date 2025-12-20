@@ -7,26 +7,23 @@ import { useDataScaleStore } from '~/stores/dataScale'
 const hoverInfoPanelStore = useHoverInfoPanelStore()
 const { showPanel, markerData } = storeToRefs(hoverInfoPanelStore)
 
-const dataScaleStore = useDataScaleStore()
-const { columnMapping } = storeToRefs(dataScaleStore)
-
 // 格式化数据用于显示
 const formattedData = computed(() => {
   if (!markerData.value) return null
 
-  // 如果 data 是对象，转换为键值对数组
-  if (typeof markerData.value === 'object' && markerData.value !== null) {
-    const entries = Object.entries(markerData.value)
+    // 如果 data 是对象，转换为键值对数组
+    if (typeof markerData.value === 'object' && markerData.value !== null) {
+      const entries = Object.entries(markerData.value)
 
-    // 根据 columnMapping.channel 过滤字段
-    const filteredEntries = entries.filter(([key]) => {
-      // 过滤的内部属性（如 _X_ROW_KEY）
-      if (key.startsWith('_X_ROW_KEY')) {
-        return false
-      }
-      // 默认显示所有字段
-      return true
-    })
+      // 过滤字段
+      const filteredEntries = entries.filter(([key]) => {
+        // 过滤的内部属性（如 _X_ROW_KEY）
+        if (key.startsWith('_X_ROW_KEY')) {
+          return false
+        }
+        // 默认显示所有字段
+        return true
+      })
 
     return filteredEntries.map(([key, value]) => ({
       key,
