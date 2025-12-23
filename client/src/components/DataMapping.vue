@@ -187,7 +187,7 @@ const handleDrop = (e: DragEvent, cardId?: string) => {
 
   // 检查是否已经存在该 column 的卡片
   const existingCard = columnFilterCards.value.find(c => c.column === column)
-  
+
   if (existingCard) {
     // 如果已存在该 column 的卡片，添加到那个卡片
     addFilterToCard(existingCard.id)
@@ -198,12 +198,12 @@ const handleDrop = (e: DragEvent, cardId?: string) => {
   columnFilterCards.value.push({
     id: generateId('card'),
     column,
-    filters: [{ 
+    filters: [{
       id: generateId('filter'),
-      operator: '=', 
-      value: '', 
-      markerId: null, 
-      data: [], 
+      operator: '=',
+      value: '',
+      markerId: null,
+      data: [],
       rows: [],
       visualAttribute: null,
       encoding: { channel: null, scale: 1 }
@@ -228,12 +228,12 @@ const handleDragLeave = (e: DragEvent) => {
 
 // 添加筛选条件到卡片
 const addFilterToCard = (cardId: string) => {
-  getCard(cardId)?.filters.push({ 
+  getCard(cardId)?.filters.push({
     id: generateId('filter'),
-    operator: '=', 
-    value: '', 
-    markerId: null, 
-    data: [], 
+    operator: '=',
+    value: '',
+    markerId: null,
+    data: [],
     rows: [],
     visualAttribute: null,
     encoding: { channel: null, scale: 1 }
@@ -267,7 +267,7 @@ const updateFilterEncoding = (cardId: string, filterIndex: number, updates: Part
       filter.encoding = { channel: null, scale: 1 }
     }
     Object.assign(filter.encoding, updates)
-    
+
     // 如果更新了 scale 或 channel，更新画布上对应的 marker 尺寸
     if (filter.id && (updates.scale !== undefined || updates.channel !== undefined)) {
       dataScaleStore.updateFilterMarkersScale(filter.id)
@@ -350,7 +350,7 @@ const handleCardDragStart = (cardId: string, e: DragEvent) => {
 
   // 传递拖动的是哪个card
   e.dataTransfer.setData('text/plain', cardId)
-  
+
   // 只传递选中的 filter id 列表
   const filterIds = selected.map(s => s.filter.id)
   e.dataTransfer.setData('application/json', JSON.stringify(filterIds))
@@ -436,8 +436,16 @@ onBeforeUnmount(() => {
           :class="getCardClasses(card.id)"
         >
           <div class="flex">
-            <div class="w-26 p-3 border-r border-gray-200 bg-gray-50">
-              <span class="text-sm font-bold text-gray-700">{{ card.column }}</span>
+            <div class="w-26 p-3 border-r border-gray-200 bg-gray-50 flex flex-col">
+              <span class="text-sm font-bold text-gray-700 pb-2 border-b border-gray-200">attribute</span>
+              <div class="flex items-center justify-center mt-2">
+                <div
+                  class="flex items-center justify-center gap-2 p-2.5 w-20 rounded-lg border-2 border-dashed transition-all"
+                  :class="'border-gray-300 text-gray-400 bg-[#f6fdf3]'"
+                >
+                  <span class="text-xs text-gray-600">{{ card.column }}</span>
+                </div>
+              </div>
             </div>
             <div class="flex-1 p-3">
               <div class="space-y-4">
@@ -618,14 +626,15 @@ onBeforeUnmount(() => {
         <div class="rounded-lg bg-white overflow-hidden border border-gray-200">
           <div class="flex">
             <div
-              class="w-26 p-3 border-r border-gray-200 bg-gray-50 flex flex-col items-center justify-center"
+              class="w-26 p-3 border-r border-gray-200 bg-gray-50 flex flex-col items-center justify-center relative"
               @drop="(e) => { handleDrop(e); isDraggingOverDropZone = false }"
               @dragover="handleDragOver"
               @dragleave="handleDragLeave"
               :class="isDraggingOverDropZone ? 'border-blue-400 bg-blue-50' : ''"
             >
               <div
-                class="flex items-center justify-center gap-2 p-2.5 w-20 rounded-lg border-2 border-dashed transition-all"
+                class="absolute flex items-center justify-center gap-2 p-2.5 w-20 rounded-lg border-2 border-dashed transition-all"
+                style="top: 30px;"
                 :class="isDraggingOverDropZone ? 'border-blue-400 bg-blue-50 text-blue-600' : 'border-gray-300 text-gray-400 bg-[#f6fdf3]'"
               >
                 <span class="i-carbon-add text-sm"></span>
