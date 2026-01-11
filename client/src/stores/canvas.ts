@@ -245,9 +245,6 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
         return
       }
-
-      // 应用当前模式的透明度规则
-      selectedModeStore.handleModeSwitch(selectedModeStore.selectedMode);
     }
   }
 
@@ -817,28 +814,32 @@ export const useCanvasStore = defineStore('canvas', () => {
     // 跳过预览形状
     if (path.get('isPreview')) return
 
-    //跳过mode不是draw或rect或ellipse的状态
-    const canvasModeStore = useCanvasModeStore()
-    if (canvasModeStore.mode !== 'draw' && canvasModeStore.mode !== 'rect' && canvasModeStore.mode !== 'ellipse') return
-
     // 只有当对象是 container 类型时才触发
     if (path.get('dataType') !== 'container') return
 
+    // 上传的图不需要
+    if (path.type === 'image') return
+    
+    const canvasModeStore = useCanvasModeStore()
+    // 在其他模式下，不询问是否闭合路径
+    if (canvasModeStore.mode !== 'draw' && canvasModeStore.mode !== 'rect' && canvasModeStore.mode !== 'ellipse') return
+    
+    
     // 对于 draw 模式，检查起点和终点距离
     if (canvasModeStore.mode === 'draw' && path.type === 'path' && path.path) {
-      const { start, end } = getPathStartAndEndPoints(path)
-      
-      if (start && end) {
-        // 计算起点和终点的距离
-        const distance = calculateDistance(start, end)
-        // 如果距离大于 50 像素，不询问是否闭合路径
-        if (distance > 100) {
-          return
+        const { start, end } = getPathStartAndEndPoints(path)
+        
+        if (start && end) {
+          // 计算起点和终点的距离
+          const distance = calculateDistance(start, end)
+          // 如果距离大于 100 像素，不询问是否闭合路径
+          if (distance > 100) {
+            return
+          }
         }
       }
-    }
-
-    // 获取对象在画布上的位置
+    
+        // 获取对象在画布上的位置
     const zoom = canvasInstance.getZoom()
     const vpt = canvasInstance.viewportTransform
     const pathBounds = path.getBoundingRect()

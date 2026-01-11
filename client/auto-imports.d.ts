@@ -93,6 +93,7 @@ declare global {
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveRef: typeof import('@vueuse/core')['resolveRef']
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
+  const sendBackgroundToSegmentAll: typeof import('./src/composables/server')['sendBackgroundToSegmentAll']
   const sendDataToServer: typeof import('./src/composables/server')['sendDataToServer']
   const sendUploadContainerToServer: typeof import('./src/composables/server')['sendUploadContainerToServer']
   const shallowReactive: typeof import('vue')['shallowReactive']
@@ -401,6 +402,7 @@ declare module 'vue' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveRef: UnwrapRef<typeof import('@vueuse/core')['resolveRef']>
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
+    readonly sendBackgroundToSegmentAll: UnwrapRef<typeof import('./src/composables/server')['sendBackgroundToSegmentAll']>
     readonly sendDataToServer: UnwrapRef<typeof import('./src/composables/server')['sendDataToServer']>
     readonly sendUploadContainerToServer: UnwrapRef<typeof import('./src/composables/server')['sendUploadContainerToServer']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>

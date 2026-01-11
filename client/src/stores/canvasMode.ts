@@ -8,7 +8,7 @@ import { useForceDrawingStore } from '~/stores/forceDrawing'
 import { useBackgroundStore } from '~/stores/background'
 import { useCanvasStore } from '~/stores/canvas'
 export const useCanvasModeStore = defineStore('canvasMode', () => {
-  const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force' | null>(null)
+  const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force' | 'segmentPoint' | null>(null)
   const canvasRef = ref<(() => Canvas | null) | null>(null)
   // 导入其他 store
   const selectedModeStore = useSelectedModeStore()
@@ -23,7 +23,7 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
     canvasRef.value = canvas
   }
 
-  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force') {
+  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force' | 'segmentPoint') {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
 
@@ -90,6 +90,10 @@ export const useCanvasModeStore = defineStore('canvasMode', () => {
       canvasInstance.isDrawingMode = false;
       canvasInstance.selection = false;
       canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; }); 
+    } else if (mode.value === 'segmentPoint') {
+      canvasInstance.isDrawingMode = false;
+      canvasInstance.selection = false;
+      canvasInstance.getObjects().forEach(obj => { obj.selectable = false; obj.evented = false; });
     } else {
       canvasInstance.isDrawingMode = false;
       canvasInstance.getObjects().forEach(obj => {  

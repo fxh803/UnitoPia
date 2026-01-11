@@ -130,9 +130,6 @@ const addImageToCanvas = (imageDataUrl: string, fileName: string) => {
     // 将图片添加到画布
     canvasInstance.add(fabricImg)
 
-    // 应用透明度规则
-    selectedModeStore.handleModeSwitch('container')
-
     // 重新渲染画布
     canvasInstance.renderAll()
 

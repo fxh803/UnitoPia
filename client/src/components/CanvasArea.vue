@@ -14,6 +14,8 @@ import { useForceDrawingStore } from '~/stores/forceDrawing'
 import { useAnimationStore } from '~/stores/animation'
 import { useBackgroundStore } from '~/stores/background'
 import { useDataScaleStore } from '~/stores/dataScale'
+import { sendPointToSegmentPoint } from '~/composables/server'
+import { FabricImage } from 'fabric'
 const animationStore = useAnimationStore()
 const { collaging, result_data } = storeToRefs(animationStore)
 
@@ -36,7 +38,7 @@ const brushSizeStore = useBrushSizeStore()
 const { brushWidth, isMainBrushSizePanelOpen } = storeToRefs(brushSizeStore)
 
 const collageSeriesStore = useCollageSeriesStore()
-const { collageSeries, currentSlideIndex, stopListen } = storeToRefs(collageSeriesStore)
+const { collageSeries, currentSlideIndex, stopListen, currentOverviewIndex, overviews } = storeToRefs(collageSeriesStore)
 const {
   initializeEmptySlide,
   updateCurrentSlide,
@@ -88,6 +90,16 @@ const canvasSize = ref(400)
 let canvas: Canvas | null = null
 
 const backgroundStore = useBackgroundStore()
+
+// 检查是否有背景
+const hasBackground = computed(() => {
+  if (overviews.value.length === 0) return false
+  const currentOverview = overviews.value[currentOverviewIndex.value]
+  if (!currentOverview) return false
+  return backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId) !== null
+})
+
+
 function getDpr() {
   return window.devicePixelRatio || 1
 }
@@ -176,6 +188,61 @@ watch(selectedMode, (newMode, oldMode) => {
     stopBlinkAnimation()
   }
 })
+// Segment Point 点击处理
+let segmentPointListener: ((e: fabric.IEvent) => void) | null = null
+
+function addSegmentPointListener() {
+  if (!canvas || segmentPointListener) return
+  
+  segmentPointListener = async (e: fabric.IEvent) => {
+    if (mode.value !== 'segmentPoint') return
+    if (!e.pointer) return
+    
+    // 立即重置 mode，避免重复点击
+    setMode(null)
+    
+    const point = {
+      x: e.pointer.x,
+      y: e.pointer.y
+    }
+    
+    // 调用后端接口
+    const result = await sendPointToSegmentPoint(canvas, point)
+    
+    if (result) {
+      // 将返回的mask添加到画布
+      const imageDataUrl = result.mask.startsWith('data:') 
+        ? result.mask 
+        : `data:image/png;base64,${result.mask}`
+      
+      FabricImage.fromURL(imageDataUrl).then((fabricImg) => {
+        fabricImg.set({
+          left: result.bbox.x,
+          top: result.bbox.y,
+          originX: 'left',
+          originY: 'top',
+          selectable: true,
+          evented: true,
+          dataType: 'container'
+        })
+        
+        canvas.add(fabricImg)
+        canvas.renderAll()
+      }).catch((error) => {
+        console.error('Mask加载失败:', error)
+      })
+    }
+  }
+  
+  canvas.on('mouse:down', segmentPointListener)
+}
+
+function removeSegmentPointListener() {
+  if (!canvas || !segmentPointListener) return
+  canvas.off('mouse:down', segmentPointListener)
+  segmentPointListener = null
+}
+
 // 监听 mode 变化，自动清理 shape 预览和事件
 watch(mode, () => {
   if (!canvas) return
@@ -190,6 +257,13 @@ watch(mode, () => {
   }
   else {
     removeForcePointListener()
+  }
+  
+  // 处理 segmentPoint 模式的点击事件
+  if (mode.value === 'segmentPoint') {
+    addSegmentPointListener()
+  } else {
+    removeSegmentPointListener()
   }
 })
 
@@ -305,6 +379,8 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   // 移除键盘事件监听
   document.removeEventListener('keydown', handleKeyDown)
+  // 移除 segmentPoint 监听
+  removeSegmentPointListener()
 })
 
 
@@ -327,6 +403,15 @@ onBeforeUnmount(() => {
         <!-- Force工具栏：仅在force模式下显示 -->
         <ForceToolbar v-if="selectedMode === 'force'" />
       </div>
+      
+      <!-- Segment Buttons 面板 - 独立于工具栏，可拖拽 -->
+      <div 
+        v-if="selectedMode === 'container' && hasBackground" 
+        class="absolute inset-0 z-10 pointer-events-none"
+      >
+        <SegmentButtons />
+      </div>
+      
       <!-- 新增canvas-wrapper，包裹canvas和button -->
       <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
         <!-- 画布本体 -->

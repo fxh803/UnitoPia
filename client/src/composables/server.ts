@@ -605,6 +605,223 @@ export function pharseData(card: ColumnFilterCard | null) {
   // 返回合并后的数据
   return combinedData
 }
+// 处理背景对象，转换为base64（在临时canvas上操作，不影响原canvas）
+function processBackground(tempCanvas: Canvas) {
+  const canvasObjects = tempCanvas.getObjects()
+  const backgroundObjs = canvasObjects.filter(obj => obj.get('dataType') === 'background')
+  
+  if (backgroundObjs.length === 0) {
+    return ''
+  }
+
+  // 保存原始背景色
+  const originalBackgroundColor = tempCanvas.backgroundColor
+
+  // 隐藏所有非 background 对象
+  for (const obj of canvasObjects) {
+    if (obj.get('dataType') !== 'background') {
+      obj.set('visible', false)
+    }
+  }
+
+  // 将背景设置为透明
+  tempCanvas.backgroundColor = 'transparent'
+
+  // 将画布转成base64
+  const backgroundBase64 = tempCanvas.toDataURL({
+    format: 'png',
+    multiplier: 1
+  })
+
+  // 恢复原始背景色和对象可见性
+  tempCanvas.backgroundColor = originalBackgroundColor
+  for (const obj of canvasObjects) {
+    if (obj.get('dataType') !== 'background') {
+      obj.set('visible', true)
+    }
+  }
+
+  return backgroundBase64
+}
+
+// 发送背景到segmentAll接口
+// 返回格式: Array<{ mask: string, bbox: { x: number, y: number } }>
+export async function sendBackgroundToSegmentAll(canvas: Canvas | null): Promise<Array<{ mask: string, bbox: { x: number, y: number } }> | null> {
+  if (!canvas) {
+    console.error('Canvas实例未找到')
+    return null
+  }
+
+  let tempCanvas: Canvas | null = null
+  
+  try {
+    // 创建临时canvas，避免影响原canvas
+    const originalWidth = canvas.width
+    const originalHeight = canvas.height
+
+    tempCanvas = new Canvas(null, {
+      width: originalWidth,
+      height: originalHeight
+    })
+
+    // 从原canvas导出JSON数据
+    const canvasJSON = canvas.toJSON()
+    
+    // 加载到临时canvas
+    await tempCanvas.loadFromJSON(canvasJSON)
+    tempCanvas.backgroundColor = canvas.backgroundColor || '#fffef8'
+    
+    // 恢复自定义属性（如果需要）
+    const collageSeriesStore = useCollageSeriesStore()
+    const currentSlide = collageSeriesStore.collageSeries[collageSeriesStore.currentSlideIndex]
+    if (currentSlide) {
+      collageSeriesStore.restoreCustomProperties(
+        tempCanvas,
+        currentSlide.dataTypeArray,
+        currentSlide.markerIdArray,
+        currentSlide.clusterIdArray,
+        currentSlide.forceTypeArray,
+        currentSlide.dataArray || []
+      )
+    }
+
+    // 在临时canvas上处理背景，转换为base64
+    const backgroundBase64 = processBackground(tempCanvas)
+    
+    if (!backgroundBase64) {
+      console.error('未找到背景对象或处理失败')
+      return null
+    }
+
+    // 获取containerColor
+    const canvasStore = useCanvasStore()
+    const { containerColor } = storeToRefs(canvasStore)
+
+    // 发送到后端
+    const response = await fetch(`${ip}/segmentAll`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        background: backgroundBase64,
+        containerColor: containerColor.value 
+      })
+    })
+
+    if (!response.ok) {
+      console.error('segmentAll请求失败:', response.statusText)
+      return null
+    }
+
+    const result = await response.json()
+    // 返回cropped_masks列表（包含mask和bbox）
+    if (result.cropped_masks && Array.isArray(result.cropped_masks)) {
+      return result.cropped_masks
+    }
+    return null
+  } catch (error) {
+    console.error('segmentAll处理出错:', error)
+    return null
+  } finally {
+    // 确保临时canvas总是被清理
+    if (tempCanvas) {
+      tempCanvas.dispose()
+    }
+  }
+}
+
+// 发送点击坐标和画布到segmentPoint接口
+export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x: number, y: number }): Promise<{ mask: string, bbox: { x: number, y: number } } | null> {
+  if (!canvas) {
+    console.error('Canvas实例未找到')
+    return null
+  }
+
+  let tempCanvas: Canvas | null = null
+  
+  try {
+    // 创建临时canvas，避免影响原canvas
+    const originalWidth = canvas.width
+    const originalHeight = canvas.height
+
+    tempCanvas = new Canvas(null, {
+      width: originalWidth,
+      height: originalHeight
+    })
+
+    // 从原canvas导出JSON数据
+    const canvasJSON = canvas.toJSON()
+    
+    // 加载到临时canvas
+    await tempCanvas.loadFromJSON(canvasJSON)
+    tempCanvas.backgroundColor = canvas.backgroundColor || '#fffef8'
+    
+    // 恢复自定义属性（如果需要）
+    const collageSeriesStore = useCollageSeriesStore()
+    const currentSlide = collageSeriesStore.collageSeries[collageSeriesStore.currentSlideIndex]
+    if (currentSlide) {
+      collageSeriesStore.restoreCustomProperties(
+        tempCanvas,
+        currentSlide.dataTypeArray,
+        currentSlide.markerIdArray,
+        currentSlide.clusterIdArray,
+        currentSlide.forceTypeArray,
+        currentSlide.dataArray || []
+      )
+    }
+
+    // 在临时canvas上处理背景，转换为base64
+    const backgroundBase64 = processBackground(tempCanvas)
+    
+    if (!backgroundBase64) {
+      console.error('未找到背景对象或处理失败')
+      return null
+    }
+
+    // 获取containerColor
+    const canvasStore = useCanvasStore()
+    const { containerColor } = storeToRefs(canvasStore)
+    console.log(point)
+    // 发送到后端
+    const response = await fetch(`${ip}/segmentPoint`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        background: backgroundBase64,
+        containerColor: containerColor.value,
+        x: point['x'],
+        y: point['y']
+      })
+    })
+
+    if (!response.ok) {
+      console.error('segmentPoint请求失败:', response.statusText)
+      return null
+    }
+
+    const result = await response.json()
+    // 返回mask和bbox
+    if (result.mask && result.bbox) {
+      return {
+        mask: result.mask,
+        bbox: result.bbox
+      }
+    }
+    return null
+  } catch (error) {
+    console.error('segmentPoint处理出错:', error)
+    return null
+  } finally {
+    // 确保临时canvas总是被清理
+    if (tempCanvas) {
+      tempCanvas.dispose()
+    }
+  }
+}
+
 export async function handleMarkerDropCanvas(pos: [number,number], card: ColumnFilterCard | null = null) {
   const collageSeriesStore = useCollageSeriesStore()
   const canvas = collageSeriesStore.canvasRef?.()

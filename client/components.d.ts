@@ -39,6 +39,7 @@ declare module 'vue' {
     ResizableContainer: typeof import('./src/components/ResizableContainer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SegmentButtons: typeof import('./src/components/SegmentButtons.vue')['default']
     SettingsPanel: typeof import('./src/components/SettingsPanel.vue')['default']
     Table: typeof import('./src/components/Table.vue')['default']
     TableData: typeof import('./src/components/TableData.vue')['default']

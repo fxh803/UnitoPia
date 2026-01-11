@@ -7,7 +7,11 @@ import math
 import base64
 import re
 import cairosvg
+import requests
 from PIL import Image
+import numpy as np
+import cv2
+from io import BytesIO
 from unitopia import Unitopia 
 from utils import *
 app = Flask(__name__, template_folder='',static_folder="")
@@ -267,6 +271,216 @@ def get_render_txt_api():
         "data": txt_files,
         "count": len(txt_files)
     }), 200
+
+@app.route('/segmentAll', methods=['POST'])
+def segment_all():
+    """全图分割接口：输入图片，输出所有mask"""
+    try:
+        request_data = request.get_json()
+        image_data = request_data['background'] 
+        target_color = request_data['containerColor']
+        # 转发请求到外部分割服务
+        segment_url = 'http://175.178.152.10:2616/segmentAll'
+        response = requests.post(segment_url, json={'image': image_data})
+        
+        if response.status_code == 200:
+            result = response.json()
+            
+            # 处理每个mask：使用contour找到白色区域bbox并裁剪mask本身
+            cropped_masks = []
+            if 'masks' in result and isinstance(result['masks'], list):
+                # 处理每个mask
+                for i, mask_b64 in enumerate(result['masks']):
+                    try:
+                        # 处理base64数据（可能包含data:image头部）
+                        if ',' in mask_b64:
+                            mask_b64_clean = mask_b64.split(',', 1)[1]
+                        else:
+                            mask_b64_clean = mask_b64
+                        
+                        # 解码mask
+                        mask_bytes = base64.b64decode(mask_b64_clean)
+                        mask_image = Image.open(BytesIO(mask_bytes)).convert('L')
+                        mask_array = np.array(mask_image)
+                        
+                        # 二值化：找到白色区域（值大于阈值的区域）
+                        threshold = 128
+                        _, binary = cv2.threshold(mask_array, threshold, 255, cv2.THRESH_BINARY)
+                        
+                        # 使用contour找到白色区域的轮廓
+                        contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                        
+                        if len(contours) > 0:
+                            # 找到最大的轮廓（主要白色区域）
+                            largest_contour = max(contours, key=cv2.contourArea)
+                            
+                            # 计算边界框（不使用padding）
+                            x, y, w, h = cv2.boundingRect(largest_contour)
+                            min_x = x
+                            min_y = y
+                            max_x = x + w
+                            max_y = y + h
+                            
+                            # 裁剪mask图片本身
+                            cropped_mask = mask_array[min_y:max_y, min_x:max_x]
+                            
+                            # 黑白反色
+                            inverted_mask = 255 - cropped_mask
+                            
+                            # 转换为PIL图片
+                            inverted_pil = Image.fromarray(inverted_mask)
+
+                            processed_image = transparency(inverted_pil, target_color)
+                            
+                            # 转换为base64
+                            buffer = BytesIO()
+                            processed_image.save(buffer, format='PNG')
+                            inverted_bytes = buffer.getvalue()
+                            inverted_b64 = base64.b64encode(inverted_bytes).decode('utf-8')
+                            
+                            # 添加到结果列表
+                            cropped_masks.append({
+                                'mask': inverted_b64,
+                                'bbox': {
+                                    'x': int(min_x),
+                                    'y': int(min_y)
+                                }
+                            })
+                    except Exception as e:
+                        print(e)
+            
+            # 返回结果，包含裁剪后的masks和bbox坐标
+            return jsonify({
+                'cropped_masks': cropped_masks  # 裁剪后的masks和bbox左上角坐标
+            }), 200
+        else:
+            return jsonify({
+                "success": False,
+                "message": f"分割服务返回错误: {response.text}"
+            }), response.status_code
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"处理失败: {str(e)}"
+        }), 500
+
+@app.route('/segmentPoint', methods=['POST'])
+def segment_point():
+    """点分割接口：输入图片和坐标，输出单个mask"""
+    try:
+        request_data = request.get_json()
+        # INSERT_YOUR_CODE
+        # 保存request_data到本地txt（带时间戳，防止覆盖）
+        import os
+        from datetime import datetime
+        save_dir = './workdir/request_logs'
+        os.makedirs(save_dir, exist_ok=True)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S_%f')
+        with open(os.path.join(save_dir, f'request_point_{timestamp}.txt'), 'w', encoding='utf-8') as f:
+            import json
+            f.write(json.dumps(request_data, ensure_ascii=False, indent=2))
+        # 处理base64图片数据，确保有正确的头部
+        image_data = request_data['background']
+        target_color = request_data['containerColor']
+        print(request_data['x'],request_data['y'])
+        # 转发请求到外部分割服务
+        segment_url = 'http://175.178.152.10:2616/segmentPoint'
+        response = requests.post(segment_url, json={
+            'image': image_data,
+            'x': request_data['x'],
+            'y': request_data['y']
+        })
+        
+        if response.status_code == 200:
+            result = response.json()
+            
+            # 处理mask：使用contour找到白色区域bbox并裁剪mask本身
+            if 'mask' in result:
+                try:
+                    # 处理base64数据（可能包含data:image头部）
+                    mask_b64 = result['mask']
+                    if ',' in mask_b64:
+                        mask_b64_clean = mask_b64.split(',', 1)[1]
+                    else:
+                        mask_b64_clean = mask_b64
+                    
+                    # 解码mask
+                    mask_bytes = base64.b64decode(mask_b64_clean)
+                    mask_image = Image.open(BytesIO(mask_bytes)).convert('L')
+                    mask_array = np.array(mask_image)
+                    
+                    # 二值化：找到白色区域（值大于阈值的区域）
+                    threshold = 128
+                    _, binary = cv2.threshold(mask_array, threshold, 255, cv2.THRESH_BINARY)
+                    
+                    # 使用contour找到白色区域的轮廓
+                    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    
+                    if len(contours) > 0:
+                        # 找到最大的轮廓（主要白色区域）
+                        largest_contour = max(contours, key=cv2.contourArea)
+                        
+                        # 计算边界框（不使用padding）
+                        x_bbox, y_bbox, w, h = cv2.boundingRect(largest_contour)
+                        min_x = x_bbox
+                        min_y = y_bbox
+                        max_x = x_bbox + w
+                        max_y = y_bbox + h
+                        
+                        # 裁剪mask图片本身
+                        cropped_mask = mask_array[min_y:max_y, min_x:max_x]
+                        
+                        # 黑白反色
+                        inverted_mask = 255 - cropped_mask
+                        
+                        # 转换为PIL图片
+                        inverted_pil = Image.fromarray(inverted_mask)
+                        
+                        # 使用transparency函数处理
+                        processed_image = transparency(inverted_pil, target_color)
+                        
+                        # 转换为base64
+                        buffer = BytesIO()
+                        processed_image.save(buffer, format='PNG')
+                        processed_bytes = buffer.getvalue()
+                        processed_b64 = base64.b64encode(processed_bytes).decode('utf-8')
+                        
+                        # 返回处理后的结果
+                        return jsonify({
+                            'mask': processed_b64,
+                            'bbox': {
+                                'x': int(min_x),
+                                'y': int(min_y)
+                            }
+                        }), 200
+                    else:
+                        return jsonify({
+                            "success": False,
+                            "message": "未找到轮廓"
+                        }), 400
+                except Exception as e:
+                    print(e)
+                    return jsonify({
+                        "success": False,
+                        "message": f"处理mask失败: {str(e)}"
+                    }), 500
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "响应中缺少mask字段"
+                }), 400
+        else:
+            return jsonify({
+                "success": False,
+                "message": f"分割服务返回错误: {response.text}"
+            }), response.status_code
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"处理失败: {str(e)}"
+        }), 500
 
 @app.route('/workdir/<path:filename>')
 def serve_workdir(filename):
