@@ -95,6 +95,7 @@ declare global {
   const resolveUnref: typeof import('@vueuse/core')['resolveUnref']
   const sendBackgroundToSegmentAll: typeof import('./src/composables/server')['sendBackgroundToSegmentAll']
   const sendDataToServer: typeof import('./src/composables/server')['sendDataToServer']
+  const sendPointToSegmentPoint: typeof import('./src/composables/server')['sendPointToSegmentPoint']
   const sendUploadContainerToServer: typeof import('./src/composables/server')['sendUploadContainerToServer']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
@@ -404,6 +405,7 @@ declare module 'vue' {
     readonly resolveUnref: UnwrapRef<typeof import('@vueuse/core')['resolveUnref']>
     readonly sendBackgroundToSegmentAll: UnwrapRef<typeof import('./src/composables/server')['sendBackgroundToSegmentAll']>
     readonly sendDataToServer: UnwrapRef<typeof import('./src/composables/server')['sendDataToServer']>
+    readonly sendPointToSegmentPoint: UnwrapRef<typeof import('./src/composables/server')['sendPointToSegmentPoint']>
     readonly sendUploadContainerToServer: UnwrapRef<typeof import('./src/composables/server')['sendUploadContainerToServer']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>

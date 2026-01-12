@@ -149,11 +149,11 @@ function processMarker(tempCanvas: Canvas) {
 
   // 获取 table store 以检查 filter encoding
   const tableStore = useTableStore()
-  
+
   // 创建一个函数来根据 cluster_id 获取对应的 filter encoding
   const getFilterEncoding = (clusterId: string) => {
     if (!clusterId) return null
-    
+
     // 遍历所有 card 的 filters，找到匹配的 filter
     for (const card of tableStore.columnFilterCards) {
       const filter = card.filters.find(f => f.id === clusterId)
@@ -167,7 +167,7 @@ function processMarker(tempCanvas: Canvas) {
   // 从 group 对象中获取颜色（优先 stroke，其次 fill）
   const getColorFromGroup = (group: any): string | null => {
     if (!group || typeof group.getObjects !== 'function') return null
-    
+
     const objects = group.getObjects()
     for (const obj of objects) {
       // 优先返回 stroke 颜色
@@ -609,7 +609,7 @@ export function pharseData(card: ColumnFilterCard | null) {
 function processBackground(tempCanvas: Canvas) {
   const canvasObjects = tempCanvas.getObjects()
   const backgroundObjs = canvasObjects.filter(obj => obj.get('dataType') === 'background')
-  
+
   if (backgroundObjs.length === 0) {
     return ''
   }
@@ -653,7 +653,7 @@ export async function sendBackgroundToSegmentAll(canvas: Canvas | null): Promise
   }
 
   let tempCanvas: Canvas | null = null
-  
+
   try {
     // 创建临时canvas，避免影响原canvas
     const originalWidth = canvas.width
@@ -666,11 +666,11 @@ export async function sendBackgroundToSegmentAll(canvas: Canvas | null): Promise
 
     // 从原canvas导出JSON数据
     const canvasJSON = canvas.toJSON()
-    
+
     // 加载到临时canvas
     await tempCanvas.loadFromJSON(canvasJSON)
     tempCanvas.backgroundColor = canvas.backgroundColor || '#fffef8'
-    
+
     // 恢复自定义属性（如果需要）
     const collageSeriesStore = useCollageSeriesStore()
     const currentSlide = collageSeriesStore.collageSeries[collageSeriesStore.currentSlideIndex]
@@ -687,12 +687,15 @@ export async function sendBackgroundToSegmentAll(canvas: Canvas | null): Promise
 
     // 在临时canvas上处理背景，转换为base64
     const backgroundBase64 = processBackground(tempCanvas)
-    
+
     if (!backgroundBase64) {
       console.error('未找到背景对象或处理失败')
       return null
     }
 
+    // 获取背景对象的bbox
+    const backgroundObj = canvas.getObjects().find(obj => obj.get('dataType') === 'background')
+    const backgroundBbox = backgroundObj ? backgroundObj.getBoundingRect() : null
     // 获取containerColor
     const canvasStore = useCanvasStore()
     const { containerColor } = storeToRefs(canvasStore)
@@ -703,9 +706,10 @@ export async function sendBackgroundToSegmentAll(canvas: Canvas | null): Promise
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         background: backgroundBase64,
-        containerColor: containerColor.value 
+        containerColor: containerColor.value,
+        backgroundBbox: backgroundBbox
       })
     })
 
@@ -739,7 +743,7 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
   }
 
   let tempCanvas: Canvas | null = null
-  
+
   try {
     // 创建临时canvas，避免影响原canvas
     const originalWidth = canvas.width
@@ -752,11 +756,11 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
 
     // 从原canvas导出JSON数据
     const canvasJSON = canvas.toJSON()
-    
+
     // 加载到临时canvas
     await tempCanvas.loadFromJSON(canvasJSON)
     tempCanvas.backgroundColor = canvas.backgroundColor || '#fffef8'
-    
+
     // 恢复自定义属性（如果需要）
     const collageSeriesStore = useCollageSeriesStore()
     const currentSlide = collageSeriesStore.collageSeries[collageSeriesStore.currentSlideIndex]
@@ -773,7 +777,7 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
 
     // 在临时canvas上处理背景，转换为base64
     const backgroundBase64 = processBackground(tempCanvas)
-    
+
     if (!backgroundBase64) {
       console.error('未找到背景对象或处理失败')
       return null
@@ -789,7 +793,7 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         background: backgroundBase64,
         containerColor: containerColor.value,
         x: point['x'],

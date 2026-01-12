@@ -279,9 +279,10 @@ def segment_all():
         request_data = request.get_json()
         image_data = request_data['background'] 
         target_color = request_data['containerColor']
+        bg_bbox = request_data['backgroundBbox']
         # 转发请求到外部分割服务
         segment_url = 'http://175.178.152.10:2616/segmentAll'
-        response = requests.post(segment_url, json={'image': image_data})
+        response = requests.post(segment_url, json={'image': image_data,'bbox': bg_bbox})
         
         if response.status_code == 200:
             result = response.json()
