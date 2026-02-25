@@ -28,7 +28,7 @@ const { collaging ,result_data} = storeToRefs(animationStore)
       <div class="border-t border-gray-200"></div>
       
       <!-- 下半部分：左右两等边 -->
-      <div class="flex-1 min-h-0 flex flex-col">
+      <div class="flex-1 min-h-0 flex flex-col" data-tutorial="mark-editor">
         <!-- 工具栏 -->
         <div class="flex justify-between items-center p-2 bg-[var(--toolbar-bg-color)] h-8 z-10 flex-shrink-0 shadow-sm">
           <span class="text-[14px] text-gray-700 font-bold">Mark Editor</span>

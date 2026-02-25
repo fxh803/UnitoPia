@@ -28,7 +28,7 @@ const switchTab = (tab: 'table' | 'mapping') => {
 </script>
 
 <template>
-  <div class="h-full border-b border-gray-200 relative flex flex-col group">
+  <div class="h-full border-b border-gray-200 relative flex flex-col group" data-tutorial="data-table">
     <!-- 工具栏 - 始终显示在顶部 -->
     <div 
       class="flex justify-between items-center p-2 h-8 bg-[var(--toolbar-bg-color)] flex-shrink-0 shadow-sm z-10"

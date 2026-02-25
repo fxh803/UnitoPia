@@ -4,12 +4,14 @@
 import { collectAllSlidesData, sendDataToServer } from '~/composables/server'
 import { useAnimationStore } from '~/stores/animation'
 import { useCanvasStore } from '~/stores/canvas'
+import { useTutorialStore } from '~/stores/tutorial'
 import { storeToRefs } from 'pinia'
 import { ref, watch, computed } from 'vue'
 import {fabric} from 'fabric'
 import { FabricImage } from 'fabric'
 const animationStore = useAnimationStore()
 const canvasStore = useCanvasStore()
+const tutorialStore = useTutorialStore()
 const { collaging, progress, result_data, replaying,now_overview_idx,totalOverview, time_interval } = storeToRefs(animationStore)
 
 // 计算进度百分比
@@ -108,6 +110,11 @@ const handleRefresh = () => {
     window.location.reload()
   }
 }
+
+// 打开教程
+const handleHelp = () => {
+  tutorialStore.openTutorial()
+}
 </script>
 
 <template>
@@ -185,6 +192,15 @@ const handleRefresh = () => {
       >
         <div class="i-carbon:edit text-lg"></div>
         <span>Back to Edit</span>
+      </button>
+
+      <!-- Help 按钮 - 靠右 -->
+      <button
+        class="ml-auto flex items-center gap-2 px-4 h-full bg-[var(--primary-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-hover-color)]"
+        @click="handleHelp"
+      >
+        <span class="i-carbon:help text-lg"></span>
+        <span>Help</span>
       </button>
       
       <!-- 调速拉条 - 只在replay模式下显示 -->

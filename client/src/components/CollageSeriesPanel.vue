@@ -168,7 +168,8 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
     <!-- 面板内容 -->
     <aside
       class="py-4 bg-[var(--primary-light-color)] flex flex-col h-full items-center transition-all duration-300 shadow-left border-l border-gray-200 overflow-x-hidden relative"
-      :class="isCollapsed ? 'w-13' : 'w-60'">
+      :class="isCollapsed ? 'w-13' : 'w-60'"
+      data-tutorial="visualization-gallery">
       <!-- 拼贴处理状态遮罩 -->
       <div v-if="collaging || result_data.length > 0"
         class="absolute inset-0 bg-gray-300 bg-opacity-0 z-30 flex items-center justify-center cursor-not-allowed pointer-events-auto">

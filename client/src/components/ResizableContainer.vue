@@ -71,7 +71,11 @@ onBeforeUnmount(() => {
       />
     </div>
     <!-- 右侧画布区 -->
-    <div class="h-full flex flex-col" :style="{ width: `${resizeHandleStore.rightWidth}px`, minWidth: `${minRightWidth}px` }">
+    <div
+      class="h-full flex flex-col"
+      :style="{ width: `${resizeHandleStore.rightWidth}px`, minWidth: `${minRightWidth}px` }"
+      data-tutorial="canvas-editor"
+    >
       <!-- 工具栏 -->
       <div class="flex justify-between items-center p-2 bg-[var(--toolbar-bg-color)] h-8 flex-shrink-0 shadow-sm z-10">
         <span class="text-[14px] text-gray-700 font-bold">Canvas Editor</span>

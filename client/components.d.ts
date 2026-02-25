@@ -44,5 +44,6 @@ declare module 'vue' {
     Table: typeof import('./src/components/Table.vue')['default']
     TableData: typeof import('./src/components/TableData.vue')['default']
     TableUploadArea: typeof import('./src/components/TableUploadArea.vue')['default']
+    TutorialOverlay: typeof import('./src/components/TutorialOverlay.vue')['default']
   }
 }
