@@ -8,7 +8,7 @@ import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useMarkerStore } from '~/stores/marker'
 import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useCanvasStore } from '~/stores/canvas'
-import { useContainerStore } from '~/stores/container'
+import { useContainerAnimationStore } from '~/stores/containerAnimation'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 import { ElMessage } from 'element-plus'
 // 定义数据类型接口
@@ -48,7 +48,7 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
   console.log('开始收集')
   const collageSeriesStore = useCollageSeriesStore()
   const { currentOverviewIndex } = storeToRefs(collageSeriesStore)
-  const containerStore = useContainerStore()
+  const containerStore = useContainerAnimationStore()
   //清空container记录
   containerStore.clearAllRecords()
   const overviewsResult = []
@@ -489,7 +489,7 @@ export async function sendDataToServer(): Promise<boolean> {
         }))
       }
     })
-    const containerStore = useContainerStore()
+    const containerStore = useContainerAnimationStore()
     containerStore.createShiningPaths()
     animationStore.startContainerAnimation()
     totalOverview.value = data.length

@@ -22,7 +22,7 @@ const {
 } = collageSeriesStore
 
 // 折叠状态
-const isCollapsed = ref(false)
+const isCollapsed = ref(true)
 
 // 悬停状态
 const hoveredOverviewIdx = ref<number | null>(null)
@@ -144,8 +144,7 @@ function toggleOverviewCollapse(overviewIdx: number) {
     collapsedOverviews.value.add(overviewIdx)
   }
 }
-onMounted(() => {
-  isCollapsed.value = window.innerWidth < 1440
+onMounted(() => { 
   // 初始时将所有总览设置为收起状态
   overviews.value.forEach((_, index) => {
     collapsedOverviews.value.add(index)
@@ -164,9 +163,9 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
 </script>
 
 <template>
-  <div class="relative flex h-full">
-    <!-- 面板内容 -->
-    <aside
+  <div class="absolute right-0 top-0 bottom-0 z-20 h-full">
+      <!-- 面板内容 -->
+      <aside
       class="bg-[var(--primary-light-color)] flex flex-col h-full items-center transition-all duration-300 shadow-left border-l border-[var(--border-color)] overflow-x-hidden relative"
       :class="isCollapsed ? 'w-13' : 'w-60'"
       data-tutorial="visualization-gallery">

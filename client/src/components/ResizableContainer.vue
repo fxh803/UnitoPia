@@ -5,7 +5,7 @@ import { useResizeHandleStore } from '~/stores/resizeHandle'
 const resizeHandleStore = useResizeHandleStore()
 const container = ref<HTMLElement | null>(null)
 const showBar = ref(false)
-const minLeftWidth = ref(640)
+const minLeftWidth = ref(300)
 const minRightWidth = ref(300)
 function startDrag(_e: MouseEvent) {
   resizeHandleStore.setDragging(true)
@@ -37,11 +37,14 @@ function handleMouseLeave() {
 }
 
 onMounted(() => {
-  // 等待DOM渲染完成后设置初始宽度
+  // 初始时左侧为 min 宽度，右侧占满剩余空间
   nextTick(() => {
     if (container.value) {
       const containerWidth = container.value.offsetWidth
-      const initialRightWidth = Math.max(minRightWidth.value, containerWidth * 0.6)
+      const initialRightWidth = Math.max(
+        minRightWidth.value,
+        containerWidth * 0.75
+      )
       resizeHandleStore.updateRightWidth(initialRightWidth)
     }
   })
@@ -58,7 +61,10 @@ onBeforeUnmount(() => {
 <template>
   <div ref="container" class="flex h-full w-full select-none relative overflow-hidden">
     <!-- 左侧数据区 + 滑动条 -->
-    <div :style="{ minWidth: `${minLeftWidth}px` }" class="h-full border-r border-[var(--border-color)] relative flex-1 min-w-0">
+    <div
+      :style="{ minWidth: `${minLeftWidth}px` }"
+      class="h-full border-r border-[var(--border-color)] relative flex-1 min-w-0 flex flex-col min-h-0 overflow-hidden"
+    >
       <slot name="left" />
       <!-- 滑动条，绝对定位在右侧 -->
       <div

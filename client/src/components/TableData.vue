@@ -42,12 +42,23 @@ const cellClassName = ({ rowIndex, column, columnIndex }: any) => {
     style="min-width: 0; min-height: 0; max-width: 100%; max-height: 100%;">
     <!-- 表格内容 -->
     <div class="flex-1 overflow-hidden">
-        <vxe-table :data="tableStore.tableData" :scroll-y="{ enabled: true }" :scroll-x="{ enabled: true }" height="100%"
-          :cell-config="{ height: 30 }" show-header-overflow show-overflow size="small" border
-          :cell-class-name="cellClassName" :auto-resize="true">
-        <vxe-column v-for="(item, index) in tableStore.tableColumns" :key="index" :field="item" :title="item" row-resize
+        <vxe-table
+          :data="tableStore.tableData"
+          :scroll-y="{ enabled: true }"
+          :scroll-x="{ enabled: true }"
+          height="100%"
+          :cell-config="{ height: 30 }"
+          show-header-overflow
+          show-overflow
+          size="small"
+          border
+          :cell-class-name="cellClassName"
+          :auto-resize="true"
+          :column-config="{ resizable: true }"
+        >
+        <vxe-column v-for="(item, index) in tableStore.tableColumns" :key="index" :field="item" :title="item"
           header-align="center"
-          :min-width="item.toLowerCase() === 'index' || item.toLowerCase() === 'idx' ? 40 : 140">
+          :min-width="item.toLowerCase() === 'index' || item.toLowerCase() === 'idx' ? 20 : 40">
         </vxe-column>
       </vxe-table>
     </div>

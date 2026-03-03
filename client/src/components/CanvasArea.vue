@@ -448,8 +448,6 @@ onBeforeUnmount(() => {
         </div>
       </div>
     </div>
-    <!-- 拼贴系列面板 - 移动到右侧 -->
-    <CollageSeriesPanel />
   </section>
 </template>
 

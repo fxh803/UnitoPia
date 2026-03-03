@@ -1,7 +1,7 @@
 // src/stores/counterStore.js
 import { defineStore, storeToRefs } from 'pinia'
-import paper from "paper";
-import { useContainerStore } from '~/stores/container'
+import paper from 'paper'
+import { useContainerAnimationStore } from '~/stores/containerAnimation'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { getRenderTxtData } from '~/composables/server'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
@@ -111,9 +111,9 @@ export const useAnimationStore = defineStore('animation', () => {
       paper.view.off('frame', containerAni.value);
       containerAni.value = null
     }
-    // 清理container的shining paths
-    const containerStore = useContainerStore()
-    containerStore.clearShiningPaths()
+    // 清理 container 的 shining paths
+    const containerAnimationStore = useContainerAnimationStore()
+    containerAnimationStore.clearShiningPaths()
   }
 
   function removeElements() {
@@ -204,13 +204,13 @@ export const useAnimationStore = defineStore('animation', () => {
   }
 
   function startContainerAnimation() {
-    const containerStore = useContainerStore()
+    const containerAnimationStore = useContainerAnimationStore()
     if (!containerAni.value) {
-        containerAni.value = (event) => {
-          containerStore.containerAnimation(event)
-        };
-        paper.view.on('frame', containerAni.value);
+      containerAni.value = (event) => {
+        containerAnimationStore.containerAnimation(event)
       }
+      paper.view.on('frame', containerAni.value)
+    }
   }
   async function updateAnimation() {//每当收到进度信息，检查动画更新情况
     // 如果正在执行，直接返回，防止并发执行
