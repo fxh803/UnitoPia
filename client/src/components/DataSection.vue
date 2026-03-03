@@ -12,7 +12,7 @@ const { tableData, tableColumns, isLoading } = storeToRefs(tableStore)
 const isExpanded = ref(true)
 const activeTab = ref<'fields' | 'table'>('fields')
 
-// 当前正在被拖拽的字段（用 column 作为唯一 key）
+// 当前正在被拖拽的字段（列名 + 变体类型组合成唯一 key）
 const draggingFieldKey = ref<string | null>(null)
 
 const fileInput = ref<HTMLInputElement>()
@@ -59,7 +59,14 @@ function handleDrop(e: DragEvent) {
   if (files?.length) tableStore.handleFileUpload(files[0])
 }
 
-function onFieldDragStart(e: DragEvent, tag: { column: string }, type: 'numeric' | 'categorical') {
+type FieldVariant = 'field' | 'group'
+
+function onFieldDragStart(
+  e: DragEvent,
+  tag: { column: string },
+  type: 'numeric' | 'categorical',
+  variant: FieldVariant = 'field',
+) {
   if (!e.dataTransfer) return
 
   // 1. 设置拖拽携带的数据
@@ -67,6 +74,7 @@ function onFieldDragStart(e: DragEvent, tag: { column: string }, type: 'numeric'
   e.dataTransfer.setData('text/plain', tag.column)
   e.dataTransfer.setData('field-type', type)
   e.dataTransfer.setData('entities', String(tableData.value.length))
+  e.dataTransfer.setData('field-variant', variant)
 
   // 2. 自定义拖拽时跟随鼠标的“影像”，保持 pill 原本样式
   const target = e.target as HTMLElement | null
@@ -89,8 +97,8 @@ function onFieldDragStart(e: DragEvent, tag: { column: string }, type: 'numeric'
     })
   }
 
-  // 3. 标记当前字段为“正在被拖拽”，让原位置显示为灰色洞
-  draggingFieldKey.value = tag.column
+  // 3. 标记当前字段为“正在被拖拽”，让对应 pill 显示为灰色洞
+  draggingFieldKey.value = `${variant}:${tag.column}`
 }
 
 function onFieldDragEnd() {
@@ -219,7 +227,7 @@ function clearData() {
               v-for="tag in numericTags"
               :key="`num-${tag.column}`"
               class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
-              :class="{ 'data-field-placeholder': draggingFieldKey === tag.column }"
+              :class="{ 'data-field-placeholder': draggingFieldKey === `field:${tag.column}` }"
               draggable="true"
               @dragstart="onFieldDragStart($event, tag, 'numeric')"
               @dragend="onFieldDragEnd"
@@ -235,18 +243,36 @@ function clearData() {
               aria-hidden="true"
             />
 
-            <!-- 分类型 / 文本字段 -->
+            <!-- 分类型 / 文本字段：普通 pill + Group 分身 -->
             <span
               v-for="tag in categoricalTags"
               :key="`cat-${tag.column}`"
-              class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
-              :class="{ 'data-field-placeholder': draggingFieldKey === tag.column }"
-              draggable="true"
-              @dragstart="onFieldDragStart($event, tag, 'categorical')"
-              @dragend="onFieldDragEnd"
+              class="inline-flex items-center gap-2"
             >
-              <span class="data-field-prefix-abc mr-1">abc</span>
-              <span class="data-field-name">{{ tag.column }}</span>
+              <!-- 普通字段 pill -->
+              <span
+                class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
+                :class="{ 'data-field-placeholder': draggingFieldKey === `field:${tag.column}` }"
+                draggable="true"
+                @dragstart="onFieldDragStart($event, tag, 'categorical', 'field')"
+                @dragend="onFieldDragEnd"
+              >
+                <span class="data-field-prefix-abc mr-1">abc</span>
+                <span class="data-field-name">{{ tag.column }}</span>
+              </span>
+
+              <!-- Group 分身 pill -->
+              <span
+                class="data-field-pill data-field-pill-group inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
+                :class="{ 'data-field-placeholder': draggingFieldKey === `group:${tag.column}` }"
+                draggable="true"
+                @dragstart="onFieldDragStart($event, tag, 'categorical', 'group')"
+                @dragend="onFieldDragEnd"
+              >
+                <span class="data-field-prefix-abc mr-1">abc</span>
+                <span class="data-field-name font-semibold mr-2">{{ tag.column }}</span>
+                <span class="data-field-group-chip">Group</span>
+              </span>
             </span>
           </div>
         </div>
@@ -279,6 +305,10 @@ function clearData() {
   border: none;
 }
 
+.data-field-pill-group {
+  background-color: #f5efec;
+}
+
 .data-field-placeholder {
   background-color: #d4d1cf;
   border-radius: 9999px;
@@ -300,8 +330,11 @@ function clearData() {
   color: #444;
 }
 
-.data-field-group {
-  background-color: #dcdcdc;
-  color: #444;
+.data-field-group-chip {
+  background-color: #efe6e1;
+  color: #777;
+  border-radius: 9999px;
+  padding: 2px 8px;
+  font-size: 11px;
 }
 </style>
