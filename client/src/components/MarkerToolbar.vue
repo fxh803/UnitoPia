@@ -353,7 +353,7 @@ const saveMarkers = async () => {
         <!-- 圆形 -->
         <button
           class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-t-lg"
-          :class="mode === 'ellipse' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'"
+          :class="mode === 'ellipse' ? 'bg-[var(--primary-light-color)] text-[var(--primary-color)]' : 'text-gray-700'"
           @click="() => { setMode('ellipse'); showDrawMenu = false; }"
         >
           <span class="i-carbon-circle-outline text-sm" />
@@ -363,7 +363,7 @@ const saveMarkers = async () => {
         <!-- 矩形 -->
         <button
           class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-50 rounded-b-lg"
-          :class="mode === 'rect' ? 'bg-blue-50 text-blue-600' : 'text-gray-700'"
+          :class="mode === 'rect' ? 'bg-[var(--primary-light-color)] text-[var(--primary-color)]' : 'text-gray-700'"
           @click="() => { setMode('rect'); showDrawMenu = false; }"
         >
           <span class="i-carbon-checkbox text-sm" />

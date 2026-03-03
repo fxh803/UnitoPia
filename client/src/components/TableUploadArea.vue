@@ -41,18 +41,18 @@ const handleFileSelect = (e: Event) => {
 <template>
   <div v-if="tableStore.tableData.length === 0 && !tableStore.isLoading" class="flex-1 w-full p-5 bg-[var(--primary-light-color)]">
     <div
-      class="border-2 h-full w-full border-dashed border-gray-300 rounded-lg transition-colors cursor-pointer flex flex-col justify-center items-center gap-4"
+      class="border-2 h-full w-full border-dashed rounded-lg transition-colors cursor-pointer flex flex-col justify-center items-center gap-4"
       :class="{
-        'border-blue-500 bg-blue-50': isDragOver,
-        'hover:border-gray-400': !isDragOver
+        'border-[var(--primary-color)] bg-[var(--primary-light-color)]': isDragOver,
+        'border-[var(--border-color)] hover:border-[var(--text-muted-light)]': !isDragOver
       }"
       @dragover="handleDragOver"
       @dragleave="handleDragLeave"
       @drop="handleDrop"
       @click="fileInput?.click()"
     >
-      <span class="i-carbon-add-alt text-4xl text-gray-400"></span>
-      <div class="text-sm font-medium text-gray-400">Upload Data</div>
+      <span class="i-carbon-add-alt text-4xl text-[var(--text-muted-light)]"></span>
+      <div class="text-sm font-medium text-[var(--text-muted)]">Upload Data</div>
     </div>
     <input
       ref="fileInput"

@@ -395,12 +395,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="bg-gray-900 flex h-full min-h-0 min-w-0 w-full">
+  <section class="bg-[var(--primary-light-color)] flex h-full min-h-0 min-w-0 w-full">
     <!-- 主画布区域 -->
     <div
       ref="canvasAreaRef"
       data-tutorial="canvas-editor"
-      class="p-2 pl-7 border-r border-[#e6e6e6] bg-[#f5f5f5] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
+      class="p-2 pl-7 border-r border-[var(--border-color)] bg-[var(--primary-light-color)] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
       @dragover="handleDragOver" @drop="(e) => handleDrop(e, canvasEl)">
       <!-- 工具栏容器：垂直居中，包含所有工具栏 -->
       <div class="absolute left-0 z-10 flex flex-col items-start gap-2" style="top: 50%; transform: translateY(-50%);">
@@ -425,7 +425,7 @@ onBeforeUnmount(() => {
       <!-- 新增canvas-wrapper，包裹canvas和button -->
       <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
         <!-- 画布本体 -->
-        <canvas ref="canvasEl" class="border border-[#e6e6e6] rounded-2xl" />
+        <canvas ref="canvasEl" class="border border-[var(--border-color)] rounded-2xl" />
         <paperCanvas v-if="collaging || result_data.length > 0" :key="paperCanvasKey" />
         <!-- 对象操作按钮 -->
         <ObjectActionButtons />

@@ -119,98 +119,99 @@ const handleHelp = () => {
 
 <template>
   <div class="relative">
-    <header class="px-6 border-b border-gray-200 bg-[var(--primary-color)] flex h-12 w-full shadow items-center z-20">
-      <h1 class="text-xl text-gray-800 font-bold flex items-center gap-2">
-        <img src="/UNITVIZ2.svg" alt="UnitoPia Logo" class="h-8 w-auto" />
+    <header class="px-6 border-b border-[var(--border-color)] bg-[var(--primary-light-color)] flex h-12 w-full items-center z-20">
+      <h1 class="topbar-label text-[#565151] flex items-center gap-2">
+        <!-- <img src="/UNITVIZ2.svg" alt="UnitoPia Logo" class="h-8 w-auto" /> -->
         UnitoPia
       </h1>
 
-      <!-- 始终显示：新建 Workspace 按钮 -->
-      <button
-        class="ml-6 flex items-center gap-2 px-4 h-full bg-[var(--primary-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-hover-color)] cursor-pointer"
-        @click="handleRefresh"
-      >
-        <span class="i-carbon:document-add text-base"></span>
-        <span>New Workspace</span>
-      </button>
-      
-      <!-- 播放按钮 -->
-      <button 
-        data-tutorial="run-button"
-        class="ml-50px flex items-center gap-2 px-6 h-full bg-[var(--primary-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-hover-color)]"
-        :class="[replaying ? 'opacity-50 cursor-not-allowed' : '']"
-        :disabled="replaying"
-        @click="handleRun"
-      >
-        <div 
-          v-if="!collaging"
-          class="i-carbon:play text-lg"
-        ></div>
-        <div 
-          v-else
-          class="i-carbon:renew animate-spin text-lg"
-        ></div>
-        <span>{{ collaging ?  'Running...' : result_data.length>0 ? 'reRun' : 'Run' }}</span>
-       
-      </button>
-      
-      <!-- Replay 按钮 - 当result_data不为空时显示 -->
-      <button 
-        v-if="showReplayButton"
-        class="flex items-center gap-2 px-6 h-full bg-[var(--primary-color)] text-[var(--title-color)] transition-colors duration-200 font-medium  hover:bg-[var(--primary-hover-color)]"
-        @click="handleReplay"
-      >
-        <div 
-          v-if="!replaying"
-          class="i-carbon:reset text-lg" 
-        ></div>
-        <div 
-          v-else
-          class="i-carbon:renew animate-spin text-lg"
-        ></div>
-        <span>{{ replaying ? 'replaying...' : 'play' }}</span>
-      </button>
-      
-      <!-- Export 按钮 -->
-      <button v-show="showExportButton" 
-      class="flex items-center gap-2 px-6 h-full bg-[var(--primary-color)] hover:bg-[var(--primary-hover-color)] text-[var(--title-color)] transition-colors duration-200 font-medium"
-      :class="[ 
-          replaying ? 'opacity-50 cursor-not-allowed' : ''
-        ]">
-        <div class="i-carbon:export text-lg"></div>
-        <span>Export</span>
-      </button>
-      
-      <!-- Back to Edit 按钮 -->
-      <button 
-        v-show="showBackToEditButton"
-        class="flex items-center gap-2 px-6 h-full bg-[var(--primary-color)] hover:bg-[var(--primary-hover-color)] text-[var(--title-color)] transition-colors duration-200 font-medium"
-        :class="[
-          replaying ? 'opacity-50 cursor-not-allowed' : ''
-        ]"
-        :disabled="replaying"
-        @click="handleBackToEdit"
-      >
-        <div class="i-carbon:edit text-lg"></div>
-        <span>Back to Edit</span>
-      </button>
+      <!-- 右侧按钮组：整体靠右，最后是 Help -->
+      <div class="ml-auto flex items-center gap-2">
+        <!-- Replay 按钮 - 当result_data不为空时显示 -->
+        <button 
+          v-if="showReplayButton"
+          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)]"
+          @click="handleReplay"
+        >
+          <div 
+            v-if="!replaying"
+            class="i-carbon:reset text-lg" 
+          ></div>
+          <div 
+            v-else
+            class="i-carbon:renew animate-spin text-lg"
+          ></div>
+          <span class="topbar-button-label">{{ replaying ? 'replaying...' : 'play' }}</span>
+        </button>
+        
+        <!-- Export 按钮 -->
+        <button v-show="showExportButton" 
+          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)]"
+          :class="[ 
+            replaying ? 'opacity-50 cursor-not-allowed' : ''
+          ]">
+          <div class="i-carbon:export text-lg"></div>
+          <span class="topbar-button-label">Export</span>
+        </button>
+        
+        <!-- Back to Edit 按钮 -->
+        <button 
+          v-show="showBackToEditButton"
+          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)]"
+          :class="[
+            replaying ? 'opacity-50 cursor-not-allowed' : ''
+          ]"
+          :disabled="replaying"
+          @click="handleBackToEdit"
+        >
+          <div class="i-carbon:edit text-lg"></div>
+          <span class="topbar-button-label">Back to Edit</span>
+        </button>
 
-      <!-- Help 按钮 - 靠右 -->
-      <button
-        class="ml-auto flex items-center gap-2 px-4 h-full bg-[var(--primary-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-hover-color)]"
-        @click="handleHelp"
-      >
-        <span class="i-carbon:help text-lg"></span>
-        <span>Help</span>
-      </button>
-      
-      <!-- 调速拉条 - 只在replay模式下显示 -->
-      <div 
-        v-if="replaying"
-        class="flex items-center gap-3 px-6 h-full bg-white border-l border-gray-200"
-      >
-        <div class="i-carbon:time text-lg text-gray-600"></div>
-        <span class="text-sm text-gray-600 font-medium">Speed:</span>
+        <!-- New Workspace 按钮 -->
+        <button
+          class="flex items-center gap-2 px-4 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] cursor-pointer border border-[var(--border-color)]"
+          @click="handleRefresh"
+        >
+          <span class="i-carbon:document-add text-base"></span>
+          <span class="topbar-button-label">New Workspace</span>
+        </button>
+        
+        <!-- Run 按钮 -->
+        <button 
+          data-tutorial="run-button"
+          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)]"
+          :class="[replaying ? 'opacity-50 cursor-not-allowed' : '']"
+          :disabled="replaying"
+          @click="handleRun"
+        >
+          <div 
+            v-if="!collaging"
+            class="i-carbon:play text-lg"
+          ></div>
+          <div 
+            v-else
+            class="i-carbon:renew animate-spin text-lg"
+          ></div>
+          <span class="topbar-button-label">{{ collaging ?  'Running...' : result_data.length>0 ? 'reRun' : 'Run' }}</span>
+        </button>
+
+        <!-- Help 按钮 - 最后一个 -->
+        <button
+          class="flex items-center gap-2 px-4 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)]"
+          @click="handleHelp"
+        >
+          <span class="i-carbon:help text-lg"></span>
+          <span class="topbar-button-label">Help</span>
+        </button>
+        
+        <!-- 调速拉条 - 只在replay模式下显示 -->
+        <div 
+          v-if="replaying"
+          class="flex items-center gap-3 px-6 py-1 rounded-md bg-[var(--primary-light-color)] border-l border-[var(--border-color)] ml-2"
+        >
+        <div class="i-carbon:time text-lg text-[var(--text-muted)]"></div>
+        <span class="text-sm text-[var(--text-muted)] font-medium">Speed:</span>
         <input
           type="range"
           min="0.5"
@@ -218,19 +219,20 @@ const handleHelp = () => {
           step="0.1"
           :value="currentSpeedMultiplier"
           @input="handleSpeedChange"
-          class="w-24 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
+          class="w-24 h-2 bg-[var(--border-color)] rounded-lg appearance-none cursor-pointer slider"
         />
-        <span class="text-xs text-gray-500 min-w-12">{{ currentSpeedMultiplier }}x</span>
+        <span class="text-xs text-[var(--text-muted)] min-w-12">{{ currentSpeedMultiplier }}x</span>
+        </div>
       </div>
     </header>
 
     <!-- 进度条 - 移到header外部，使用fixed定位 -->
     <div 
       v-if="collaging||replaying"
-      class="fixed top-11 left-0 w-full bg-gray-200 h-2 z-50"
+      class="fixed top-11 left-0 w-full bg-[var(--border-color)] h-2 z-50"
     >
       <div 
-        class="bg-[#fb9830] h-full transition-all duration-300 ease-out"
+        class="bg-[var(--primary-color)] h-full transition-all duration-300 ease-out"
         :style="{ width: percentage + '%' }"
       ></div>
     </div>
@@ -241,7 +243,7 @@ const handleHelp = () => {
 .slider {
   -webkit-appearance: none;
   appearance: none;
-  background: #e5e7eb;
+  background: var(--border-color);
   outline: none;
   border-radius: 8px;
 }
@@ -251,20 +253,20 @@ const handleHelp = () => {
   appearance: none;
   width: 16px;
   height: 16px;
-  background: #3b82f6;
+  background: var(--primary-color);
   cursor: pointer;
   border-radius: 50%;
   transition: background-color 0.2s;
 }
 
 .slider::-webkit-slider-thumb:hover {
-  background: #2563eb;
+  background: var(--primary-hover-color);
 }
 
 .slider::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  background: #3b82f6;
+  background: var(--primary-color);
   cursor: pointer;
   border-radius: 50%;
   border: none;
@@ -272,6 +274,25 @@ const handleHelp = () => {
 }
 
 .slider::-moz-range-thumb:hover {
-  background: #2563eb;
+  background: var(--primary-hover-color);
 }
+
+/* 顶部导航标题：IBM Plex Sans 20px Medium，略紧字距 */
+.topbar-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 28px;
+  letter-spacing: -0.2px;
+}
+
+/* 顶部按钮文字：稍小一号 */
+.topbar-button-label {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: -0.1px;
+}
+
 </style>

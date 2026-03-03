@@ -1,20 +1,28 @@
 :root {
-  /* 主题主色（Header / 主按钮） */
-  --primary-color: #ffcc00;
-  --primary-hover-color: #ffd633;
-  
-  /* 浅色背景（面板 / 画布外围） */
-  --primary-light-color: #fffef8;
-  
-  /* 工具栏 / 条带背景和边框 */
-  --toolbar-bg-color: #ffe991;
-  --sub-toolbar-bg-color: #fffae8;
-  /* 标题文字颜色（Header / 面板标题） */
-  --title-color: #111111;
-  
-  /* 删除相关颜色 */
-  --delete-color: #F24E1E;
-  --delete-hover-color: #E0451A;
+  /* 字体 */
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+
+  /* 玫瑰色强调色（用于分隔条等小面积高亮） */
+  --accent-rose: #B59B99;
+
+  /* 主操作按钮（Run 等强调色 - 暖粉/鲑鱼红） */
+  --primary-color: #EB7678;
+  --primary-hover-color: #E06A6C;
+
+  /* 浅色背景（面板 / 侧栏 - 暖米白） */
+  --primary-light-color: #F8F6F4;
+
+  /* 标题与正文 */
+  --title-color: #565151;
+  --text-muted: #646464;
+  --text-muted-light: #969696;
+
+  /* 边框（极浅暖灰） */
+  --border-color: #E8E6E4;
+
+  /* 删除相关 */
+  --delete-color: #C75C5E;
+  --delete-hover-color: #B54E50;
 }
 
 html,
@@ -23,6 +31,7 @@ body,
   height: 100%;
   margin: 0;
   padding: 0;
+  font-family: var(--font-sans);
 }
 
 html.dark {
@@ -40,16 +49,17 @@ html.dark {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(156, 163, 175, 0.5);
+  background: rgba(181, 155, 153, 0.35);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(156, 163, 175, 0.8);
+  background: rgba(181, 155, 153, 0.55);
 }
 
 /* Firefox 滚动条样式 */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+  scrollbar-color: rgba(181, 155, 153, 0.35) transparent;
 }
+

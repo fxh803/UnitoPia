@@ -58,7 +58,7 @@ onBeforeUnmount(() => {
 <template>
   <div ref="container" class="flex h-full w-full select-none relative overflow-hidden">
     <!-- 左侧数据区 + 滑动条 -->
-    <div :style="{ minWidth: `${minLeftWidth}px` }" class="h-full border-r border-gray-300 relative flex-1 min-w-0">
+    <div :style="{ minWidth: `${minLeftWidth}px` }" class="h-full border-r border-[var(--border-color)] relative flex-1 min-w-0">
       <slot name="left" />
       <!-- 滑动条，绝对定位在右侧 -->
       <div
@@ -76,8 +76,8 @@ onBeforeUnmount(() => {
       :style="{ width: `${resizeHandleStore.rightWidth}px`, minWidth: `${minRightWidth}px` }"
     >
       <!-- 工具栏 -->
-      <div class="flex justify-between items-center p-2 bg-[var(--toolbar-bg-color)] h-8 flex-shrink-0 shadow-sm z-10">
-        <span class="text-[14px] text-gray-700 font-bold">Canvas Editor</span>
+      <div class="flex justify-between items-center p-2 bg-[var(--primary-light-color)] h-8 flex-shrink-0 shadow-sm z-10">
+        <span class="text-[14px] text-[var(--title-color)] font-bold">Canvas Editor</span>
       </div>
       <div class="flex-1 min-h-0">
         <slot name="right" />
@@ -99,8 +99,7 @@ onBeforeUnmount(() => {
 }
 
 .resizer-bar-active {
-  background: rgba(59, 130, 246, 0.15);
-  /* 蓝色淡背景 */
+  background: rgba(181, 155, 153, 0.2);
 }
 
 .resizer-bar::after {
@@ -112,7 +111,7 @@ onBeforeUnmount(() => {
   width: 6px;
   height: 100%;
   border-radius: 4px;
-  background: #60a5fa;
+  background: var(--accent-rose);
   opacity: 0;
   transition: opacity 0.2s;
 }

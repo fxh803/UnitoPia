@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="h-full flex flex-col bg-[var(--primary-light-color)] overflow-x-auto">
     <!-- 标题 -->
-    <div class="px-4 py-2 border-b border-gray-200 bg-[var(--sub-toolbar-bg-color)]">
+    <div class="px-4 py-2 border-b border-gray-200 bg-[var(--primary-light-color)]">
       <h3 class="text-sm font-semibold text-gray-700">Marker Library</h3>
     </div>
     <!-- Marker 图案库 -->
@@ -95,7 +95,9 @@ onBeforeUnmount(() => {
           :key="marker.id"
           :class="[
             'bg-white border rounded-lg p-2 shadow-sm cursor-move transition-all duration-200 relative group',
-            isDragging ? 'border-blue-400 shadow-lg bg-blue-50' : 'border-gray-200 hover:border-blue-300 hover:shadow-md'
+            isDragging
+              ? 'border-[var(--primary-color)] shadow-lg bg-[var(--primary-light-color)]'
+              : 'border-gray-200 hover:border-[var(--primary-color)] hover:shadow-md'
           ]"
           draggable="true"
           @dragstart="handleMarkerDragStart(marker.id, $event)"

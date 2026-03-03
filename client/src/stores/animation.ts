@@ -81,7 +81,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function stopReplay() {
     clearInterval(replayTimer.value);
-    paper.view.off('frame', markerAni.value);
+    removeAnimation()
     replaying.value = false
   }
 
@@ -91,7 +91,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function resetReplayData() {
     replayIdx.value = 0
-    txtArray.value = []
+    // txtArray.value = []
     posArray.value = []
     widthArray.value = []
     heightArray.value = []
@@ -526,6 +526,7 @@ export const useAnimationStore = defineStore('animation', () => {
     removeAnimation()
     removeElements()
     resetReplayData()
+    startContainerAnimation()
     replayTimer.value = setInterval(() => {
       executeReplayStep()
     }, time_interval.value);

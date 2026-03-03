@@ -376,8 +376,8 @@ const getCardClasses = (cardId: string) => {
   const hasSelected = getSelectedFilters(cardId).length > 0
   return [
     'rounded-lg bg-white overflow-hidden transition-all border',
-    hasSelected ? 'cursor-move border-gray-200 hover:border-blue-400' : 'border-gray-200',
-    isDraggingFilter.value && hasSelected ? 'border-blue-400 bg-blue-50' : ''
+    hasSelected ? 'cursor-move border-[var(--border-color)] hover:border-[var(--primary-color)]' : 'border-[var(--border-color)]',
+    isDraggingFilter.value && hasSelected ? 'border-[var(--primary-color)] bg-[var(--primary-light-color)]' : ''
   ]
 }
 
@@ -386,8 +386,8 @@ const getFilterClasses = (cardId: string, filterIndex: number) => {
   return [
     'space-y-3 rounded-lg transition-all p-2 relative group/filter',
     isFilterSelected(cardId, filterIndex)
-      ? 'bg-blue-50 border-2 border-blue-300'
-      : 'bg-gray-50/50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300'
+      ? 'bg-[var(--primary-light-color)] border-2 border-[var(--primary-color)]'
+      : 'bg-[var(--primary-light-color)]/50 border border-[var(--border-color)] hover:bg-[var(--primary-light-color)] hover:border-[var(--text-muted-light)]'
   ]
 }
 
@@ -399,13 +399,13 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex-1 flex overflow-hidden bg-[var(--primary-light-color)]">
     <!-- 左侧：列名列表 -->
-    <div class="w-38 border-r border-gray-200 bg-[var(--primary-light-color)] flex flex-col">
-      <div class="p-3 border-b border-gray-200">
-        <p v-if="tableStore.fileName" class="text-sm font-bold text-gray-700">{{ tableStore.fileName }}</p>
-        <h3 class="text-xs text-gray-500 mt-1 truncate">Attributes</h3>
+    <div class="w-38 border-r border-[var(--border-color)] bg-[var(--primary-light-color)] flex flex-col">
+      <div class="p-3 border-b border-[var(--border-color)]">
+        <p v-if="tableStore.fileName" class="text-sm font-bold text-[var(--title-color)]">{{ tableStore.fileName }}</p>
+        <h3 class="text-xs text-[var(--text-muted)] mt-1 truncate">Attributes</h3>
       </div>
       <div class="flex-1 overflow-y-auto p-2">
-        <div v-if="tableColumns.length === 0" class="text-center py-8 text-gray-400 text-sm">
+        <div v-if="tableColumns.length === 0" class="text-center py-8 text-[var(--text-muted-light)] text-sm">
           No columns available
         </div>
         <div v-else class="space-y-2">
@@ -414,10 +414,10 @@ onBeforeUnmount(() => {
             :key="column"
             draggable="true"
             @dragstart="handleColumnDragStart(column, $event)"
-            class="flex items-center gap-2 p-2.5 rounded-lg cursor-move bg-white hover:shadow-md transition-all border border-gray-200 hover:border-blue-300 hover:bg-blue-50"
+            class="flex items-center gap-2 p-2.5 rounded-lg cursor-move bg-white hover:shadow-md transition-all border border-[var(--border-color)] hover:border-[var(--primary-color)] hover:bg-[var(--primary-light-color)]"
           >
-            <span :class="[getColumnIcon(column), 'text-xs text-gray-400']"></span>
-            <span class="text-sm text-gray-700 flex-1 font-medium">{{ column }}</span>
+            <span :class="[getColumnIcon(column), 'text-xs text-[var(--text-muted-light)]']"></span>
+            <span class="text-sm text-[var(--title-color)] flex-1 font-medium">{{ column }}</span>
           </div>
         </div>
       </div>
@@ -436,8 +436,8 @@ onBeforeUnmount(() => {
           :class="getCardClasses(card.id)"
         >
           <div class="flex">
-            <div class="w-26 p-3 border-r border-gray-200 bg-gray-50 flex flex-col">
-              <span class="text-sm font-bold text-gray-700 pb-2 border-b border-gray-200">attribute</span>
+            <div class="w-26 p-3 border-r border-[var(--border-color)] bg-[var(--primary-light-color)] flex flex-col">
+              <span class="text-sm font-bold text-[var(--title-color)] pb-2 border-b border-[var(--border-color)]">attribute</span>
               <div class="flex items-center justify-center mt-2">
                 <div
                   class="flex items-center justify-center gap-2 p-2.5 w-20 rounded-lg border-2 border-dashed transition-all"
@@ -516,7 +516,7 @@ onBeforeUnmount(() => {
                       <!-- Mark -->
                       <div class="flex items-center min-h-[32px] justify-center w-16 flex-shrink-0">
                         <div v-if="filter.markerId" class="relative w-8 h-8 group/marker">
-                          <div class="w-full h-full border border-gray-300 rounded overflow-hidden cursor-pointer hover:border-blue-400 transition-colors" @click.stop>
+                          <div class="w-full h-full border border-gray-300 rounded overflow-hidden cursor-pointer hover:border-[var(--primary-color)] transition-colors" @click.stop>
                             <img :src="markers.find(m => m.id === filter.markerId)?.thumbnail" alt="Marker" class="w-full h-full object-contain" />
                           </div>
                           <button
@@ -534,7 +534,9 @@ onBeforeUnmount(() => {
                           @dragleave="(e) => handleMarkerDragLeave(filter.id || '', e)"
                           :class="[
                             'w-8 h-8 border-2 border-dashed rounded flex items-center justify-center transition-all',
-                            filter.id && isDraggingOverMarkerDropZone[filter.id] ? 'border-blue-400 text-blue-600 bg-blue-50' : 'border-gray-300 text-gray-400'
+                            filter.id && isDraggingOverMarkerDropZone[filter.id]
+                              ? 'border-[var(--primary-color)] text-[var(--primary-color)] bg-[var(--primary-light-color)]'
+                              : 'border-gray-300 text-gray-400'
                           ]"
                           title="Drag marker here"
                         >
@@ -609,7 +611,7 @@ onBeforeUnmount(() => {
                               :value="filter.encoding?.colorStart || '#3b82f6'"
                               @input="(e) => updateFilterEncoding(card.id, filterIndex, { colorStart: (e.target as HTMLInputElement).value })"
                               @click.stop
-                              class="flex-1 px-1.5 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              class="flex-1 px-1.5 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
                               placeholder="#3b82f6"
                             />
                           </div>
@@ -626,7 +628,7 @@ onBeforeUnmount(() => {
                               :value="filter.encoding?.colorEnd || '#ef4444'"
                               @input="(e) => updateFilterEncoding(card.id, filterIndex, { colorEnd: (e.target as HTMLInputElement).value })"
                               @click.stop
-                              class="flex-1 px-1.5 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                              class="flex-1 px-1.5 py-0.5 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-[var(--primary-color)]"
                               placeholder="#ef4444"
                             />
                           </div>
@@ -644,7 +646,7 @@ onBeforeUnmount(() => {
                           @change="toggleFilterSelection(card.id, filterIndex)"
                           @click.stop
                           :class="[
-                            'w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500',
+                            'w-4 h-4 text-[var(--primary-color)] border-gray-300 rounded focus:ring-[var(--primary-color)]',
                             !(filter.markerId && filter.data && filter.data.length > 0) ? 'opacity-30 cursor-not-allowed' : ''
                           ]"
                         />
@@ -655,7 +657,7 @@ onBeforeUnmount(() => {
               </div>
               <button
                 @click.stop="addFilterToCard(card.id)"
-                class="mt-3 w-full py-2 text-xs text-gray-500 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center gap-1 border-2 border-dashed border-gray-300 hover:border-blue-400 cursor-pointer"
+                class="mt-3 w-full py-2 text-xs text-gray-500 hover:text-[var(--primary-color)] hover:bg-[var(--primary-light-color)] rounded transition-colors flex items-center justify-center gap-1 border-2 border-dashed border-gray-300 hover:border-[var(--primary-color)] cursor-pointer"
               >
                 <span class="i-carbon-add text-sm"></span>
                 <span>Add condition</span>
@@ -672,12 +674,12 @@ onBeforeUnmount(() => {
               @drop="(e) => { handleDrop(e); isDraggingOverDropZone = false }"
               @dragover="handleDragOver"
               @dragleave="handleDragLeave"
-              :class="isDraggingOverDropZone ? 'border-blue-400 bg-blue-50' : ''"
+              :class="isDraggingOverDropZone ? 'border-[var(--primary-color)] bg-[var(--primary-light-color)]' : ''"
             >
               <div
                 class="absolute flex items-center justify-center gap-2 p-2.5 w-20 rounded-lg border-2 border-dashed transition-all"
                 style="top: 30px;"
-                :class="isDraggingOverDropZone ? 'border-blue-400 bg-blue-50 text-blue-600' : 'border-gray-300 text-gray-400 bg-[#f6fdf3]'"
+                :class="isDraggingOverDropZone ? 'border-[var(--primary-color)] bg-[var(--primary-light-color)] text-[var(--primary-color)]' : 'border-gray-300 text-gray-400 bg-[#f6fdf3]'"
               >
                 <span class="i-carbon-add text-sm"></span>
               </div>

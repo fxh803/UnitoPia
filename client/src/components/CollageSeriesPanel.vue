@@ -167,42 +167,42 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
   <div class="relative flex h-full">
     <!-- 面板内容 -->
     <aside
-      class="py-4 bg-[var(--primary-light-color)] flex flex-col h-full items-center transition-all duration-300 shadow-left border-l border-gray-200 overflow-x-hidden relative"
+      class="bg-[var(--primary-light-color)] flex flex-col h-full items-center transition-all duration-300 shadow-left border-l border-[var(--border-color)] overflow-x-hidden relative"
       :class="isCollapsed ? 'w-13' : 'w-60'"
       data-tutorial="visualization-gallery">
       <!-- 拼贴处理状态遮罩 -->
       <div v-if="collaging || result_data.length > 0"
-        class="absolute inset-0 bg-gray-300 bg-opacity-0 z-30 flex items-center justify-center cursor-not-allowed pointer-events-auto">
+        class="absolute inset-0 bg-[var(--border-color)] bg-opacity-0 z-30 flex items-center justify-center cursor-not-allowed pointer-events-auto">
       </div>
       <!-- 收起按钮 - 放在左上角 -->
       <button @click="toggleCollapse"
-        class="absolute top-3px left-2 z-20 bg-white hover:bg-gray-100 transition-all duration-200 p-1.5 rounded"
+        class="absolute top-3px left-2 z-20 bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] transition-all duration-200 p-1.5 rounded"
         :title="isCollapsed ? 'Expand' : 'Collapse'">
         <div class="w-5 h-5 text-black transition-all duration-300"
           :class="isCollapsed ? 'i-carbon:open-panel-right' : 'i-carbon:open-panel-filled-right'"></div>
       </button>
 
       <!-- 标题 -->
-      <div  class="w-full h-22px mb-2 border-b border-gray-200 flex items-center justify-center bg-[var(--sub-toolbar-bg-color)]">
-        <div v-if="!isCollapsed" class="text-[14px] text-gray-600 font-bold transform translate-y--5px">Visualization Gallery</div>
+      <div  class="w-full h-42px mb-2 border-b border-[var(--border-color)] flex items-center justify-center bg-[var(--primary-light-color)]">
+        <div v-if="!isCollapsed" class="text-[14px] text-[var(--text-muted)] font-bold">Visualization Gallery</div>
       </div>
 
       <div v-if="!isCollapsed" class="w-full px-2 flex flex-col h-full overflow-y-auto">
         <!-- 总览列表 -->
         <div v-for="(overview, overviewIdx) in overviews" :key="overview.overviewId"
-          class="border-2 rounded p-2 flex flex-col mb-4 group border-dashed border-gray-400">
+          class="border-2 rounded p-2 flex flex-col mb-4 group border-dashed border-[var(--border-color)]">
           <!-- 总览区域 - 更大的slide -->
           <div class="mb-1 relative">
-            <div class="border rounded flex h-32 items-center justify-center bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+            <div class="border rounded flex h-32 items-center justify-center cursor-pointer hover:bg-[var(--primary-light-color)] transition-colors border-[var(--border-color)]"
               @click="handleOverviewClick(overviewIdx)">
               <img :src="overview.preview" class="max-h-full max-w-full object-contain" alt="总览预览" />
             </div>
             <!-- 收起/展开按钮 -->
             <button
-              class="absolute top-1 left-1 z-10 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-gray-100 transition-colors"
+              class="absolute top-1 left-1 z-10 bg-white rounded-full w-6 h-6 flex items-center justify-center shadow hover:bg-[var(--primary-light-color)] transition-colors"
               @click.stop="toggleOverviewCollapse(overviewIdx)"
               :title="collapsedOverviews.has(overviewIdx) ? '展开' : '收起'">
-              <div class="w-3 h-3 text-gray-600 transition-transform duration-200"
+              <div class="w-3 h-3 text-[var(--text-muted)] transition-transform duration-200"
                 :class="collapsedOverviews.has(overviewIdx) ? 'i-carbon-chevron-right' : 'i-carbon-chevron-down'"></div>
             </button>
             <!-- 删除总览按钮 -->
@@ -214,13 +214,13 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
           <!-- 拼贴系列列表区域 -->
           <transition name="slide-fade">
             <div v-show="!collapsedOverviews.has(overviewIdx)" class=" mt-3 flex-1 overflow-y-auto">
-            <div v-for="(item, slideIdx) in overview.collageSeries" :key="item.slideId"
+              <div v-for="(item, slideIdx) in overview.collageSeries" :key="item.slideId"
               class="relative mb-3 m-l-5 m-r-5 border rounded flex h-28 items-center justify-center cursor-pointer"
               :class="[
                 (item as any).isResult === true
                   ? 'border-green-500 bg-green-50'
                   : overviewIdx === currentOverviewIndex && slideIdx === currentSlideIndex
-                    ? 'border-blue-500 bg-blue-50'
+                    ? 'border-[var(--primary-color)] bg-[var(--primary-light-color)]'
                     : 'border-[#e6e6e6] bg-[#f5f5f5]'
               ]"
               @click="handleClick(overviewIdx, slideIdx)"
@@ -261,9 +261,9 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
 
             <!-- 添加新拼贴按钮 -->
             <button @click="handleAddNew(overviewIdx)"
-              class="w-[calc(100%-40px)] mb-3 m-l-5 m-r-5 border-2 border-dashed border-gray-300 rounded bg-gray-50 flex h-28 items-center justify-center hover:bg-gray-100 transition-colors"
+              class="w-[calc(100%-40px)] mb-3 m-l-5 m-r-5 border-2 border-dashed border-[var(--border-color)] rounded bg-white flex h-28 items-center justify-center hover:bg-[var(--primary-light-color)] transition-colors"
               title="Add New Collage">
-              <div class="text-gray-400 text-2xl">+</div>
+              <div class="text-[var(--text-muted-light)] text-2xl">+</div>
             </button>
             </div>
           </transition>
@@ -272,12 +272,12 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
         <div class="flex flex-col items-center mb-3">
           <button
             @click="handleAddNewOverview"
-            class="w-12 h-12 border-2 border-dashed border-gray-300 rounded-full bg-gray-50 flex items-center justify-center hover:bg-gray-100 transition-colors"
+            class="w-12 h-12 border-2 border-dashed border-[var(--border-color)] rounded-full bg-white flex items-center justify-center hover:bg-[var(--primary-light-color)] transition-colors"
             title="添加新总览"
           >
-            <div class="text-gray-400 text-2xl leading-none transform translate-y-[-1px]">+</div>
+            <div class="text-[var(--text-muted-light)] text-2xl leading-none transform translate-y-[-1px]">+</div>
           </button>
-          <div class="text-xs text-gray-400 text-center mt-2">new a unitvis</div>
+          <div class="text-xs text-[var(--text-muted-light)] text-center mt-2">new a unitvis</div>
         </div>
       </div>
 

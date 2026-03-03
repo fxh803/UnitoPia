@@ -136,7 +136,7 @@ onBeforeUnmount(() => {
         />
         <!-- 说明卡片 -->
         <div
-          class="tutorial-card pointer-events-auto absolute left-1/2 bottom-16 -translate-x-1/2 max-w-[90vw] bg-white rounded-xl shadow-xl border border-gray-200 p-5"
+          class="tutorial-card pointer-events-auto absolute left-1/2 bottom-16 -translate-x-1/2 max-w-[90vw] bg-white rounded-xl shadow-xl border border-[var(--border-color)] p-5"
           :class="stepWidthClass"
         >
           <!-- 第一步：Data Table 演示视频（按视频自身比例，无黑边） -->
@@ -188,20 +188,20 @@ onBeforeUnmount(() => {
             />
           </div>
           <div class="flex items-center justify-between mb-3">
-            <h3 class="text-lg font-bold text-gray-800">
+            <h3 class="text-lg font-bold text-[var(--title-color)]">
               {{ steps[currentStep].title }}
             </h3>
-            <span class="text-sm text-gray-500">
+            <span class="text-sm text-[var(--text-muted)]">
               {{ currentStep + 1 }} / {{ steps.length }}
             </span>
           </div>
-          <p class="text-gray-600 text-sm leading-relaxed mb-5">
+          <p class="text-[var(--text-muted)] text-sm leading-relaxed mb-5">
             {{ steps[currentStep].desc }}
           </p>
           <div class="flex items-center justify-between gap-3">
             <button
               type="button"
-              class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              class="px-4 py-2 text-sm font-medium text-[var(--text-muted)] hover:bg-[var(--primary-light-color)] rounded-lg transition-colors"
               :class="{ 'invisible': currentStep === 0 }"
               :disabled="currentStep === 0"
               @click="goPrev"
@@ -210,7 +210,7 @@ onBeforeUnmount(() => {
             </button>
             <button
               type="button"
-              class="px-4 py-2 text-sm font-medium bg-[var(--primary-color)] text-[var(--title-color)] rounded-lg hover:opacity-90 transition-opacity"
+              class="px-4 py-2 text-sm font-medium bg-[var(--primary-color)] text-white rounded-lg hover:opacity-90 transition-opacity"
               @click="goNext"
             >
               {{ currentStep === steps.length - 1 ? '完成' : '下一步' }}
@@ -220,7 +220,7 @@ onBeforeUnmount(() => {
         <!-- 右上角关闭 -->
         <button
           type="button"
-          class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center pointer-events-auto text-gray-600 hover:text-gray-800 transition-colors"
+          class="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-md flex items-center justify-center pointer-events-auto text-[var(--text-muted)] hover:text-[var(--title-color)] transition-colors"
           aria-label="关闭教程"
           @click="close"
         >

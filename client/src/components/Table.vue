@@ -28,13 +28,13 @@ const switchTab = (tab: 'table' | 'mapping') => {
 </script>
 
 <template>
-  <div class="h-full border-b border-gray-200 relative flex flex-col group" data-tutorial="data-table">
+  <div class="h-full border-b border-[var(--border-color)] relative flex flex-col group" data-tutorial="data-table">
     <!-- 工具栏 - 始终显示在顶部 -->
     <div 
-      class="flex justify-between items-center p-2 h-8 bg-[var(--toolbar-bg-color)] flex-shrink-0 shadow-sm z-10"
+      class="flex justify-between items-center p-2 h-8 bg-[var(--primary-light-color)] flex-shrink-0 shadow-sm z-10"
     >
       <!-- 左侧：标题 -->
-      <span class="text-[14px] text-gray-700 font-bold">Data Table</span>
+      <span class="text-[14px] text-[var(--title-color)] font-bold">Data Table</span>
 
       <!-- 右侧：标签页切换和清除按钮 -->
       <div class="flex items-center gap-2">
@@ -45,8 +45,8 @@ const switchTab = (tab: 'table' | 'mapping') => {
             :class="[
               'px-3 py-1 text-xs font-medium rounded transition-colors',
               activeTab === 'mapping' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-[var(--primary-light-color)] text-gray-600 hover:bg-gray-100'
+                ? 'bg-[var(--primary-color)] text-white' 
+                : 'bg-white text-[var(--text-muted)] hover:bg-[var(--primary-light-color)]'
             ]"
           >
             Mapping
@@ -56,8 +56,8 @@ const switchTab = (tab: 'table' | 'mapping') => {
             :class="[
               'px-3 py-1 text-xs font-medium rounded transition-colors',
               activeTab === 'table' 
-                ? 'bg-blue-500 text-white' 
-                : 'bg-[var(--primary-light-color)] text-gray-600 hover:bg-gray-100'
+                ? 'bg-[var(--primary-color)] text-white' 
+                : 'bg-white text-[var(--text-muted)] hover:bg-[var(--primary-light-color)]'
             ]"
           >
             Table
@@ -69,7 +69,7 @@ const switchTab = (tab: 'table' | 'mapping') => {
           <button
             v-if="tableStore.tableData.length > 0"
             @click="handleClearData"
-            class="h-6 w-6 rounded-full transition-colors flex items-center justify-center bg-white hover:bg-[var(--delete-color)] text-gray-600 hover:text-white opacity-0 group-hover:opacity-100"
+            class="h-6 w-6 rounded-full transition-colors flex items-center justify-center bg-white hover:bg-[var(--delete-color)] text-[var(--text-muted)] hover:text-white opacity-0 group-hover:opacity-100"
             style="box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);"
             title="Clear data"
           >

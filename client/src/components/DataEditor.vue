@@ -9,11 +9,11 @@ const { collaging ,result_data} = storeToRefs(animationStore)
 </script>
 
 <template>
-  <aside class="border-r border-gray-200 bg-gray-50 h-full w-full flex flex-col relative">
+  <aside class="border-r border-[var(--border-color)] bg-[var(--primary-light-color)] h-full w-full flex flex-col relative">
     <!-- 拼贴处理状态遮罩 -->
     <div 
       v-if="collaging||result_data.length>0"
-      class="absolute inset-0 bg-gray-300 bg-opacity-0 z-30 flex items-center justify-center cursor-not-allowed pointer-events-auto"
+      class="absolute inset-0 bg-[var(--border-color)] bg-opacity-0 z-30 flex items-center justify-center cursor-not-allowed pointer-events-auto"
     >
     </div>
     
@@ -25,19 +25,19 @@ const { collaging ,result_data} = storeToRefs(animationStore)
       </div>
       
       <!-- 分隔线 -->
-      <div class="border-t border-gray-200"></div>
+      <div class="border-t border-[var(--border-color)]"></div>
       
       <!-- 下半部分：左右两等边 -->
       <div class="flex-1 min-h-0 flex flex-col" data-tutorial="mark-editor">
         <!-- 工具栏 -->
-        <div class="flex justify-between items-center p-2 bg-[var(--toolbar-bg-color)] h-8 z-10 flex-shrink-0 shadow-sm">
-          <span class="text-[14px] text-gray-700 font-bold">Mark Editor</span>
+        <div class="flex justify-between items-center p-2 bg-[var(--primary-light-color)] h-8 z-10 flex-shrink-0 shadow-sm">
+          <span class="text-[14px] text-[var(--title-color)] font-bold">Mark Editor</span>
         </div>
         
         <!-- 内容区域 -->
         <div class="flex-1 min-h-0 flex">
           <!-- 左半边 -->
-          <div class="flex-1 border-r border-gray-200">
+          <div class="flex-1 border-r border-[var(--border-color)]">
             <MarkerCanvasArea />
           </div>
           <!-- 右半边 -->

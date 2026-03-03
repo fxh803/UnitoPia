@@ -20,9 +20,9 @@ export default defineConfig({
     }),
     presetWebFonts({
       fonts: {
-        sans: 'DM Sans',
-        serif: 'DM Serif Display',
-        mono: 'DM Mono',
+        sans: 'IBM Plex Sans',
+        serif: 'IBM Plex Serif',
+        mono: 'IBM Plex Mono',
       },
     }),
   ],
