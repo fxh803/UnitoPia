@@ -6,18 +6,19 @@ import { storeToRefs } from 'pinia'
 import * as fabric from 'fabric'
 import { Canvas, Group } from 'fabric'
 import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
-import { useMarkerStore } from '~/stores/marker'
 import { useBrushSizeStore } from '~/stores/brushsize'
+import { useMarkInstanceStore } from '~/stores/markInstance'
 
 const markerCanvasModeStore = useMarkerCanvasModeStore()
-const {mode} = storeToRefs(markerCanvasModeStore)
+const { mode } = storeToRefs(markerCanvasModeStore)
 const { setMode } = markerCanvasModeStore
 
 // 形状绘制store
 const markerShapeDrawingStore = useMarkerShapeDrawingStore()
 
-// Marker store
-const markerStore = useMarkerStore()
+// Mark 实例 store（保存当前实例的 marker 可视化）
+const markInstanceStore = useMarkInstanceStore()
+const { selectedMarkForDetail } = storeToRefs(markInstanceStore)
 
 // 画笔大小 store
 const brushSizeStore = useBrushSizeStore()
@@ -251,20 +252,51 @@ const saveMarkers = async () => {
   tempFabricCanvas.add(group)
   tempFabricCanvas.renderAll()
   // 使用更高的 multiplier 提高清晰度
-  const thumbnail = tempFabricCanvas.toDataURL({ format: 'png', multiplier: 2, enableRetinaScaling: false as any })
-   // 获取所有对象的 JSON 数据
-   const jsonData = allObjects.map(obj => obj.toJSON())
+  const thumbnail = tempFabricCanvas.toDataURL({
+    format: 'png',
+    multiplier: 2,
+    enableRetinaScaling: false as any,
+  })
 
-    // 保存到 store
-    const markerData = {
-      thumbnail,
-      jsonData
-    }
+  // 获取当前画布的完整 JSON 数据（单个对象）
+  const jsonData = canvasInstance.toJSON()
 
-    const savedMarker = markerStore.addMarker(markerData)
+  // 找到当前正在编辑的 mark 或 child 实例（如果有）
+  const sel = selectedMarkForDetail.value
 
-    // 清理临时画布
-    tempFabricCanvas.dispose()
+  if (!sel) {
+    // 没有选中任何 Mark，直接结束
+    return
+  }
+
+  // 编辑的是普通（非 group）实例：直接写到该实例本身
+  if (sel.type === 'instance') {
+    markInstanceStore.updateMarkInstance(sel.markId, {
+      markerThumbnail: thumbnail,
+      markerJsonData: jsonData,
+    })
+  } else {
+    // 编辑的是 group 的某个 child：只更新这个 child，不动其它兄弟
+    const parent = markInstanceStore.markInstances.find(m => m.id === sel.parentMarkId)
+    if (!parent) return
+
+    const nextChildren = parent.children.map(child =>
+      child.id === sel.childId
+        ? {
+            ...child,
+            markerThumbnail: thumbnail,
+            markerJsonData: jsonData,
+          }
+        : child,
+    )
+
+    markInstanceStore.updateMarkInstance(sel.parentMarkId, {
+      children: nextChildren,
+    })
+  }
+
+  // 清理临时画布
+  tempFabricCanvas.dispose()
 }
 </script>
 

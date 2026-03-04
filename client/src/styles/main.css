@@ -11,7 +11,7 @@
 
   /* 浅色背景（面板 / 侧栏 - 暖米白） */
   --primary-light-color: #F8F6F4;
-
+  --primary-muted-color: #F0E8E6;
   /* 标题与正文 */
   --title-color: #565151;
   --text-muted: #646464;

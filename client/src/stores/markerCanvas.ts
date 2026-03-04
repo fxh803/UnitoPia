@@ -19,6 +19,9 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     position: { x: 0, y: 0 }
   })
 
+  // 是否暂时抑制路径闭合确认（例如从 JSON 批量恢复画布时）
+  const suppressClosePath = ref(false)
+
   // 实时预览图状态
   const previewDataUrl = ref<string>('')
   const previewGroup = ref<Group | null>(null)
@@ -66,6 +69,10 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
     canvasRef.value = canvas
+  }
+
+  function setSuppressClosePath(value: boolean) {
+    suppressClosePath.value = value
   }
 
   // 添加画布事件监听器
@@ -191,6 +198,7 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
   function askToClosePath(path: any) {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance || !path) return
+    if (suppressClosePath.value) return
     
     // 跳过预览形状
     if (path.get('isPreview')) return
@@ -267,7 +275,8 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     removeMarkerCanvasEventListeners,
     updatePreview,
     askToClosePath,
-    handleClosePathConfirm
+    handleClosePathConfirm,
+    setSuppressClosePath
   }
 })
 

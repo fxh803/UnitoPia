@@ -12,6 +12,14 @@ const { tableData } = storeToRefs(tableStore)
 const markInstanceStore = useMarkInstanceStore()
 const { markInstances } = storeToRefs(markInstanceStore)
 
+function openMarkDetail(markId: string) {
+  markInstanceStore.setSelectedMarkForDetail({ type: 'instance', markId })
+}
+
+function openMarkChildDetail(parentMarkId: string, childId: string) {
+  markInstanceStore.setSelectedMarkForDetail({ type: 'child', parentMarkId, childId })
+}
+
 const isDragOver = ref(false)
 
 const hasMarks = computed(() => markInstances.value.length > 0)
@@ -288,7 +296,7 @@ function handleDragLeave(e: DragEvent) {
 </script>
 
 <template>
-  <div class="border-b border-[var(--border-color)] flex flex-col min-h-0">
+  <div class="border-b border-[var(--border-color)] flex flex-col min-h-0 bg-[var(--primary-light-color)]">
     <!-- 标题栏：左侧折叠按钮 + 标题（只有箭头可点击） -->
     <div
       class="flex items-center w-full px-3 py-2 bg-[var(--primary-light-color)] hover:bg-[var(--border-color)]/10 transition-colors text-left gap-2"
@@ -328,7 +336,7 @@ function handleDragLeave(e: DragEvent) {
       <!-- Mark 列表（内部可纵向滚动） -->
       <div
         v-if="hasMarks"
-        class="space-y-2 max-h-[260px] overflow-y-auto pr-1"
+        class="space-y-2 max-h-[260px] overflow-y-auto"
       >
         <div
           v-for="mark in markInstances"
@@ -336,23 +344,37 @@ function handleDragLeave(e: DragEvent) {
           class="rounded-2xl bg-[var(--primary-light-color)] border border-[var(--border-color)] px-3 py-2 space-y-2"
         >
           <!-- 父实例行 -->
-          <div class="flex items-center gap-2">
-            <!-- 缩略图：仅非 group 实例显示 -->
-            <div
-              v-if="!mark.isGroup"
-              class="w-10 h-10 rounded-xl bg-white border border-[var(--border-color)] flex items-center justify-center overflow-hidden"
-            >
-              <img
-                src="/default_mark.svg"
-                alt=""
-                class="w-full h-full object-contain"
-              />
-            </div>
+          <div
+            class="flex items-center gap-2"
+            :class="{ 'cursor-pointer': !mark.isGroup }"
+            @click="!mark.isGroup && openMarkDetail(mark.id)"
+          >
+            <!-- 非 group：整行可点，仅右侧删除/拖放不触发 -->
+            <template v-if="!mark.isGroup">
+              <div class="flex items-center gap-2 min-w-0 rounded-lg hover:bg-[var(--border-color)]/10 transition-colors -m-1 p-1 flex-1 min-w-0">
+                <div
+                  class="w-10 h-10 rounded-xl bg-white border border-[var(--border-color)] flex items-center justify-center overflow-hidden flex-shrink-0"
+                >
+                  <img
+                    :src="mark.markerThumbnail || '/default_mark.svg'"
+                    alt=""
+                    class="w-full h-full object-contain"
+                  />
+                </div>
+                <div class="flex flex-col min-w-0">
+                  <span class="text-[14px] font-semibold text-[var(--title-color)] truncate">
+                    {{ mark.name }}
+                  </span>
+                  <span class="text-[12px] text-[var(--text-muted)] whitespace-nowrap">
+                    {{ mark.entities }} Entities
+                  </span>
+                </div>
+              </div>
+            </template>
 
-            <!-- 文本信息 -->
-            <div class="flex flex-col min-w-0">
-              <!-- group：带折叠箭头的标题 -->
-              <div v-if="mark.isGroup" class="flex items-center gap-1">
+            <!-- group：带折叠箭头的标题（仅标题区，不整行打开详情） -->
+            <div v-else class="flex flex-col min-w-0">
+              <div class="flex items-center gap-1">
                 <button
                   type="button"
                   class="flex items-center gap-1 text-[14px] font-semibold text-[var(--title-color)] cursor-pointer"
@@ -367,26 +389,12 @@ function handleDragLeave(e: DragEvent) {
                   </span>
                 </button>
               </div>
-              <!-- 非 group：普通标题 -->
-              <span
-                v-else
-                class="text-[14px] font-semibold text-[var(--title-color)] truncate"
-              >
-                {{ mark.name }}
-              </span>
-              <!-- 实体数量：仅非 group 显示 -->
-              <span
-                v-if="!mark.isGroup"
-                class="text-[12px] text-[var(--text-muted)]"
-              >
-                {{ mark.entities }} Entities
-              </span>
             </div>
 
             <div class="flex-1" />
 
             <!-- 父行右侧字段 pill（支持重新绑定字段） -->
-            <div v-if="mark.fieldName" class="flex items-center gap-2">
+            <div v-if="mark.fieldName" class="flex items-center gap-2" @click.stop>
               <div
                 class="group relative px-4 py-1.5 rounded-full text-[13px] flex items-center gap-2 bg-white border border-[var(--border-color)] text-[var(--title-color)] min-w-[160px]"
                 @dragover.prevent
@@ -412,7 +420,7 @@ function handleDragLeave(e: DragEvent) {
                 </button>
               </div>
             </div>
-            <div v-else class="flex items-center">
+            <div v-else class="flex items-center" @click.stop>
               <div
                 class="px-4 py-1.5 rounded-full text-[13px] flex items-center bg-[var(--border-color)]/60 border border-[var(--border-color)] min-w-[160px]"
                 @dragover.prevent
@@ -426,7 +434,7 @@ function handleDragLeave(e: DragEvent) {
             <button
               type="button"
               class="ml-1 text-[var(--text-muted)] hover:text-[var(--title-color)] cursor-pointer"
-              @click="markInstanceStore.removeMarkInstance(mark.id)"
+              @click.stop="markInstanceStore.removeMarkInstance(mark.id)"
             >
               <img src="/Icon-Trash.svg" alt="" class="w-6 h-6" />
             </button>
@@ -438,12 +446,16 @@ function handleDragLeave(e: DragEvent) {
               <div
                 v-for="child in mark.children"
                 :key="child.id"
-                class="flex items-center gap-2 bg-white rounded-xl border border-[var(--border-color)] px-3 py-1.5"
+                class="flex items-center gap-2 bg-white rounded-xl border border-[var(--border-color)] px-3 py-1.5 cursor-pointer hover:bg-[var(--border-color)]/10 transition-colors"
+                role="button"
+                tabindex="0"
+                @click.stop="openMarkChildDetail(mark.id, child.id)"
+                @keydown.enter.stop="openMarkChildDetail(mark.id, child.id)"
               >
                 <!-- 子实例 icon -->
                 <div class="w-7 h-7 rounded-lg bg-white border border-[var(--border-color)] flex items-center justify-center overflow-hidden">
                   <img
-                    src="/default_mark.svg"
+                    :src="child.markerThumbnail || mark.markerThumbnail || '/default_mark.svg'"
                     alt=""
                     class="w-full h-full object-contain"
                   />
@@ -476,6 +488,7 @@ function handleDragLeave(e: DragEvent) {
                     <select
                       class="appearance-none pl-2 pr-5 py-1 rounded-full bg-white/70 border border-[var(--border-color)] text-[11px] text-[var(--text-muted)] max-w-[66px] cursor-pointer truncate"
                       :value="child.selectedValue || ''"
+                      @click.stop
                       @change="handleGroupValueChange(mark.id, child.id, ($event.target as HTMLSelectElement).value)"
                     >
                       <option

@@ -120,7 +120,7 @@ async function handleContainerFileSelect(e: Event) {
 </script>
 
 <template>
-  <div class="flex flex-col h-full min-h-0 overflow-hidden">
+  <div class="flex flex-col h-full min-h-0 overflow-hidden bg-[var(--primary-light-color)]">
     <!-- 顶部：Libraries 标题 -->
     <div
       class="flex items-center w-full px-3 py-2 bg-[var(--primary-light-color)] hover:bg-[var(--border-color)]/10 transition-colors text-left gap-2 border-b border-[var(--border-color)]"

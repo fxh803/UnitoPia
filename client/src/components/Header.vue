@@ -119,7 +119,7 @@ const handleHelp = () => {
 
 <template>
   <div class="relative">
-    <header class="px-6 border-b border-[var(--border-color)] bg-[var(--primary-light-color)] flex h-12 w-full items-center z-20">
+    <header class="px-6 border-b border-[var(--border-color)] bg-[var(--primary-muted-color)] flex h-12 w-full items-center z-20">
       <h1 class="topbar-label text-[#565151] flex items-center gap-2">
         <!-- <img src="/UNITVIZ2.svg" alt="UnitoPia Logo" class="h-8 w-auto" /> -->
         UnitoPia

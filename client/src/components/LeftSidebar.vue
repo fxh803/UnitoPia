@@ -4,12 +4,23 @@
 
 <template>
   <aside
-    class="h-full w-full flex flex-col min-h-0 overflow-hidden border-r border-[var(--border-color)] bg-[var(--primary-light-color)]"
+    class="h-full w-full flex flex-col overflow-y-auto overflow-x-hidden border-[var(--border-color)] bg-[var(--primary-muted-color)]"
   >
-    <!-- 顶部 Data / Marks 固定高度 -->
-    <DataSection class="flex-shrink-0" />
-    <MarksSection class="flex-shrink-0" />
-    <!-- 底部 Libraries 占用剩余高度，内部再滚动 -->
-    <LibrariesSection class="flex-1 min-h-0 overflow-hidden" />
+    <!-- Data 卡片 -->
+    <div class=" bg-[var(--primary-light-color)] shadow-sm overflow-hidden min-h-0">
+      <DataSection class="flex-shrink-0" />
+    </div>
+
+    <!-- Marks 卡片 -->
+    <div class="mt-2 bg-[var(--primary-light-color)] shadow-sm overflow-hidden min-h-0">
+      <MarksSection class="flex-shrink-0" />
+    </div>
+
+    <!-- Libraries：外层占满剩余高度（无背景，露出 muted）；内层卡片高度随内容，超出时由整个侧栏滚动 -->
+    <div class="mt-2 flex-1 min-h-0">
+      <div class=" bg-[var(--primary-light-color)] shadow-sm overflow-hidden flex-shrink-0">
+        <LibrariesSection class="flex-1 min-h-0 overflow-hidden" />
+      </div>
+    </div> 
   </aside>
 </template>

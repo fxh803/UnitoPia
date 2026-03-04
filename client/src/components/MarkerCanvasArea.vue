@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { Canvas, PencilBrush } from 'fabric'
-import { ref, onMounted, onBeforeUnmount, nextTick, watch, computed } from 'vue'
+import * as fabric from 'fabric'
+import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { useResizeHandleStore } from '~/stores/resizeHandle'
 import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useMarkerCanvasStore } from '~/stores/markerCanvas'
+import { useMarkInstanceStore } from '~/stores/markInstance'
 
 const colorPickerStore = useColorPickerStore()
 const { isColorPickerOpen } = storeToRefs(colorPickerStore)
-const resizeHandleStore = useResizeHandleStore()
 const markerCanvasModeStore = useMarkerCanvasModeStore()
 const markerObjectActionsStore = useMarkerObjectActionsStore()
 const brushSizeStore = useBrushSizeStore()
@@ -23,40 +23,62 @@ const markerShapeDrawingStore = useMarkerShapeDrawingStore()
 // Marker Canvas store
 const markerCanvasStore = useMarkerCanvasStore()
 const { closePathConfirm, previewDataUrl } = storeToRefs(markerCanvasStore)
-const { askToClosePath, handleClosePathConfirm, addMarkerCanvasEventListeners, removeMarkerCanvasEventListeners } = markerCanvasStore
+const { askToClosePath, handleClosePathConfirm, addMarkerCanvasEventListeners, removeMarkerCanvasEventListeners, setSuppressClosePath } =
+  markerCanvasStore
+
+// Mark 实例 store：用于根据当前选中实例加载 / 恢复画布
+const markInstanceStore = useMarkInstanceStore()
+const { markInstances, selectedMarkForDetail } = storeToRefs(markInstanceStore)
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasContainerRef = ref<HTMLDivElement | null>(null)
 const canvasWidth = ref(0)
 const canvasHeight = ref(0)
 let canvas: Canvas | null = null
+function loadCurrentMarkCanvas() {
+  if (!canvas) return
+  const sel = selectedMarkForDetail.value
+  if (!sel) {
+    canvas.clear()
+    canvas.backgroundColor = '#fffef8'
+    canvas.renderAll()
+    return
+  }
 
-// 更新画布尺寸
-function updateCanvasSize() {
-  
-  if (canvasEl.value && canvas) { 
-    const rect = canvasContainerRef.value.getBoundingClientRect()
-    const newWidth = rect.width-16
-    const newHeight = rect.height-16 
-    if (newWidth !== canvasWidth.value || newHeight !== canvasHeight.value) {
-      canvasWidth.value = newWidth
-      canvasHeight.value = newHeight
-      const dpr = window.devicePixelRatio || 1
-      canvasEl.value.width = canvasWidth.value * dpr
-      canvasEl.value.height = canvasHeight.value * dpr
-      canvas.setWidth(canvasWidth.value)
-      canvas.setHeight(canvasHeight.value)
-      canvas.renderAll()
+  // 根据选中的类型，决定使用父实例还是子实例的画布数据（完整 JSON 对象）
+  let markerJson: any | null = null
+
+  if (sel.type === 'instance') {
+    const inst = markInstances.value.find(m => m.id === sel.markId)
+    markerJson = inst?.markerJsonData ?? null
+  } else {
+    const parent = markInstances.value.find(m => m.id === sel.parentMarkId)
+    const child = parent?.children.find(c => c.id === sel.childId)
+    // 优先使用 child 自己的 jsonData，若没有则回退用父实例的
+    if (child?.markerJsonData) {
+      markerJson = child.markerJsonData
+    } else if (parent?.markerJsonData) {
+      markerJson = parent.markerJsonData
     }
   }
-}
 
-// 监听store中右侧宽度的变化
-watch(() => resizeHandleStore.rightWidth, () => {
-  setTimeout(() => {
-    updateCanvasSize()
-  }, 0)
-})
+  if (!markerJson) {
+    canvas.clear()
+    canvas.backgroundColor = '#fffef8'
+    canvas.renderAll()
+    return
+  }
+  // 批量恢复对象时不弹出闭合路径确认对话框
+  setSuppressClosePath(true)
+  canvas.loadFromJSON(markerJson, () => {
+    setTimeout(() => {
+      if (!canvas) return
+      canvas.backgroundColor = '#fffef8'
+      canvas.renderAll()
+      setSuppressClosePath(false)
+    }, 50)
+  })
+}
 // 监听颜色变化，更新画笔颜色
 watch(() => colorPickerStore.selectedColor, (color) => {
   // 更新画笔颜色（仅在Marker模式下）
@@ -97,6 +119,16 @@ watch([isColorPickerOpen, () => closePathConfirm.value.show, isMarkerBrushSizePa
     }
   }
 })
+
+// 当选中的 Mark 发生变化时，自动根据其保存的 markerJsonData 恢复画布
+watch(
+  () => selectedMarkForDetail.value,
+  () => {
+    // 需要等 canvas 初始化完成
+    if (!canvas) return
+    loadCurrentMarkCanvas()
+  },
+)
 
 // 处理键盘删除事件
 const handleKeyDown = (e: KeyboardEvent) => {
@@ -157,6 +189,9 @@ onMounted(async () => {
       document.addEventListener('keydown', handleKeyDown)
 
       canvas.renderAll()
+
+      // 初始挂载时，根据当前选中的 Mark 恢复一次画布内容
+      loadCurrentMarkCanvas()
     }
   }, 200)
 })
@@ -189,13 +224,6 @@ onBeforeUnmount(() => {
       class="absolute top-5 left-5 z-10 bg-white/80 border border-gray-300 rounded shadow-sm p-1">
       <img :src="previewDataUrl" alt="" class="block w-30px h-30px h-auto rounded" />
     </div> -->
-
-    <!-- 工具栏 - 底部居中，卡片样式 -->
-    <div class="absolute left-1/2 bottom-5 -translate-x-1/2 z-10">
-      <div class="px-2 py-1 border border-[#e6e6e6] rounded-xl bg-white shadow">
-        <MarkerToolbar />
-      </div>
-    </div>
 
     <!-- 对象操作按钮 -->
     <MarkerObjectActionButtons />

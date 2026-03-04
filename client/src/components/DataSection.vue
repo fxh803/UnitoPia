@@ -118,7 +118,7 @@ function clearData() {
 
 <template>
   <div
-    class="border-b border-[var(--border-color)] flex flex-col min-h-0"
+    class="border-b border-[var(--border-color)] flex flex-col min-h-0 bg-[var(--primary-light-color)]"
     :class="tableData.length > 0 && isExpanded && activeTab === 'table' ? 'h-[500px]' : ''"
   >
     <!-- 无数据时：左侧折叠按钮 + 「Data」标题（只有箭头可点击） -->
@@ -263,7 +263,7 @@ function clearData() {
 
               <!-- Group 分身 pill -->
               <span
-                class="data-field-pill data-field-pill-group inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
+                class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
                 :class="{ 'data-field-placeholder': draggingFieldKey === `group:${tag.column}` }"
                 draggable="true"
                 @dragstart="onFieldDragStart($event, tag, 'categorical', 'group')"
@@ -303,10 +303,6 @@ function clearData() {
   background-color: #fbf8f6;
   color: #444;
   border: none;
-}
-
-.data-field-pill-group {
-  background-color: #f5efec;
 }
 
 .data-field-placeholder {
