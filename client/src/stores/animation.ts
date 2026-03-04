@@ -1,6 +1,6 @@
 // src/stores/counterStore.js
 import { defineStore, storeToRefs } from 'pinia'
-import paper from 'paper'
+import paper from "paper";
 import { useContainerAnimationStore } from '~/stores/containerAnimation'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { getRenderTxtData } from '~/composables/server'
