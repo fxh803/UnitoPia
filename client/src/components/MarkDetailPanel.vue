@@ -18,6 +18,25 @@ const currentMark = computed(() => {
   return parent
 })
 
+const currentChild = computed(() => {
+  const sel = selectedMarkForDetail.value
+  if (!sel || sel.type !== 'child') return null
+  const parent = markInstances.value.find(x => x.id === sel.parentMarkId) ?? null
+  if (!parent) return null
+  return parent.children?.find(c => c.id === sel.childId) ?? null
+})
+
+const currentEncoding = computed(() => {
+  const sel = selectedMarkForDetail.value
+  if (!sel) return null
+  if (sel.type === 'child') {
+    const child = currentChild.value as any
+    return child?.encoding ?? null
+  }
+  const m = currentMark.value as any
+  return m?.encoding ?? null
+})
+
 const displayName = computed(() => {
   const sel = selectedMarkForDetail.value
   if (!sel) return ''
@@ -37,6 +56,60 @@ const encodingChannelKey: Record<string, 'color' | 'size' | 'width' | 'height'> 
   Height: 'height',
 }
 
+const colorStart = computed<string>({
+  get() {
+    const sel = selectedMarkForDetail.value
+    if (sel?.type === 'child') {
+      const child = currentChild.value as any
+      if (child && child.colorStart) {
+        return child.colorStart as string
+      }
+    }
+    const m = currentMark.value as any
+    return (m?.colorStart as string | null) || '#FF6B6B'
+  },
+  set(value: string) {
+    const sel = selectedMarkForDetail.value
+    if (!sel) return
+    if (sel.type === 'child') {
+      markInstanceStore.updateChildInstance(sel.parentMarkId, sel.childId, {
+        colorStart: value,
+      })
+    } else {
+      markInstanceStore.updateMarkInstance(sel.markId, {
+        colorStart: value,
+      })
+    }
+  },
+})
+
+const colorEnd = computed<string>({
+  get() {
+    const sel = selectedMarkForDetail.value
+    if (sel?.type === 'child') {
+      const child = currentChild.value as any
+      if (child && child.colorEnd) {
+        return child.colorEnd as string
+      }
+    }
+    const m = currentMark.value as any
+    return (m?.colorEnd as string | null) || '#4E79FF'
+  },
+  set(value: string) {
+    const sel = selectedMarkForDetail.value
+    if (!sel) return
+    if (sel.type === 'child') {
+      markInstanceStore.updateChildInstance(sel.parentMarkId, sel.childId, {
+        colorEnd: value,
+      })
+    } else {
+      markInstanceStore.updateMarkInstance(sel.markId, {
+        colorEnd: value,
+      })
+    }
+  },
+})
+
 function handleEncodingDragOver(e: DragEvent) {
   e.preventDefault()
   if (e.dataTransfer) {
@@ -52,19 +125,41 @@ function handleEncodingDrop(e: DragEvent, channelLabel: 'Color' | 'Size' | 'Widt
   const sel = selectedMarkForDetail.value
   if (!sel) return
 
-  const targetMarkId = sel.type === 'instance' ? sel.markId : sel.parentMarkId
-  const target = markInstances.value.find(m => m.id === targetMarkId)
-  if (!target) return
-
   const key = encodingChannelKey[channelLabel]
-  // 目前约束：同一 Mark 只允许一个 channel 生效
+  // 目前约束：同一 Mark / 子实例 只允许一个 channel 生效
   const nextEncoding = {
     [key]: column,
   }
 
-  markInstanceStore.updateMarkInstance(targetMarkId, {
-    encoding: nextEncoding,
-  })
+  const isColorChannel = channelLabel === 'Color'
+  const defaultColorStart = '#FF6B6B'
+  const defaultColorEnd = '#4E79FF'
+
+  if (sel.type === 'child') {
+    // 子实例：单独管理 encoding
+    const parent = markInstances.value.find(m => m.id === sel.parentMarkId)
+    const child = parent?.children?.find(c => c.id === sel.childId) as any
+    const payload: any = {
+      encoding: nextEncoding,
+    }
+    // 如果是 Color 通道且还没有设置过色带，则写入默认 start / end，保证 drop 时有颜色
+    if (isColorChannel) {
+      if (!child?.colorStart) payload.colorStart = defaultColorStart
+      if (!child?.colorEnd) payload.colorEnd = defaultColorEnd
+    }
+    markInstanceStore.updateChildInstance(sel.parentMarkId, sel.childId, payload)
+  } else {
+    // 非 group 或父实例
+    const mark = markInstances.value.find(m => m.id === sel.markId) as any
+    const payload: any = {
+      encoding: nextEncoding,
+    }
+    if (isColorChannel) {
+      if (!mark?.colorStart) payload.colorStart = defaultColorStart
+      if (!mark?.colorEnd) payload.colorEnd = defaultColorEnd
+    }
+    markInstanceStore.updateMarkInstance(sel.markId, payload)
+  }
 }
 
 function close() {
@@ -92,26 +187,51 @@ function close() {
         <div
           v-for="channel in ['Color', 'Size', 'Width', 'Height']"
           :key="channel"
-          class="flex items-center gap-2 rounded-lg bg-[var(--border-color)]/40 border border-[var(--border-color)] px-3 py-1 min-h-[48px]"
+          class="flex flex-col gap-1 rounded-lg bg-[var(--border-color)]/40 border border-[var(--border-color)] px-3 py-1 min-h-[48px]"
         >
-          <span class="text-sm font-bold text-[var(--title-color)] shrink-0 w-16">{{ channel }}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-bold text-[var(--title-color)] shrink-0 w-16">{{ channel }}</span>
+            <div
+              class="ml-auto shrink-0 w-[220px] rounded-full border-2 border-dashed border-[var(--border-color)] bg-white py-1.5 px-3 flex items-center justify-between min-h-[36px] gap-2"
+              @dragover="handleEncodingDragOver"
+              @drop="handleEncodingDrop($event, channel as 'Color' | 'Size' | 'Width' | 'Height')"
+            >
+              <span
+                v-if="currentEncoding && currentEncoding[encodingChannelKey[channel]]"
+                class="text-xs font-medium text-[var(--title-color)] truncate"
+              >
+                {{ currentEncoding[encodingChannelKey[channel]] }}
+              </span>
+              <span
+                v-else
+                class="text-xs font-bold text-[var(--text-muted)]/70"
+              >
+                Drop Fields Here
+              </span>
+            </div>
+          </div>
+
+          <!-- 颜色通道下方的线性插值颜色选择器 -->
           <div
-            class="ml-auto shrink-0 w-[220px] rounded-full border-2 border-dashed border-[var(--border-color)] bg-white py-1.5 px-3 flex items-center justify-between min-h-[36px] gap-2"
-            @dragover="handleEncodingDragOver"
-            @drop="handleEncodingDrop($event, channel as 'Color' | 'Size' | 'Width' | 'Height')"
+            v-if="channel === 'Color' && currentEncoding && currentEncoding[encodingChannelKey[channel]]"
+            class="pl-16 pr-2 pb-1 flex flex-col gap-1"
           >
-            <span
-              v-if="currentMark?.encoding && currentMark.encoding[encodingChannelKey[channel]]"
-              class="text-xs font-medium text-[var(--title-color)] truncate"
-            >
-              {{ currentMark.encoding[encodingChannelKey[channel]] }}
-            </span>
-            <span
-              v-else
-              class="text-xs font-bold text-[var(--text-muted)]/70"
-            >
-              Drop Fields Here
-            </span>
+            <div class="flex items-center justify-between text-[10px] text-[var(--text-muted)]">
+              <span>Start</span>
+              <span>End</span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <input
+                v-model="colorStart"
+                type="color"
+                class="h-7 w-14 rounded border border-[var(--border-color)] bg-white cursor-pointer"
+              />
+              <input
+                v-model="colorEnd"
+                type="color"
+                class="h-7 w-14 rounded border border-[var(--border-color)] bg-white cursor-pointer"
+              />
+            </div>
           </div>
         </div>
       </div>

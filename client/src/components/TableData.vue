@@ -3,7 +3,7 @@ import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
 
-// const tableStore = useTableStore()
+const tableStore = useTableStore()
 // const { columnFilterCards } = storeToRefs(tableStore)
 const cellClasses = ref<Record<number, Record<number, string>>>({})
 

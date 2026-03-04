@@ -46,6 +46,9 @@ export interface MarkInstance {
   // 当前 mark 对应的 marker 可视化（可选）
   markerThumbnail?: string | null
   markerJsonData?: any | null
+  // 颜色通道使用时的线性插值起止颜色（十六进制）
+  colorStart?: string | null
+  colorEnd?: string | null
   // 当前 mark 的可视编码设置（Color / Size / Width / Height）
   encoding?: MarkEncoding
 }
@@ -94,6 +97,18 @@ export const useMarkInstanceStore = defineStore('markInstance', () => {
     Object.assign(target, payload)
   }
 
+  function updateChildInstance(
+    parentId: string,
+    childId: string,
+    payload: Partial<Omit<MarkChildInstance, 'id'>>
+  ) {
+    const parent = markInstances.value.find(item => item.id === parentId)
+    if (!parent || !parent.children) return
+    const child = parent.children.find(c => c.id === childId)
+    if (!child) return
+    Object.assign(child, payload)
+  }
+
   return {
     markInstances,
     selectedMarkForDetail,
@@ -103,6 +118,7 @@ export const useMarkInstanceStore = defineStore('markInstance', () => {
     removeMarkInstance,
     clearAllMarkInstances,
     updateMarkInstance,
+    updateChildInstance,
   }
 })
 

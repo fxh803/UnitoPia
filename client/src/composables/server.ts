@@ -10,6 +10,7 @@ import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useCanvasStore } from '~/stores/canvas'
 import { useContainerAnimationStore } from '~/stores/containerAnimation'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
+import { useMarkInstanceStore } from '~/stores/markInstance'
 import { ElMessage } from 'element-plus'
 // 定义数据类型接口
 interface ProcessedData {
@@ -164,6 +165,26 @@ function processMarker(tempCanvas: Canvas) {
   //   return null
   // }
 
+  // 获取 markInstance store，用于检查 encoding 是否为 color
+  const markInstanceStore = useMarkInstanceStore()
+  const { markInstances } = storeToRefs(markInstanceStore)
+
+  const hasColorEncodingForMarker = (markerId: string): boolean => {
+    const all = markInstances.value
+    // 1) 普通 mark：id 与 markerId 相同
+    const mark = all.find(m => m.id === markerId)
+    if (mark?.encoding?.color) return true
+
+    // 2) group 子实例：在某个父 mark 的 children 里
+    const parent = all.find(m => m.children?.some(c => c.id === markerId))
+    if (parent) {
+      const child = parent.children.find(c => c.id === markerId)
+      if (child?.encoding?.color) return true
+    }
+
+    return false
+  }
+
   // 从 group 对象中获取颜色（优先 stroke，其次 fill）
   const getColorFromGroup = (group: any): string | null => {
     if (!group || typeof group.getObjects !== 'function') return null
@@ -225,16 +246,12 @@ function processMarker(tempCanvas: Canvas) {
         const angleRadians = angleDegrees * Math.PI / 180
         angles.push(angleRadians)
 
-        // 检查是否有 color 映射
-        const clusterId = obj.get('clusterId')
-        if (clusterId) {
-          const filterEncoding = getFilterEncoding(clusterId)
-          if (filterEncoding?.channel === 'color') {
-            hasColorMapping = true
-            // 从 group 中获取颜色
-            const color = getColorFromGroup(obj)
-            colors.push(color || '#000000') // 如果没有颜色，使用默认黑色
-          }
+        // 检查是否有 color 映射：查看对应 mark / 子实例 的 encoding 是否为 color
+        if (hasColorEncodingForMarker(markerId)) {
+          hasColorMapping = true
+          // 从 group 中获取颜色
+          const color = getColorFromGroup(obj)
+          colors.push(color || '#000000') // 如果没有颜色，使用默认黑色
         }
 
         // 只生成一次thumbnail（使用第一个对象）

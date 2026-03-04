@@ -448,6 +448,79 @@ export const useCanvasStore = defineStore('canvas', () => {
     return []
   }
 
+  // 判断值是否为数值型
+  const isNumericValue = (value: any): boolean => {
+    if (value === undefined || value === null || value === '') return false
+    const num = Number(value)
+    return !isNaN(num) && String(value).trim() !== ''
+  }
+
+  // 十六进制颜色转 RGB
+  const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null
+  }
+
+  // RGB 转十六进制颜色
+  const rgbToHex = (r: number, g: number, b: number): string => {
+    return (
+      '#' +
+      [r, g, b]
+        .map((x) => {
+          const hex = Math.round(x).toString(16)
+          return hex.length === 1 ? '0' + hex : hex
+        })
+        .join('')
+    )
+  }
+
+  // 颜色插值函数
+  const interpolateColor = (colorStart: string, colorEnd: string, t: number): string => {
+    const rgbStart = hexToRgb(colorStart)
+    const rgbEnd = hexToRgb(colorEnd)
+    if (!rgbStart || !rgbEnd) return colorStart
+
+    const r = rgbStart.r + (rgbEnd.r - rgbStart.r) * t
+    const g = rgbStart.g + (rgbEnd.g - rgbStart.g) * t
+    const b = rgbStart.b + (rgbEnd.b - rgbStart.b) * t
+
+    return rgbToHex(r, g, b)
+  }
+
+  // 为字符串值生成颜色映射（相同值相同颜色）
+  const getStringValueColorMapForRows = (
+    rows: any[],
+    field: string,
+    colorStart: string,
+    colorEnd: string
+  ): Map<string, string> => {
+    const colorMap = new Map<string, string>()
+    if (!rows || rows.length === 0) return colorMap
+
+    const uniqueValues = new Set<string>()
+    rows.forEach((row: any) => {
+      const value = row?.[field]
+      if (value !== undefined && value !== null && value !== '') {
+        uniqueValues.add(String(value))
+      }
+    })
+
+    const uniqueValuesArray = Array.from(uniqueValues).sort()
+    uniqueValuesArray.forEach((value, index) => {
+      const t = uniqueValuesArray.length > 1 ? index / (uniqueValuesArray.length - 1) : 0
+      const color = interpolateColor(colorStart, colorEnd, t)
+      colorMap.set(value, color)
+    })
+
+    return colorMap
+  }
+
   // async function addMarkers(markerIdList: string[], pos: Array<{ x: number, y: number }>, clusterIdList: string[] = [], card: ColumnFilterCard | null = null) {
   //   console.log('addMarkers', markerIdList, pos, clusterIdList, card)
   //   const canvasInstance = canvasRef.value?.()
@@ -764,6 +837,39 @@ export const useCanvasStore = defineStore('canvas', () => {
     }
     const normalized = values.map(v => normalize(v, minValue, maxValue))
 
+    // 如果是颜色编码，预先为每个实体计算好颜色
+    let colors: string[] | null = null
+    if (channelKey === 'color' && fieldForEncoding && mark.colorStart && mark.colorEnd) {
+      colors = []
+      const colorStart = mark.colorStart
+      const colorEnd = mark.colorEnd
+
+      // 判断该字段是否为数值型
+      const firstRow = rows[0]
+      const firstValue = firstRow && fieldForEncoding in firstRow ? firstRow[fieldForEncoding] : undefined
+      const treatAsNumeric = isNumericValue(firstValue)
+
+      if (treatAsNumeric) {
+        for (let i = 0; i < rows.length; i++) {
+          const normalizedValue = normalized[i]
+          const tRaw =
+            maxDisplaySize > minDisplaySize
+              ? (normalizedValue - minDisplaySize) / (maxDisplaySize - minDisplaySize)
+              : 0
+          const t = Math.max(0, Math.min(1, tRaw))
+          colors.push(interpolateColor(colorStart, colorEnd, t))
+        }
+      } else {
+        const colorMap = getStringValueColorMapForRows(rows, fieldForEncoding, colorStart, colorEnd)
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i]
+          const value = row && fieldForEncoding in row ? row[fieldForEncoding] : undefined
+          const valueStr = value != null ? String(value) : ''
+          colors.push(colorMap.get(valueStr) || colorStart)
+        }
+      }
+    }
+
     // 计算用于放置的点位：
     // - 如果丢在 emitter 上，沿 emitter 采样
     // - 否则使用后端的布局服务（容器区域）
@@ -823,6 +929,25 @@ export const useCanvasStore = defineStore('canvas', () => {
         scaleX: scaleX,
         scaleY: scaleY
       })
+
+      // 如果存在颜色编码，为当前实体应用插值颜色
+      if (colors && colors[i]) {
+        const interpolatedColor = colors[i]
+        const objects = group.getObjects()
+        objects.forEach((obj: any) => {
+          const hasStroke =
+            obj.stroke && obj.stroke !== 'transparent' && obj.stroke !== 'rgba(0,0,0,0)'
+          const hasFill =
+            obj.fill && obj.fill !== 'transparent' && obj.fill !== 'rgba(0,0,0,0)'
+
+          if (hasStroke) {
+            obj.set('stroke', interpolatedColor)
+          }
+          if (hasFill) {
+            obj.set('fill', interpolatedColor)
+          }
+        })
+      }
 
       // 添加到主画布（此时所有属性都已设置好）
       canvasInstance.add(group)
@@ -923,6 +1048,40 @@ export const useCanvasStore = defineStore('canvas', () => {
       }
       const normalized = values.map(v => normalize(v, minValue, maxValue))
 
+      // 如果是颜色编码，预先为该子实例的每个实体计算好颜色（优先使用子实例的色带，否则使用父 mark 的色带）
+      let colors: string[] | null = null
+      const childColorStart = child.colorStart || mark.colorStart
+      const childColorEnd = child.colorEnd || mark.colorEnd
+      if (channelKey === 'color' && fieldForEncoding && childColorStart && childColorEnd) {
+        colors = []
+        const colorStart = childColorStart
+        const colorEnd = childColorEnd
+
+        const firstRow = rows[0]
+        const firstValue = firstRow && fieldForEncoding in firstRow ? firstRow[fieldForEncoding] : undefined
+        const treatAsNumeric = isNumericValue(firstValue)
+
+        if (treatAsNumeric) {
+          for (let i = 0; i < rows.length; i++) {
+            const normalizedValue = normalized[i]
+            const tRaw =
+              maxDisplaySize > minDisplaySize
+                ? (normalizedValue - minDisplaySize) / (maxDisplaySize - minDisplaySize)
+                : 0
+            const t = Math.max(0, Math.min(1, tRaw))
+            colors.push(interpolateColor(colorStart, colorEnd, t))
+          }
+        } else {
+          const colorMap = getStringValueColorMapForRows(rows, fieldForEncoding, colorStart, colorEnd)
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows[i]
+            const value = row && fieldForEncoding in row ? row[fieldForEncoding] : undefined
+            const valueStr = value != null ? String(value) : ''
+            colors.push(colorMap.get(valueStr) || colorStart)
+          }
+        }
+      }
+
       // 为该子实例的每个实体添加一个 mark
       for (let i = 0; i < indices.length; i++) {
         if (globalIndex >= pos.length) break
@@ -974,6 +1133,24 @@ export const useCanvasStore = defineStore('canvas', () => {
           scaleX,
           scaleY
         })
+        // 如果存在颜色编码，为当前实体应用插值颜色
+        if (colors && colors[i]) {
+          const interpolatedColor = colors[i]
+          const objects = group.getObjects()
+          objects.forEach((obj: any) => {
+            const hasStroke =
+              obj.stroke && obj.stroke !== 'transparent' && obj.stroke !== 'rgba(0,0,0,0)'
+            const hasFill =
+              obj.fill && obj.fill !== 'transparent' && obj.fill !== 'rgba(0,0,0,0)'
+
+            if (hasStroke) {
+              obj.set('stroke', interpolatedColor)
+            }
+            if (hasFill) {
+              obj.set('fill', interpolatedColor)
+            }
+          })
+        }
 
         canvasInstance.add(group)
         group.setCoords()
@@ -1330,14 +1507,14 @@ export const useCanvasStore = defineStore('canvas', () => {
   removeCanvasEventListeners,
   setDrawedObjectDataType,
   adjustLayer,
-  removeObjectsByMarkerId,
+  // removeObjectsByMarkerId,
   isDropOnEmitter,
   getBezierApproxLength,
   calculateBezierPoint,
   getEmitterSampledPoints,
-  addMarkers,
-  handleEmitterDrop,
-  handleMarkerDrop,
+  // addMarkers,
+  // handleEmitterDrop,
+  // handleMarkerDrop,
   handleDragOver,
     handleDrop,
   askToClosePath,
