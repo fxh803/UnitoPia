@@ -826,13 +826,10 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
   }
 }
 
-export async function handleMarkerDropCanvas(pos: [number,number], card: ColumnFilterCard | null = null) {
+export async function handleMarkerDropCanvas(pos: [number,number], num: number) {
   const collageSeriesStore = useCollageSeriesStore()
   const canvas = collageSeriesStore.canvasRef?.()
-  const container = processContainer(canvas)
-
-
-  const data = pharseData(card)
+  const container = processContainer(canvas) 
   const response = await fetch(`${ip}/markerDropApi`, {
     method: 'POST',
     headers: {
@@ -840,7 +837,7 @@ export async function handleMarkerDropCanvas(pos: [number,number], card: ColumnF
     },
     body: JSON.stringify(
       {
-        'markerData': data,
+        'num': num,
         'container': container,
         'pos': pos
       }
@@ -848,6 +845,7 @@ export async function handleMarkerDropCanvas(pos: [number,number], card: ColumnF
   })
   if (response.ok) {
     const result = await response.json()
+    console.log('result', result)
     if (result.init_pos) {
       return result
 

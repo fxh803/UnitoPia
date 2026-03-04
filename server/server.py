@@ -210,15 +210,13 @@ def upload_container_api():
 @app.route('/markerDropApi', methods=['POST'])
 def marker_drop_api():
     request_data = request.get_json()
-    markerData = request_data['markerData']
+    num_markers = request_data['num']
     container = request_data['container']
     container = base64_to_image(container) 
     pos = request_data['pos']
-    
-    # 1. 统计markerData的长度
-    num_markers = len(markerData)
+     
 
-    # 2. 在container图像上找到pos所在的非透明区域
+    # 在container图像上找到pos所在的非透明区域
     contour = find_region_containing_point(container, pos)
     # 获取container的宽高
     width, height = container.size

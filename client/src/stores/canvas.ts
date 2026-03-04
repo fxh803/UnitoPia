@@ -13,6 +13,7 @@ import { Group } from 'fabric'
 import paper from 'paper'
 import { handleMarkerDropCanvas } from '~/composables/server'
 import { useTableStore, type ColumnFilterCard } from '~/stores/table'
+import { useMarkInstanceStore, type MarkInstance } from '~/stores/markInstance'
 import { useMarkerStore } from '~/stores/marker'
 import * as fabric from 'fabric'
 export const useCanvasStore = defineStore('canvas', () => {
@@ -722,47 +723,134 @@ export const useCanvasStore = defineStore('canvas', () => {
     }
   }
 
-  function handleDrop(e: DragEvent, canvasEl: HTMLElement) {
+  async function handleDrop(e: DragEvent, canvasEl: HTMLElement) {
     e.preventDefault()
-    const cardId = e.dataTransfer?.getData('text/plain')
-    if (!cardId) return
-
-    // 获取 filter id 列表
-    const filterIdsJson = e.dataTransfer?.getData('application/json')
-    const filterIds: string[] = filterIdsJson ? JSON.parse(filterIdsJson) : []
-
-    const tableStore = useTableStore()
-    const card = tableStore.columnFilterCards.find(c => c.id === cardId)
-    if (!card || filterIds.length === 0) return
-
-    const markerIdList: string[] = []
-    const clusterIdList: string[] = []
-    
-    // 根据 filter id 列表构建 markerIdList 和 clusterIdList
-    for (const filterId of filterIds) {
-      const filter = card.filters.find(f => f.id === filterId)
-      if (!filter?.markerId) continue
-      
-      // 根据 filter 的 rows 数量，为每个数据点添加对应的 cluster_id 和 markerId
-      for (let j = 0; j < filter.rows.length; j++) {
-        markerIdList.push(filter.markerId)
-        clusterIdList.push(filterId)
-      }
-    }
-
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
 
-    // 计算拖拽位置相对于画布的偏移
+    // 只支持从 Marks 区拖来的 Mark 实例
+    const markInstanceId = e.dataTransfer?.getData('mark-instance-id')
+    if (!markInstanceId) return
+
     const canvasRect = canvasEl.getBoundingClientRect()
     const dropX = e.clientX - canvasRect.left
     const dropY = e.clientY - canvasRect.top
 
-    // 统一使用列表格式处理
-    if (isDropOnEmitter(dropX, dropY)) {
-      handleEmitterDrop(dropX, dropY, markerIdList, clusterIdList, card)
+    const dropOnEmitter = isDropOnEmitter(dropX, dropY)
+
+    const markInstanceStore = useMarkInstanceStore()
+    const { markInstances } = markInstanceStore
+    const tableStore = useTableStore()
+
+    const mark = markInstances.find((m: MarkInstance) => m.id === markInstanceId)
+    if (!mark || !mark.markerJsonData) return
+
+    // 构造参与归一化的数据集合（使用该实例覆盖的实体）
+    const indices = mark.entityIndices ?? []
+
+    // 当前约束：encoding 只会选一个 channel，这里取出 channel 和对应字段名
+    let channelKey: MarkEncodingChannel | null = null
+    let fieldForEncoding: string | undefined
+    if (mark.encoding) {
+      const entries = Object.entries(mark.encoding)
+      if (entries.length > 0) {
+        channelKey = entries[0][0] as MarkEncodingChannel
+        fieldForEncoding = entries[0][1] as string
+      }
+    }
+
+    const rows: any[] = []
+    const values: number[] = []
+
+    indices.forEach(idx => {
+      const row = tableStore.tableData[idx] as any
+      rows.push(row)
+      if (fieldForEncoding && row && row[fieldForEncoding] != null) {
+        const v = Number(row[fieldForEncoding])
+        values.push(!isNaN(v) && v > 0 ? v : 1)
+      } else {
+        values.push(1)
+      }
+    })
+    console.log('values', values)
+    console.log('mark', mark)
+    // 基于 dataScale 的规则做简单归一化（20~70）
+    const minDisplaySize = 20
+    const maxDisplaySize = 70
+    const defaultSize = 45
+    const minValue = values.length ? Math.min(...values) : 1
+    const maxValue = values.length ? Math.max(...values) : 1
+    const normalize = (value: number, min: number, max: number) => {
+      if (max === min) return (minDisplaySize + maxDisplaySize) / 2
+      return minDisplaySize + ((value - min) / (max - min)) * (maxDisplaySize - minDisplaySize)
+    }
+    const normalized = values.map(v => normalize(v, minValue, maxValue))
+    console.log('normalized', normalized)
+    // 计算用于放置的点位：
+    // - 如果丢在 emitter 上，沿 emitter 采样
+    // - 否则使用后端的布局服务（容器区域）
+    let pos: Array<{ x: number; y: number }> = []
+    const markerCount = indices.length || values.length || 1
+
+    if (dropOnEmitter) {
+      pos = getEmitterSampledPoints(markerCount)
     } else {
-      handleMarkerDrop(dropX, dropY, markerIdList, clusterIdList, card)
+      const result = await handleMarkerDropCanvas([dropX, dropY], markerCount, null)
+      pos = (result.init_pos as Array<{ x: number; y: number }>) || []
+    }
+    console.log('pos', pos)
+    for (let i = 0; i < pos.length; i++) {
+      const object = await fabric.util.enlivenObjects(mark.markerJsonData, 'fabric')
+      const group = new Group(object)
+      group.set({
+        left: pos[i].x,
+        top: pos[i].y,
+        selectable: false,
+        evented: false,
+        dataType: 'marker',
+        hasControls: false,
+        originX: 'center',
+        originY: 'center',
+        markerId: mark.id,
+        data: rows[i]
+      })
+
+      if (selectedModeStore.selectedMode === null) {
+        group.selectable = true;
+        group.evented = true;
+      }
+      // 根据数据中的 width 和 height 调节对象大小
+      const currentWidth = group.width || group.getScaledWidth()
+      const currentHeight = group.height || group.getScaledHeight()
+      const normalizedValue = normalized[i]
+      const currentSize = Math.max(currentWidth, currentHeight)
+      
+      //一开始先按比例缩放
+      let scaleX = defaultSize / currentSize
+      let scaleY = defaultSize / currentSize
+      
+      if (channelKey === 'width') {
+        scaleX = normalizedValue / currentSize
+      } else if (channelKey === 'height') {
+        scaleY = normalizedValue / currentSize
+      } else if (channelKey === 'size') {
+        scaleX = normalizedValue / currentSize
+        scaleY = normalizedValue / currentSize
+      } else { 
+        scaleX = defaultSize / currentSize
+        scaleY = defaultSize / currentSize
+      }
+      
+      group.set({
+        scaleX: scaleX,
+        scaleY: scaleY
+      })
+
+      // 添加到主画布（此时所有属性都已设置好）
+      canvasInstance.add(group)
+      // 强制更新对象
+      group.setCoords()
+      canvasInstance.renderAll()
     }
   }
 
@@ -1085,7 +1173,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   handleEmitterDrop,
   handleMarkerDrop,
   handleDragOver,
-  handleDrop,
+    handleDrop,
   askToClosePath,
   handleClosePathConfirm,
   renderResult,

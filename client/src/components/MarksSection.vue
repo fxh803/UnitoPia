@@ -36,6 +36,12 @@ function toggleGroupRow(id: string) {
   groupRowExpanded.value[id] = !isGroupRowExpanded(id)
 }
 
+function onMarkDragStart(e: DragEvent, mark: any) {
+  if (!e.dataTransfer) return
+  e.dataTransfer.effectAllowed = 'copy'
+  e.dataTransfer.setData('mark-instance-id', mark.id)
+}
+
 function handleGroupValueChange(parentId: string, childId: string, value: string) {
   const parent = markInstances.value.find(m => m.id === parentId)
   if (!parent || !parent.fieldName || !parent.isGroup) return
@@ -347,6 +353,8 @@ function handleDragLeave(e: DragEvent) {
           <div
             class="flex items-center gap-2"
             :class="{ 'cursor-pointer': !mark.isGroup }"
+            draggable="true"
+            @dragstart.stop="onMarkDragStart($event, mark)"
             @click="!mark.isGroup && openMarkDetail(mark.id)"
           >
             <!-- 非 group：整行可点，仅右侧删除/拖放不触发 -->

@@ -259,8 +259,9 @@ const saveMarkers = async () => {
   })
 
   // 获取当前画布的完整 JSON 数据（单个对象）
-  const jsonData = canvasInstance.toJSON()
-
+  // const jsonData = canvasInstance.toJSON()
+  const jsonData = allObjects.map(obj => obj.toJSON())
+  console.log('jsonData', jsonData)
   // 找到当前正在编辑的 mark 或 child 实例（如果有）
   const sel = selectedMarkForDetail.value
 
