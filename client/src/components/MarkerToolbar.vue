@@ -271,7 +271,7 @@ const saveMarkers = async () => {
   }
 
   // 编辑的是普通（非 group）实例：直接写到该实例本身
-  if (sel.type === 'instance') {
+  if (sel.type === 'singleInstance') {
     markInstanceStore.updateMarkInstance(sel.markId, {
       markerThumbnail: thumbnail,
       markerJsonData: jsonData,

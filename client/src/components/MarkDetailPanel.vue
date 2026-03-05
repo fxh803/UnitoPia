@@ -11,7 +11,7 @@ const { markInstances, selectedMarkForDetail } = storeToRefs(markInstanceStore)
 const currentMark = computed(() => {
   const sel = selectedMarkForDetail.value
   if (!sel) return null
-  if (sel.type === 'instance') {
+  if (sel.type === 'singleInstance') {
     return markInstances.value.find(x => x.id === sel.markId) ?? null
   }
   const parent = markInstances.value.find(x => x.id === sel.parentMarkId) ?? null
@@ -20,7 +20,7 @@ const currentMark = computed(() => {
 
 const currentChild = computed(() => {
   const sel = selectedMarkForDetail.value
-  if (!sel || sel.type !== 'child') return null
+  if (!sel || sel.type !== 'childInstance') return null
   const parent = markInstances.value.find(x => x.id === sel.parentMarkId) ?? null
   if (!parent) return null
   return parent.children?.find(c => c.id === sel.childId) ?? null
@@ -29,7 +29,7 @@ const currentChild = computed(() => {
 const currentEncoding = computed(() => {
   const sel = selectedMarkForDetail.value
   if (!sel) return null
-  if (sel.type === 'child') {
+  if (sel.type === 'childInstance') {
     const child = currentChild.value as any
     return child?.encoding ?? null
   }
@@ -40,7 +40,7 @@ const currentEncoding = computed(() => {
 const displayName = computed(() => {
   const sel = selectedMarkForDetail.value
   if (!sel) return ''
-  if (sel.type === 'instance') {
+  if (sel.type === 'singleInstance') {
     const m = markInstances.value.find(x => x.id === sel.markId)
     return m?.name ?? 'Mark'
   }
@@ -59,7 +59,7 @@ const encodingChannelKey: Record<string, 'color' | 'size' | 'width' | 'height'> 
 const colorStart = computed<string>({
   get() {
     const sel = selectedMarkForDetail.value
-    if (sel?.type === 'child') {
+    if (sel?.type === 'childInstance') {
       const child = currentChild.value as any
       if (child && child.colorStart) {
         return child.colorStart as string
@@ -71,7 +71,7 @@ const colorStart = computed<string>({
   set(value: string) {
     const sel = selectedMarkForDetail.value
     if (!sel) return
-    if (sel.type === 'child') {
+    if (sel.type === 'childInstance') {
       markInstanceStore.updateChildInstance(sel.parentMarkId, sel.childId, {
         colorStart: value,
       })
@@ -86,7 +86,7 @@ const colorStart = computed<string>({
 const colorEnd = computed<string>({
   get() {
     const sel = selectedMarkForDetail.value
-    if (sel?.type === 'child') {
+    if (sel?.type === 'childInstance') {
       const child = currentChild.value as any
       if (child && child.colorEnd) {
         return child.colorEnd as string
@@ -98,7 +98,7 @@ const colorEnd = computed<string>({
   set(value: string) {
     const sel = selectedMarkForDetail.value
     if (!sel) return
-    if (sel.type === 'child') {
+    if (sel.type === 'childInstance') {
       markInstanceStore.updateChildInstance(sel.parentMarkId, sel.childId, {
         colorEnd: value,
       })
@@ -135,7 +135,7 @@ function handleEncodingDrop(e: DragEvent, channelLabel: 'Color' | 'Size' | 'Widt
   const defaultColorStart = '#FF6B6B'
   const defaultColorEnd = '#4E79FF'
 
-  if (sel.type === 'child') {
+  if (sel.type === 'childInstance') {
     // 子实例：单独管理 encoding
     const parent = markInstances.value.find(m => m.id === sel.parentMarkId)
     const child = parent?.children?.find(c => c.id === sel.childId) as any

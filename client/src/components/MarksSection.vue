@@ -13,11 +13,11 @@ const markInstanceStore = useMarkInstanceStore()
 const { markInstances } = storeToRefs(markInstanceStore)
 
 function openMarkDetail(markId: string) {
-  markInstanceStore.setSelectedMarkForDetail({ type: 'instance', markId })
+  markInstanceStore.setSelectedMarkForDetail({ type: 'singleInstance', markId })
 }
 
 function openMarkChildDetail(parentMarkId: string, childId: string) {
-  markInstanceStore.setSelectedMarkForDetail({ type: 'child', parentMarkId, childId })
+  markInstanceStore.setSelectedMarkForDetail({ type: 'childInstance', parentMarkId, childId })
 }
 
 const isDragOver = ref(false)
@@ -40,7 +40,6 @@ function onMarkDragStart(e: DragEvent, mark: any) {
   if (!e.dataTransfer) return
   e.dataTransfer.effectAllowed = 'copy'
   e.dataTransfer.setData('mark-instance-id', mark.id)
-  e.dataTransfer.setData('mark-kind', mark.isGroup ? 'group' : 'instance')
 }
 
 function handleGroupValueChange(parentId: string, childId: string, value: string) {
@@ -51,14 +50,12 @@ function handleGroupValueChange(parentId: string, childId: string, value: string
 
   // 计算这个子实例对应的行索引
   const indices: number[] = []
-  const details: unknown[] = []
   tableData.value.forEach((row, idx) => {
     const raw = (row as Record<string, unknown>)[fieldName]
     if (raw == null) return
     const str = String(raw).trim()
     if (str === value) {
       indices.push(idx)
-      details.push(raw)
     }
   })
 
@@ -69,14 +66,12 @@ function handleGroupValueChange(parentId: string, childId: string, value: string
       selectedValue: value,
       entityIndices: indices,
       entities: indices.length,
-      entitiesDetail: details,
     }
   })
 
   markInstanceStore.updateMarkInstance(parentId, {
     children: newChildren,
     entityIndices: null,
-    entitiesDetail: null,
     entities: 0,
   })
 }
@@ -85,7 +80,6 @@ function handleFieldDropOnMark(e: DragEvent, markId: string) {
   e.preventDefault()
   const fieldName = e.dataTransfer?.getData('text/plain')
   const fieldType = e.dataTransfer?.getData('field-type') as 'numeric' | 'categorical'
-  const entitiesStr = e.dataTransfer?.getData('entities')
   const variant = e.dataTransfer?.getData('field-variant') || 'field'
 
   if (!fieldName || !fieldType) return
@@ -93,23 +87,23 @@ function handleFieldDropOnMark(e: DragEvent, markId: string) {
   const mark = markInstances.value.find(m => m.id === markId)
   if (!mark) return
 
-  const baseEntities = entitiesStr ? Number(entitiesStr) : tableData.value.length
   const isGroupDrop = variant === 'group' && fieldType === 'categorical'
 
-  // 只有同类才能互相 drop：
-  // - group 父实例只能接收 group 分身
-  // - 非 group 实例只能接收普通字段
+  // 只有同类才能互相 drop
   if (mark.isGroup && !isGroupDrop) return
   if (!mark.isGroup && isGroupDrop) return
 
-  // 非 group：把这一行当作普通 mark，清空 children
+  // 非 group：根据该字段非空行精确计算实体索引
   if (!mark.isGroup) {
-    const entityIndices = tableData.value.map((_, idx) => idx)
-    const entities = Math.min(entityIndices.length, baseEntities)
-    const entitiesDetail = entityIndices.map(idx => {
-      const row = tableData.value[idx] as Record<string, unknown>
-      return row[fieldName]
+    const entityIndices: number[] = []
+    tableData.value.forEach((row, idx) => {
+      const raw = (row as Record<string, unknown>)[fieldName]
+      if (raw == null) return
+      const str = String(raw).trim()
+      if (!str) return
+      entityIndices.push(idx)
     })
+    const entities = entityIndices.length
 
     markInstanceStore.updateMarkInstance(markId, {
       fieldName,
@@ -118,7 +112,6 @@ function handleFieldDropOnMark(e: DragEvent, markId: string) {
       children: [],
       entityIndices,
       entities,
-      entitiesDetail,
     })
     return
   }
@@ -152,21 +145,15 @@ function handleFieldDropOnMark(e: DragEvent, markId: string) {
           selectedValue: null,
           entities: 0,
           entityIndices: [],
-          entitiesDetail: [],
         }
       }
       const idxs = map.get(value) ?? []
-      const details = idxs.map(idx => {
-        const row = tableData.value[idx] as Record<string, unknown>
-        return row[fieldName]
-      })
       return {
         id: base?.id || `child-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         name: base?.name || `Mark ${index + 1}`,
         selectedValue: value,
         entities: idxs.length,
         entityIndices: idxs,
-        entitiesDetail: details,
       }
     })
 
@@ -176,7 +163,6 @@ function handleFieldDropOnMark(e: DragEvent, markId: string) {
       isGroup: true,
       children,
       entityIndices: null,
-      entitiesDetail: null,
       entities: 0,
     })
   }
@@ -193,7 +179,6 @@ function clearMarkField(markId: string) {
       fieldType: null,
       entities: 0,
       entityIndices: null,
-      entitiesDetail: null,
       // 仍然是 group 容器，只是暂时没有字段和子实例
       children: [],
     })
@@ -203,7 +188,6 @@ function clearMarkField(markId: string) {
       fieldType: null,
       entities: 0,
       entityIndices: null,
-      entitiesDetail: null,
       children: [],
     })
   }
@@ -214,22 +198,23 @@ function handleDrop(e: DragEvent) {
   isDragOver.value = false
   const fieldName = e.dataTransfer?.getData('text/plain')
   const fieldType = e.dataTransfer?.getData('field-type') as 'numeric' | 'categorical'
-  const entitiesStr = e.dataTransfer?.getData('entities')
   const variant = e.dataTransfer?.getData('field-variant') || 'field'
 
   if (!fieldName || !fieldType) return
 
-  const baseEntities = entitiesStr ? Number(entitiesStr) : tableData.value.length
   const isGroup = variant === 'group' && fieldType === 'categorical'
 
   // 非 group：创建普通 mark 实例
   if (!isGroup) {
-    const entityIndices = tableData.value.map((_, idx) => idx)
-    const entities = Math.min(entityIndices.length, baseEntities)
-    const entitiesDetail = entityIndices.map(idx => {
-      const row = tableData.value[idx] as Record<string, unknown>
-      return row[fieldName]
+    const entityIndices: number[] = []
+    tableData.value.forEach((row, idx) => {
+      const raw = (row as Record<string, unknown>)[fieldName]
+      if (raw == null) return
+      const str = String(raw).trim()
+      if (!str) return
+      entityIndices.push(idx)
     })
+    const entities = entityIndices.length
 
     markInstanceStore.addMarkInstance({
       name: `Mark ${markInstances.value.length + 1}`,
@@ -239,7 +224,6 @@ function handleDrop(e: DragEvent) {
       children: [],
       entityIndices,
       entities,
-      entitiesDetail,
     })
     return
   }
@@ -256,24 +240,19 @@ function handleDrop(e: DragEvent) {
       list.push(idx)
       map.set(str, list)
     })
-
+    console.log(map)
     const groupValues = Array.from(map.keys())
 
     const defaultCount = Math.min(3, groupValues.length)
     const children = Array.from({ length: defaultCount }).map((_, index) => {
       const value = groupValues[index]
       const idxs = value ? (map.get(value) ?? []) : []
-      const details = idxs.map(idx => {
-        const row = tableData.value[idx] as Record<string, unknown>
-        return row[fieldName]
-      })
       return {
         id: `child-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         name: `Mark ${index + 1}`,
         selectedValue: value ?? null,
         entities: idxs.length,
         entityIndices: idxs,
-        entitiesDetail: details,
       }
     })
 
@@ -285,7 +264,6 @@ function handleDrop(e: DragEvent) {
       children,
       entities: 0,
       entityIndices: null,
-      entitiesDetail: null,
     })
     return
   }

@@ -3,8 +3,10 @@ import { ref } from 'vue'
 
 export interface MarkerData {
   id: string
+  name: string
   thumbnail: string
-  jsonData: any
+  // svg 或图片的原始内容（data URL）
+  source: string
 }
 
 export const useMarkerStore = defineStore('marker', () => {

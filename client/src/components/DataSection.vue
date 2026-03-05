@@ -2,11 +2,9 @@
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
-// import { useDataScaleStore } from '~/stores/dataScale'
 import TableDataView from './TableData.vue'
 
 const tableStore = useTableStore()
-// const dataScaleStore = useDataScaleStore()
 const { tableData, tableColumns, isLoading } = storeToRefs(tableStore)
 
 const isExpanded = ref(true)
@@ -73,7 +71,6 @@ function onFieldDragStart(
   e.dataTransfer.effectAllowed = 'copy'
   e.dataTransfer.setData('text/plain', tag.column)
   e.dataTransfer.setData('field-type', type)
-  e.dataTransfer.setData('entities', String(tableData.value.length))
   e.dataTransfer.setData('field-variant', variant)
 
   // 2. 自定义拖拽时跟随鼠标的“影像”，保持 pill 原本样式
@@ -112,7 +109,6 @@ function handleFileSelect(e: Event) {
 
 function clearData() {
   tableStore.clearTableData()
-  // dataScaleStore.resetScales()
 }
 </script>
 
@@ -229,7 +225,7 @@ function clearData() {
               class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
               :class="{ 'data-field-placeholder': draggingFieldKey === `field:${tag.column}` }"
               draggable="true"
-              @dragstart="onFieldDragStart($event, tag, 'numeric')"
+              @dragstart="(e) => onFieldDragStart(e, tag, 'numeric')"
               @dragend="onFieldDragEnd"
             >
               <span class="data-field-prefix-num mr-1">#</span>
@@ -254,7 +250,7 @@ function clearData() {
                 class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
                 :class="{ 'data-field-placeholder': draggingFieldKey === `field:${tag.column}` }"
                 draggable="true"
-                @dragstart="onFieldDragStart($event, tag, 'categorical', 'field')"
+                @dragstart="(e) => onFieldDragStart(e, tag, 'categorical', 'field')"
                 @dragend="onFieldDragEnd"
               >
                 <span class="data-field-prefix-abc mr-1">abc</span>
@@ -266,7 +262,7 @@ function clearData() {
                 class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
                 :class="{ 'data-field-placeholder': draggingFieldKey === `group:${tag.column}` }"
                 draggable="true"
-                @dragstart="onFieldDragStart($event, tag, 'categorical', 'group')"
+                @dragstart="(e) => onFieldDragStart(e, tag, 'categorical', 'group')"
                 @dragend="onFieldDragEnd"
               >
                 <span class="data-field-prefix-abc mr-1">abc</span>
@@ -296,7 +292,6 @@ function clearData() {
   border-radius: 12px;
   padding: 14px 16px;
   border: 1px solid #cfcecd;
-  /* box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); */
 }
 
 .data-field-pill {

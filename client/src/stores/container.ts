@@ -5,7 +5,8 @@ export interface ContainerLibraryItem {
   id: string
   name: string
   thumbnail: string
-  base64: string
+  // svg 或图片的原始内容（data URL）
+  source: string
 }
 
 export const useContainerStore = defineStore('container', () => {

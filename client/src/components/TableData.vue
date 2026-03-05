@@ -4,7 +4,6 @@ import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
 
 const tableStore = useTableStore()
-// const { columnFilterCards } = storeToRefs(tableStore)
 const cellClasses = ref<Record<number, Record<number, string>>>({})
 
 // 获取 filter 的颜色索引（每个 card 独立从 0 开始）

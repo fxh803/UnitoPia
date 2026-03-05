@@ -19,8 +19,6 @@ export interface MarkChildInstance {
   entities: number
   // 这个子实例包含的实体在 tableData 中的行索引
   entityIndices: number[]
-  // 这个子实例对应实体在字段上的取值列表
-  entitiesDetail: unknown[]
   // 子实例对应的 marker 可视化（可选）
   markerThumbnail?: string | null
   markerJsonData?: any | null
@@ -39,8 +37,6 @@ export interface MarkInstance {
   isGroup: boolean
   // 非 group 时：父实例整体覆盖的实体行索引；group 时：置为 null
   entityIndices: number[] | null
-  // 非 group 时：当前字段在这些实体上的取值列表；group 时：置为 null
-  entitiesDetail: unknown[] | null
   // group 类型下的子实例列表；普通 mark 为空数组
   children: MarkChildInstance[]
   // 当前 mark 对应的 marker 可视化（可选）
@@ -53,10 +49,10 @@ export interface MarkInstance {
   encoding?: MarkEncoding
 }
 
-/** 当前在左侧栏弹出的「Mark 详情面板」对应的选中项：非 group 实例 或 group 的子实例 */
+/** 当前在左侧栏弹出的「Mark 详情面板」对应的选中项：单实例 或 group 的子实例 */
 export type SelectedMarkForDetail =
-  | { type: 'instance'; markId: string }
-  | { type: 'child'; parentMarkId: string; childId: string }
+  | { type: 'singleInstance'; markId: string }
+  | { type: 'childInstance'; parentMarkId: string; childId: string }
   | null
 
 export const useMarkInstanceStore = defineStore('markInstance', () => {
@@ -84,6 +80,16 @@ export const useMarkInstanceStore = defineStore('markInstance', () => {
   }
 
   function removeMarkInstance(id: string) {
+    // 如果当前详情面板选中的就是这个实例（或它的子实例），一起清空选中状态
+    const sel = selectedMarkForDetail.value
+    if (sel) {
+      const isSameSingle = sel.type === 'singleInstance' && sel.markId === id
+      const isSameParent = sel.type === 'childInstance' && sel.parentMarkId === id
+      if (isSameSingle || isSameParent) {
+        selectedMarkForDetail.value = null
+      }
+    }
+
     markInstances.value = markInstances.value.filter(item => item.id !== id)
   }
 

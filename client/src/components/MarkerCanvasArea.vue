@@ -48,7 +48,7 @@ function loadCurrentMarkCanvas() {
   // 根据选中的类型，决定使用父实例还是子实例的画布数据
   let markerJson: any | null = null
 
-  if (sel.type === 'instance') {
+  if (sel.type === 'singleInstance') {
     const inst = markInstances.value.find(m => m.id === sel.markId)
     markerJson = inst?.markerJsonData ?? null
   } else {

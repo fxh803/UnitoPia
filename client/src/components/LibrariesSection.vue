@@ -47,11 +47,9 @@ async function handleMarkFiles(files: FileList | null) {
   })
 
   markerStore.addMarker({
+    name: file.name,
     thumbnail: dataUrl,
-    jsonData: {
-      name: file.name,
-      source: 'upload',
-    },
+    source: dataUrl,
   })
 }
 
@@ -101,7 +99,7 @@ async function handleContainerFiles(files: FileList | null) {
   containerStore.addContainer({
     name: file.name,
     thumbnail: finalBase64,
-    base64: finalBase64,
+    source: finalBase64,
   })
 }
 
@@ -180,7 +178,7 @@ async function handleContainerFileSelect(e: Event) {
                 >
               </div>
               <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-center">
-                {{ marker.jsonData?.name || 'Marker' }}
+                {{ marker.name || 'Marker' }}
               </span>
             </button>
 
