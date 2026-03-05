@@ -33,24 +33,58 @@ async function handleMarkFiles(files: FileList | null) {
   if (!files?.length)
     return
 
-  const file = files[0]
-  if (!file.type.startsWith('image/'))
-    return
+  // 支持多选：依次处理每个文件
+  for (const file of Array.from(files)) {
+    // 如果是 SVG：用文本形式保存 source，缩略图仍然用 dataURL
+    if (file.type === 'image/svg+xml') {
+      const svgString = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          resolve((ev.target?.result as string) || '')
+        }
+        reader.onerror = (err) => reject(err)
+        reader.readAsText(file)
+      })
 
-  const dataUrl = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      resolve((ev.target?.result as string) || '')
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          resolve((ev.target?.result as string) || '')
+        }
+        reader.onerror = (err) => reject(err)
+        reader.readAsDataURL(file)
+      })
+
+      markerStore.addMarker({
+        name: file.name,
+        thumbnail: dataUrl,
+        // source 保存 svg 源码字符串，后续在 marker 画布中用 SVG 方式加载
+        source: svgString,
+      })
+    } else {
+      // 普通位图：直接以 dataURL 形式保存
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = (ev) => {
+          resolve((ev.target?.result as string) || '')
+        }
+        reader.onerror = (err) => reject(err)
+        reader.readAsDataURL(file)
+      })
+
+      markerStore.addMarker({
+        name: file.name,
+        thumbnail: dataUrl,
+        source: dataUrl,
+      })
     }
-    reader.onerror = (err) => reject(err)
-    reader.readAsDataURL(file)
-  })
+  }
+}
 
-  markerStore.addMarker({
-    name: file.name,
-    thumbnail: dataUrl,
-    source: dataUrl,
-  })
+function onLibraryMarkerDragStart(e: DragEvent, marker: { id: string }) {
+  if (!e.dataTransfer) return
+  e.dataTransfer.effectAllowed = 'copy'
+  e.dataTransfer.setData('library-marker-id', marker.id)
 }
 
 async function handleMarkDrop(e: DragEvent) {
@@ -79,28 +113,33 @@ async function handleContainerFiles(files: FileList | null) {
   if (!files?.length)
     return
 
-  const file = files[0]
-  if (!file.type.startsWith('image/'))
-    return
+  // 支持多选：依次处理每个文件
+  for (const file of Array.from(files)) {
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        resolve((ev.target?.result as string) || '')
+      }
+      reader.onerror = (err) => reject(err)
+      reader.readAsDataURL(file)
+    })
 
-  const base64 = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      resolve((ev.target?.result as string) || '')
-    }
-    reader.onerror = (err) => reject(err)
-    reader.readAsDataURL(file)
-  })
+    // 经过后端处理，得到最终用于 container 的 base64（与画布上传一致）
+    const processed = await sendUploadContainerToServer(base64)
+    const finalBase64 = processed || base64
 
-  // 经过后端处理，得到最终用于 container 的 base64（与画布上传一致）
-  const processed = await sendUploadContainerToServer(base64)
-  const finalBase64 = processed || base64
+    containerStore.addContainer({
+      name: file.name,
+      thumbnail: finalBase64,
+      source: finalBase64,
+    })
+  }
+}
 
-  containerStore.addContainer({
-    name: file.name,
-    thumbnail: finalBase64,
-    source: finalBase64,
-  })
+function onLibraryContainerDragStart(e: DragEvent, item: { id: string }) {
+  if (!e.dataTransfer) return
+  e.dataTransfer.effectAllowed = 'copy'
+  e.dataTransfer.setData('library-container-id', item.id)
 }
 
 async function handleContainerDrop(e: DragEvent) {
@@ -168,6 +207,8 @@ async function handleContainerFileSelect(e: Event) {
               :key="marker.id"
               type="button"
               class="group flex flex-col items-center justify-between rounded-xl bg-[var(--primary-light-color)] border border-[var(--border-color)] px-2 pt-2 pb-1 cursor-pointer hover:border-[var(--primary-color)] transition-colors w-[110px]"
+              draggable="true"
+              @dragstart.stop="onLibraryMarkerDragStart($event, marker)"
             >
               <div class="w-full aspect-square rounded-lg bg-[var(--primary-light-color)] flex items-center justify-center overflow-hidden">
                 <img
@@ -202,7 +243,8 @@ async function handleContainerFileSelect(e: Event) {
                 ref="markFileInput"
                 type="file"
                 class="hidden"
-                accept="image/*"
+                accept=".png,.jpg,.jpeg,.svg,image/png,image/jpeg,image/svg+xml"
+                multiple
                 @change="handleMarkFileSelect"
               />
             </button>
@@ -236,6 +278,8 @@ async function handleContainerFileSelect(e: Event) {
               :key="item.id"
               type="button"
               class="group flex flex-col items-center justify-between rounded-xl bg-[var(--primary-light-color)] border border-[var(--border-color)] px-2 pt-2 pb-1 cursor-pointer hover:border-[var(--primary-color)] transition-colors w-[110px]"
+              draggable="true"
+              @dragstart.stop="onLibraryContainerDragStart($event, item)"
             >
               <div class="w-full aspect-square rounded-lg bg-[var(--primary-light-color)] flex items-center justify-center overflow-hidden">
                 <img
@@ -270,7 +314,8 @@ async function handleContainerFileSelect(e: Event) {
                 ref="containerFileInput"
                 type="file"
                 class="hidden"
-                accept="image/*"
+                accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                multiple
                 @change="handleContainerFileSelect"
               />
             </button>

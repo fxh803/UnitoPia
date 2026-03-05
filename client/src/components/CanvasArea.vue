@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Canvas, PencilBrush } from 'fabric'
+import { Canvas, PencilBrush, FabricImage } from 'fabric'
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useObjectActionsStore } from '~/stores/objectActions'
@@ -14,7 +14,6 @@ import { useForceDrawingStore } from '~/stores/forceDrawing'
 import { useAnimationStore } from '~/stores/animation'
 import { useBackgroundStore } from '~/stores/background'
 import { sendPointToSegmentPoint } from '~/composables/server'
-import { FabricImage } from 'fabric'
 const animationStore = useAnimationStore()
 const { collaging, result_data } = storeToRefs(animationStore)
 
@@ -88,6 +87,8 @@ const canvasSize = ref(400)
 let canvas: Canvas | null = null
 
 const backgroundStore = useBackgroundStore()
+import { useContainerStore } from '~/stores/container'
+const containerStore = useContainerStore()
 
 // 检查是否有背景
 const hasBackground = computed(() => {
@@ -112,6 +113,64 @@ function resizeCanvasForDPR() {
   canvas.setHeight(size)
   // canvas.setZoom(dpr)
   canvas.renderAll()
+}
+
+function handleLibraryContainerDrop(e: DragEvent) {
+  if (!canvas) return
+  const id = e.dataTransfer?.getData('library-container-id')
+  if (!id) return
+
+  const item = containerStore.containers.find(c => c.id === id)
+  if (!item || !item.source) return
+
+  // 计算鼠标在实际 canvas 内部的坐标（考虑 canvas 居中和缩放）
+  let centerX = canvas.getWidth() / 2
+  let centerY = canvas.getHeight() / 2
+  if (canvasEl.value) {
+    const rect = canvasEl.value.getBoundingClientRect()
+    if (rect.width > 0 && rect.height > 0) {
+      const relX = (e.clientX - rect.left) / rect.width
+      const relY = (e.clientY - rect.top) / rect.height
+      centerX = relX * canvas.getWidth()
+      centerY = relY * canvas.getHeight()
+    }
+  }
+
+  FabricImage.fromURL(item.source)
+    .then(fabricImg => {
+      if (!canvas) return
+
+      fabricImg.set({
+        left: centerX,
+        top: centerY,
+        originX: 'center',
+        originY: 'center',
+        selectable: false,
+        evented: false,
+        dataType: 'container',
+      })
+
+      const canvasWidth = canvas.getWidth() || 400
+      const canvasHeight = canvas.getHeight() || 400
+      const maxWidth = canvasWidth * 0.8
+      const maxHeight = canvasHeight * 0.8
+
+      const scaleX = maxWidth / fabricImg.width!
+      const scaleY = maxHeight / fabricImg.height!
+      const scale = Math.min(scaleX, scaleY, 1)
+
+      fabricImg.set({
+        scaleX: scale,
+        scaleY: scale,
+      })
+
+      canvas.add(fabricImg)
+      adjustLayer()
+      canvas.renderAll()
+    })
+    .catch(error => {
+      console.error('从库中加载 Container 失败:', error)
+    })
 }
 
 function updateCanvasSize() {
@@ -399,7 +458,8 @@ onBeforeUnmount(() => {
       ref="canvasAreaRef"
       data-tutorial="canvas-editor"
       class="p-2 pl-7 border-r border-[var(--border-color)] bg-[var(--primary-light-color)] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
-      @dragover="handleDragOver" @drop="(e) => handleDrop(e, canvasEl)">
+      @dragover="handleDragOver"
+      @drop="(e) => { handleLibraryContainerDrop(e); handleDrop(e, canvasEl) }">
       <!-- 工具栏容器：垂直居中，包含所有工具栏 -->
       <div class="absolute left-0 z-10 flex flex-col items-start gap-2" style="top: 50%; transform: translateY(-50%);">
         <!-- 一级工具栏：模式选择 -->

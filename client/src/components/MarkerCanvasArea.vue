@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Canvas, PencilBrush } from 'fabric'
+import { Canvas, PencilBrush, FabricImage } from 'fabric'
 import * as fabric from 'fabric'
 import { ref, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -10,6 +10,7 @@ import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useMarkerCanvasStore } from '~/stores/markerCanvas'
 import { useMarkInstanceStore } from '~/stores/markInstance'
+import { useMarkerStore } from '~/stores/marker'
 
 const colorPickerStore = useColorPickerStore()
 const { isColorPickerOpen } = storeToRefs(colorPickerStore)
@@ -29,6 +30,9 @@ const { askToClosePath, handleClosePathConfirm, addMarkerCanvasEventListeners, r
 // Mark 实例 store：用于根据当前选中实例加载 / 恢复画布
 const markInstanceStore = useMarkInstanceStore()
 const { markInstances, selectedMarkForDetail } = storeToRefs(markInstanceStore)
+
+// 库中的 Marker store：支持将 Libraries 里的 svg / 图片拖到当前画布
+const markerStore = useMarkerStore()
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasContainerRef = ref<HTMLDivElement | null>(null)
@@ -201,6 +205,106 @@ onMounted(async () => {
   }, 200)
 })
 
+function handleLibraryMarkerDrop(e: DragEvent) {
+  e.preventDefault()
+  if (!canvas) return
+  const id = e.dataTransfer?.getData('library-marker-id')
+  if (!id) return
+
+  const marker = markerStore.markers.find(m => m.id === id)
+  if (!marker || !marker.source) return
+
+  // 这里是从 Library 拖拽过来的图形，不需要触发路径闭合确认
+  setSuppressClosePath(true)
+
+  // 以鼠标释放位置作为放置中心
+  let dropX: number | null = null
+  let dropY: number | null = null
+  if (canvasContainerRef.value) {
+    const rect = canvasContainerRef.value.getBoundingClientRect()
+    dropX = e.clientX - rect.left
+    dropY = e.clientY - rect.top
+  }
+
+  const source = marker.source.trim()
+
+  // 如果是 SVG 源码字符串，使用 SVG 方式加载（与 MarkerToolbar 保持一致）
+  if (source.startsWith('<')) {
+    ;(async () => {
+      try {
+        const loadedSVG = await fabric.loadSVGFromString(source)
+        const svgObject = fabric.util.groupSVGElements(loadedSVG.objects)
+
+        svgObject.set({
+          left: dropX ?? canvas!.getWidth() / 2,
+          top: dropY ?? canvas!.getHeight() / 2,
+          originX: 'center',
+          originY: 'center',
+          selectable: false,
+          evented: false,
+        })
+
+        const canvasW = canvas!.getWidth()
+        const canvasH = canvas!.getHeight()
+        const maxWidth = canvasW * 0.3
+        const maxHeight = canvasH * 0.3
+        const scaleX = maxWidth / svgObject.width!
+        const scaleY = maxHeight / svgObject.height!
+        const scale = Math.min(scaleX, scaleY, 1)
+
+        svgObject.set({
+          scaleX: scale,
+          scaleY: scale,
+        })
+
+        canvas!.add(svgObject)
+        canvas!.renderAll()
+      } catch (error) {
+        console.error('从库中加载 SVG 标记失败:', error)
+      } finally {
+        setSuppressClosePath(false)
+      }
+    })()
+  } else {
+    // 否则按普通图片 dataURL 方式加载（使用 FabricImage Promise API）
+    FabricImage.fromURL(source)
+      .then(img => {
+        if (!canvas) return
+
+        img.set({
+          left: dropX ?? canvas.getWidth() / 2,
+          top: dropY ?? canvas.getHeight() / 2,
+          originX: 'center',
+          originY: 'center',
+          selectable: false,
+          evented: false,
+        })
+
+        const canvasW = canvas.getWidth() || 400
+        const canvasH = canvas.getHeight() || 400
+        const maxWidth = canvasW * 0.3
+        const maxHeight = canvasH * 0.3
+        const scaleX = maxWidth / img.width!
+        const scaleY = maxHeight / img.height!
+        const scale = Math.min(scaleX, scaleY, 1)
+
+        img.set({
+          scaleX: scale,
+          scaleY: scale,
+        })
+
+        canvas.add(img)
+        canvas.renderAll()
+      })
+      .catch(error => {
+        console.error('从库中加载图片标记失败:', error)
+      })
+      .finally(() => {
+        setSuppressClosePath(false)
+      })
+  }
+}
+
 
 onBeforeUnmount(() => {
   // 移除键盘事件监听
@@ -220,7 +324,12 @@ onBeforeUnmount(() => {
 
 <template>
   <!-- 画布区域 -->
-  <div ref="canvasContainerRef" class="flex justify-center items-center bg-gray-100 min-h-0 w-full h-full relative overflow-hidden">
+  <div
+    ref="canvasContainerRef"
+    class="flex justify-center items-center bg-gray-100 min-h-0 w-full h-full relative overflow-hidden"
+    @dragover.prevent
+    @drop.stop.prevent="handleLibraryMarkerDrop"
+  >
     <canvas ref="canvasEl" class="w-full h-full border-r border-gray-200" />
 
     <!-- 实时预览图 - 左上角 -->
