@@ -10,7 +10,7 @@ const tableStore = useTableStore()
 const { tableData } = storeToRefs(tableStore)
 
 const markInstanceStore = useMarkInstanceStore()
-const { markInstances } = storeToRefs(markInstanceStore)
+const { markInstances, selectedMarkForDetail } = storeToRefs(markInstanceStore)
 
 function openMarkDetail(markId: string) {
   markInstanceStore.setSelectedMarkForDetail({ type: 'singleInstance', markId })
@@ -73,6 +73,81 @@ function handleGroupValueChange(parentId: string, childId: string, value: string
     children: newChildren,
     entityIndices: null,
     entities: 0,
+  })
+}
+
+function handleRemoveGroupChild(parentId: string, childId: string) {
+  const parent = markInstances.value.find(m => m.id === parentId)
+  if (!parent || !parent.isGroup) return
+
+  const nextChildren = (parent.children || []).filter(child => child.id !== childId)
+
+  // 如果当前详情面板正打开这个子实例，也一并清空
+  const sel = selectedMarkForDetail.value
+  if (sel && sel.type === 'childInstance' && sel.parentMarkId === parentId && sel.childId === childId) {
+    markInstanceStore.clearSelectedMarkForDetail()
+  }
+
+  markInstanceStore.updateMarkInstance(parentId, {
+    children: nextChildren,
+  })
+}
+
+function handleAddGroupChild(parentId: string) {
+  const parent = markInstances.value.find(m => m.id === parentId)
+  if (!parent || !parent.isGroup || !parent.fieldName) return
+
+  const fieldName = parent.fieldName
+
+  // 基于当前 fieldName 构建 value -> 行索引列表的映射
+  const map = new Map<string, number[]>()
+  tableData.value.forEach((row, idx) => {
+    const raw = (row as Record<string, unknown>)[fieldName]
+    if (raw == null) return
+    const str = String(raw).trim()
+    if (!str) return
+    const list = map.get(str) ?? []
+    list.push(idx)
+    map.set(str, list)
+  })
+
+  const groupValues = Array.from(map.keys())
+  const nextChildren = parent.children ? [...parent.children] : []
+
+  // 找一个当前 children 还未使用的分组值，作为新 child 的默认值
+  const usedValues = new Set(
+    nextChildren
+      .map(c => (c.selectedValue != null ? String(c.selectedValue) : null))
+      .filter((v): v is string => v !== null),
+  )
+
+  let chosenValue: string | null = null
+  for (const v of groupValues) {
+    if (!usedValues.has(v)) {
+      chosenValue = v
+      break
+    }
+  }
+  if (!chosenValue && groupValues.length > 0) {
+    chosenValue = groupValues[0]
+  }
+
+  const indices = chosenValue ? map.get(chosenValue) ?? [] : []
+  const entities = indices.length
+
+  const index = nextChildren.length
+  const newChild = {
+    id: `child-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: `Mark ${index + 1}`,
+    selectedValue: chosenValue,
+    entities,
+    entityIndices: indices,
+  }
+
+  nextChildren.push(newChild)
+
+  markInstanceStore.updateMarkInstance(parentId, {
+    children: nextChildren,
   })
 }
 
@@ -497,7 +572,26 @@ function handleDragLeave(e: DragEvent) {
                     </span>
                   </div>
                 </div>
+
+                <!-- 删除子实例按钮：圆形叉号 -->
+                <button
+                  type="button"
+                  class="ml-1 flex items-center justify-center w-5 h-5 rounded-full border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--title-color)] hover:bg-[var(--border-color)]/10 cursor-pointer transition-colors"
+                  @click.stop="handleRemoveGroupChild(mark.id, child.id)"
+                >
+                  <span class="i-carbon-close text-xs leading-none" />
+                </button>
               </div>
+
+              <!-- 添加子实例按钮：卡片风格，暗背景 + 虚线边框，中间加号 -->
+              <button
+                type="button"
+                class="mt-1 w-full flex items-center justify-center rounded-xl border-2 border-dashed border-[var(--border-color)] bg-[var(--border-color)]/10 px-3 py-2 text-[12px] text-[var(--text-muted)] hover:bg-[var(--border-color)]/20 hover:text-[var(--title-color)] cursor-pointer transition-colors"
+                @click.stop="handleAddGroupChild(mark.id)"
+              >
+                <span class="i-carbon-add text-base mr-1" />
+                <span></span>
+              </button>
             </div>
           </div>
         </div>

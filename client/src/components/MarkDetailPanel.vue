@@ -192,7 +192,7 @@ function close() {
           <div class="flex items-center gap-2">
             <span class="text-sm font-bold text-[var(--title-color)] shrink-0 w-16">{{ channel }}</span>
             <div
-              class="ml-auto shrink-0 w-[220px] rounded-full border-2 border-dashed border-[var(--border-color)] bg-white py-1.5 px-3 flex items-center justify-between min-h-[36px] gap-2"
+              class="ml-auto shrink-0 w-[220px] rounded-full border-2 border-dashed border-[var(--border-color)] bg-white py-1.5 px-3 flex items-center justify-center min-h-[36px] gap-2"
               @dragover="handleEncodingDragOver"
               @drop="handleEncodingDrop($event, channel as 'Color' | 'Size' | 'Width' | 'Height')"
             >

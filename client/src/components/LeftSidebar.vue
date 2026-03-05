@@ -7,12 +7,12 @@
     class="h-full w-full flex flex-col overflow-y-auto overflow-x-hidden border-[var(--border-color)] bg-[var(--primary-muted-color)]"
   >
     <!-- Data 卡片 -->
-    <div class=" bg-[var(--primary-light-color)] shadow-sm overflow-hidden min-h-0">
+    <div class=" bg-[var(--primary-light-color)] shadow-sm overflow-hidden min-h-0 flex-shrink-0">
       <DataSection class="flex-shrink-0" />
     </div>
 
     <!-- Marks 卡片 -->
-    <div class="mt-2 bg-[var(--primary-light-color)] shadow-sm overflow-hidden min-h-0">
+    <div class="mt-2 bg-[var(--primary-light-color)] shadow-sm overflow-hidden min-h-0 flex-shrink-0">
       <MarksSection class="flex-shrink-0" />
     </div>
 
