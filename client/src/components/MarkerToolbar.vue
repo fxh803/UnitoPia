@@ -464,8 +464,8 @@ const saveMarkers = async () => {
       title="Clear Canvas / Renew"
       @click="clearCanvas"
     >
-      <!-- <span class="i-carbon-trash-can" /> -->
-      <div class="i-carbon:add-alt"></div>
+      <span class="i-carbon-trash-can" />
+      <!-- <div class="i-carbon:add-alt"></div> -->
     </button>
 
     <!-- 隐藏的文件输入框 -->

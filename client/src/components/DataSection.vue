@@ -115,12 +115,17 @@ function clearData() {
 <template>
   <div
     class="border-b border-[var(--border-color)] flex flex-col min-h-0 bg-[var(--primary-light-color)]"
-    :class="tableData.length > 0 && isExpanded && activeTab === 'table' ? 'h-[500px]' : ''"
+    :class="
+      tableData.length > 0 && isExpanded
+        ? activeTab === 'table'
+          ? 'h-[500px]'
+          : 'max-h-[500px]'
+        : ''
+    "
   >
-    <!-- 无数据时：左侧折叠按钮 + 「Data」标题（只有箭头可点击） -->
+    <!-- 统一的顶部区域：左侧折叠按钮 + 右侧内容（无数据时是 Data，有数据时是 Tabs + 删除） -->
     <div
-      v-if="tableData.length === 0"
-      class="flex items-center w-full px-3 py-2 bg-[var(--primary-light-color)] hover:bg-[var(--border-color)]/10 transition-colors text-left gap-2"
+      class="flex items-center w-full px-3 py-2 bg-[var(--primary-light-color)] hover:bg-[var(--border-color)]/10 transition-colors text-left gap-2 border-b-0 flex-shrink-0"
     >
       <button
         type="button"
@@ -132,51 +137,42 @@ function clearData() {
           :class="isExpanded ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'"
         />
       </button>
-      <span class="text-[14px] font-bold text-[var(--title-color)]">Data</span>
-    </div>
 
-    <!-- 有数据时：左侧折叠 + Fields/Table tab（无 Data 标题） -->
-    <div
-      v-else
-      class="flex items-center px-3 py-2 bg-[var(--primary-light-color)] border-b-0 flex-shrink-0 gap-2"
-    >
-      <button
-        type="button"
-        class="p-0.5 rounded hover:bg-[var(--border-color)]/20 transition-colors text-[var(--text-muted)] cursor-pointer"
-        @click="isExpanded = !isExpanded"
-      >
-        <div
-          class="w-4 h-4 transition-transform duration-200"
-          :class="isExpanded ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'"
-        />
-      </button>
-      <div class="flex items-center gap-4">
+      <!-- 无数据：显示 Data 文本 -->
+      <template v-if="tableData.length === 0">
+        <span class="text-[14px] font-bold text-[var(--title-color)]">Data</span>
+      </template>
+
+      <!-- 有数据：显示 Tabs + 清空按钮 -->
+      <template v-else>
+        <div class="flex items-center gap-4">
+          <button
+            type="button"
+            class="px-0 py-0 text-[14px] transition-colors cursor-pointer"
+            :class="activeTab === 'fields' ? 'font-bold text-[var(--title-color)]' : 'font-normal text-[var(--text-muted)] hover:text-[var(--title-color)]'"
+            @click="activeTab = 'fields'"
+          >
+            Fields
+          </button>
+          <button
+            type="button"
+            class="px-0 py-0 text-[14px] transition-colors cursor-pointer"
+            :class="activeTab === 'table' ? 'font-bold text-[var(--title-color)]' : 'font-normal text-[var(--text-muted)] hover:text-[var(--title-color)]'"
+            @click="activeTab = 'table'"
+          >
+            Table
+          </button>
+        </div>
+        <div class="flex-1 min-w-0" />
         <button
           type="button"
-          class="px-0 py-0 text-[14px] transition-colors cursor-pointer"
-          :class="activeTab === 'fields' ? 'font-bold text-[var(--title-color)]' : 'font-normal text-[var(--text-muted)] hover:text-[var(--title-color)]'"
-          @click="activeTab = 'fields'"
+          class="rounded cursor-pointer text-black hover:text-[var(--text-muted)]"
+          title="clear data"
+          @click="clearData"
         >
-          Fields
+          <span class="i-carbon-close text-lg w-5 h-5 block" />
         </button>
-        <button
-          type="button"
-          class="px-0 py-0 text-[14px] transition-colors cursor-pointer"
-          :class="activeTab === 'table' ? 'font-bold text-[var(--title-color)]' : 'font-normal text-[var(--text-muted)] hover:text-[var(--title-color)]'"
-          @click="activeTab = 'table'"
-        >
-          Table
-        </button>
-      </div>
-      <div class="flex-1 min-w-0" />
-      <button
-        type="button"
-        class="p-1 rounded cursor-pointer text-black hover:text-[var(--text-muted)]"
-        title="clear data"
-        @click="clearData"
-      >
-        <span class="i-carbon-close text-lg w-5 h-5 block" />
-      </button>
+      </template>
     </div>
 
     <div v-show="isExpanded" class="flex-1 min-h-0 overflow-hidden flex flex-col">

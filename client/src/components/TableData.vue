@@ -1,37 +1,60 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
+import { useMarkInstanceStore } from '~/stores/markInstance'
 
 const tableStore = useTableStore()
-const cellClasses = ref<Record<number, Record<number, string>>>({})
 
-// 获取 filter 的颜色索引（每个 card 独立从 0 开始）
-const getFilterColorIndex = (filterIndex: number): number => {
-  return filterIndex % 8
-}
+// 根据当前所有 mark 实例（single + child）计算每一行应该使用的高亮类名
+const markInstanceStore = useMarkInstanceStore()
+const { markInstances } = storeToRefs(markInstanceStore)
 
-// 单元格类名处理
-const cellClassName = ({ rowIndex, column, columnIndex }: any) => {
-  // // 遍历所有卡片和它们的 filter，检查当前行索引是否在某个 filter 的 rows 中
-  // for (const card of columnFilterCards.value) {
-  //   for (let filterIndex = 0; filterIndex < card.filters.length; filterIndex++) {
-  //     const filter = card.filters[filterIndex]
-  //     if (filter.rows && filter.rows.includes(rowIndex)) {
-  //       // 每个 card 内的 filter 索引独立，从 0 开始
-  //       const colorIndex = getFilterColorIndex(filterIndex)
-  //       const className = `highlight-cell-${colorIndex}`
-  //       // 确保 rowIndex 存在，如果不存在则创建
-  //       if (!cellClasses.value[rowIndex]) {
-  //         cellClasses.value[rowIndex] = {}
-  //       }
-  //       cellClasses.value[rowIndex][columnIndex] = className
-  //       return className
-  //     }
-  //   }
-  // }
+const rowHighlightClass = computed<Record<number, string>>(() => {
+  const map: Record<number, string> = {}
 
-  return ''
+  let colorCounter = 0
+
+  for (const mark of markInstances.value) {
+    // 单实例：直接使用自身的 entityIndices
+    if (!mark.isGroup) {
+      const indices = mark.entityIndices || []
+      if (!indices.length) continue
+      const cls = `highlight-row-${colorCounter % 8}`
+      colorCounter++
+
+      for (const idx of indices) {
+        if (map[idx] === undefined) {
+          map[idx] = cls
+        }
+      }
+      continue
+    }
+
+    // group：为每个子实例单独分配颜色
+    if (mark.children && mark.children.length > 0) {
+      for (const child of mark.children) {
+        const indices = child.entityIndices || []
+        if (!indices.length) continue
+
+        const cls = `highlight-row-${colorCounter % 8}`
+        colorCounter++
+
+        for (const idx of indices) {
+          if (map[idx] === undefined) {
+            map[idx] = cls
+          }
+        }
+      }
+    }
+  }
+
+  return map
+})
+
+// 行类名处理：按行索引查找是否需要高亮（整行高亮，性能更好）
+const rowClassName = ({ rowIndex }: { rowIndex: number }) => {
+  return rowHighlightClass.value[rowIndex] || ''
 }
 </script>
 
@@ -51,7 +74,7 @@ const cellClassName = ({ rowIndex, column, columnIndex }: any) => {
           show-overflow
           size="small"
           border
-          :cell-class-name="cellClassName"
+          :row-class-name="rowClassName"
           :auto-resize="true"
           :column-config="{ resizable: true }"
         >
@@ -65,43 +88,43 @@ const cellClassName = ({ rowIndex, column, columnIndex }: any) => {
 </template>
 
 <style>
-/* 为不同的 filter 定义不同的背景颜色 */
-.highlight-cell-0 {
+/* 为不同的 mark 实例定义不同的整行背景颜色 */
+.highlight-row-0 .vxe-cell {
   background-color: rgba(166, 206, 227, 0.5);
   font-weight: bold;
 }
 
-.highlight-cell-1 {
+.highlight-row-1 .vxe-cell {
   background-color: rgba(178, 223, 138, 0.5);
   font-weight: bold;
 }
 
-.highlight-cell-2 {
+.highlight-row-2 .vxe-cell {
   background-color: rgba(251, 154, 153, 0.5);
   font-weight: bold;
 }
 
-.highlight-cell-3 {
+.highlight-row-3 .vxe-cell {
   background-color: rgba(253, 191, 111, 0.5);
   font-weight: bold;
 }
 
-.highlight-cell-4 {
+.highlight-row-4 .vxe-cell {
   background-color: rgba(202, 178, 214, 0.5);
   font-weight: bold;
 }
 
-.highlight-cell-5 {
+.highlight-row-5 .vxe-cell {
   background-color: rgba(255, 255, 153, 0.5);
   font-weight: bold;
 }
 
-.highlight-cell-6 {
+.highlight-row-6 .vxe-cell {
   background-color: rgba(141, 211, 199, 0.5);
   font-weight: bold;
 }
 
-.highlight-cell-7 {
+.highlight-row-7 .vxe-cell {
   background-color: rgba(252, 205, 229, 0.5);
   font-weight: bold;
 }
