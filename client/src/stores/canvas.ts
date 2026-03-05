@@ -69,6 +69,10 @@ export const useCanvasStore = defineStore('canvas', () => {
     const allObjects = canvasInstance.getObjects()
     allObjects.forEach((obj: any) => {
       if (obj.get('dataType') === 'marker') {
+        // 首次高亮时记住原始不透明度，后面恢复时用
+        if (obj._origOpacity == null) {
+          obj._origOpacity = obj.opacity ?? 1
+        }
         if (selectedMarker && obj === selectedMarker) {
           obj.set('opacity', 1)
         } else {
@@ -87,7 +91,12 @@ export const useCanvasStore = defineStore('canvas', () => {
     const allObjects = canvasInstance.getObjects()
     allObjects.forEach((obj: any) => {
       if (obj.get('dataType') === 'marker') {
-        obj.set('opacity', 1)
+        const orig = obj._origOpacity
+        if (orig != null) {
+          obj.set('opacity', orig)
+          obj._origOpacity = undefined
+        }
+        // 如果没有记录过 _origOpacity，就保持当前 opacity，不去强制改成 1
       }
     })
     canvasInstance.renderAll()

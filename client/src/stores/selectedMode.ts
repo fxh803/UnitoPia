@@ -23,15 +23,22 @@ export const useSelectedModeStore = defineStore('selectedMode', () => {
             const objType = obj.get('dataType')
             
             if (newMode === null) {
+                if (objType === 'marker') {
+                    // obj.set('opacity', 0.5)
+                }
+                else {
                     obj.set('opacity', 1)
-            } else if (objType === newMode) {
-                // 当前模式的对象保持完全不透明
+                }
+            } else if (objType === newMode) {// 当前对象属于当前模式
                 obj.set('opacity', 1)
-            } else if (objType && objType !== newMode) {
-                // 其他模式的对象变成半透明
+            } else if (objType && objType !== newMode) {//当前对象不属于当前模式
                 if (objType === 'background') {
                     obj.set('opacity', 1)
-                } else {
+                }
+                else if (objType === 'marker') {
+                    // obj.set('opacity', 0.5)
+                }
+                 else {
                     obj.set('opacity', 0.5)
                 }
             }

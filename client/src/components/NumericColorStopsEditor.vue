@@ -7,9 +7,27 @@ interface ColorStop {
   opacity: number // 0 ~ 1
 }
 
-const props = defineProps<{
-  stops: ColorStop[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    stops: ColorStop[]
+    /** 对应数据映射的最小值（用于展示/编辑），默认 0 */
+    min?: number
+    /** 对应数据映射的最大值（用于展示/编辑），默认 3 */
+    max?: number
+    /** 显示和编辑的小数位数，默认 1 位 */
+    decimals?: number
+  }>(),
+  {
+    min: 0,
+    max: 3,
+    decimals: 1,
+  }
+)
+
+const positionStep = computed(() => {
+  const d = Math.max(0, Math.min(6, props.decimals))
+  return Number((1 / Math.pow(10, d)).toFixed(d))
+})
 
 const emit = defineEmits<{
   (e: 'update:stops', value: ColorStop[]): void
@@ -24,13 +42,25 @@ const innerStops = computed<ColorStop[]>({
   },
 })
 
-// 渐变背景
+// 16 进制颜色转 rgba 字符串，用于带透明度的预览
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = hex.replace('#', '')
+  if (normalized.length !== 6) return hex
+  const r = parseInt(normalized.slice(0, 2), 16)
+  const g = parseInt(normalized.slice(2, 4), 16)
+  const b = parseInt(normalized.slice(4, 6), 16)
+  const a = Math.min(1, Math.max(0, alpha))
+  return `rgba(${r}, ${g}, ${b}, ${a})`
+}
+
+// 渐变背景（同时考虑透明度）
 const gradientBackground = computed(() => {
   const stops = innerStops.value
   if (!stops.length) return 'linear-gradient(to right, #ffffff, #000000)'
   const parts = stops.map(stop => {
     const pct = stop.position * 100
-    return `${stop.color} ${pct}%`
+    const rgba = hexToRgba(stop.color, stop.opacity ?? 1)
+    return `${rgba} ${pct}%`
   })
   return `linear-gradient(to right, ${parts.join(', ')})`
 })
@@ -63,10 +93,14 @@ function removeStop(index: number) {
   innerStops.value = stops.filter((_, i) => i !== index)
 }
 
-function updateStopPositionFromInput(index: number, percent: number) {
+function updateStopPositionFromInput(index: number, rawValue: number) {
   const stops = [...innerStops.value]
   if (!stops[index]) return
-  const pos = Math.min(1, Math.max(0, percent / 100))
+  const min = props.min
+  const max = props.max
+  const span = max - min || 1
+  const t = (rawValue - min) / span
+  const pos = Math.min(1, Math.max(0, t))
   stops[index] = {
     ...stops[index],
     position: pos,
@@ -153,7 +187,7 @@ onBeforeUnmount(() => {
           <span class="gradient-handle-square">
             <span
               class="gradient-handle-square-inner"
-              :style="{ backgroundColor: stop.color }"
+              :style="{ backgroundColor: stop.color, opacity: stop.opacity }"
             />
           </span>
           <span class="gradient-handle-caret" />
@@ -180,9 +214,9 @@ onBeforeUnmount(() => {
           <input
             type="number"
             class="stops-position-input"
-            :value="Number((stop.position * 3).toFixed(1))"
-            step="0.1"
-            @change="updateStopPositionFromInput(index, (Number(($event.target as HTMLInputElement).value) / 3) * 100)"
+            :value="Number((props.min + (props.max - props.min) * stop.position).toFixed(props.decimals))"
+            :step="positionStep"
+            @change="updateStopPositionFromInput(index, Number(($event.target as HTMLInputElement).value))"
           />
         </div>
         <div class="stops-cell stops-center">
@@ -211,7 +245,7 @@ onBeforeUnmount(() => {
                 :value="Math.round(stop.opacity * 100)"
                 min="0"
                 max="100"
-                @change="updateStopOpacity(index, Number(($event.target as HTMLInputElement).value))"
+                @input="updateStopOpacity(index, Number(($event.target as HTMLInputElement).value))"
               />
               <span class="stops-opacity-unit">%</span>
             </div>
@@ -440,7 +474,7 @@ onBeforeUnmount(() => {
 .stops-opacity-input {
   width: 50px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: 2px;
   border: none;
   background-color: transparent;
   font-size: 12px;
@@ -452,7 +486,6 @@ onBeforeUnmount(() => {
 .stops-opacity-unit {
   font-size: 11px;
   color: #8f837c;
-  transform: translateX(-10px);
 }
 
 .stops-remove-btn {

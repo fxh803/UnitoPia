@@ -83,6 +83,42 @@ const currentColorFieldName = computed(() => {
 // 当前 Color 通道是否绑定了数值型字段
 const isColorNumeric = computed(() => isNumericField(currentColorFieldName.value))
 
+// 数值型颜色映射对应字段的数据范围和精度（用于 NumericColorStopsEditor 的展示/编辑）
+const colorNumericDomain = computed(() => {
+  const field = currentColorFieldName.value
+  if (!field || !isColorNumeric.value) {
+    return { min: 0, max: 3, decimals: 1 }
+  }
+
+  const data = tableData.value || []
+  const values: number[] = []
+  let maxDecimals = 0
+  data.forEach(row => {
+    if (!row) return
+    const raw = (row as any)[field]
+    if (raw == null || raw === '') return
+    const str = String(raw)
+    const v = Number(str)
+    if (!Number.isNaN(v)) {
+      values.push(v)
+      const dot = str.indexOf('.')
+      if (dot >= 0) {
+        const decLen = str.length - dot - 1
+        if (decLen > maxDecimals) maxDecimals = decLen
+      }
+    }
+  })
+
+  if (!values.length) {
+    return { min: 0, max: 3, decimals: 1 }
+  }
+
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const decimals = Math.min(Math.max(maxDecimals, 0), 6) || 1
+  return { min, max, decimals }
+})
+
 // 数值型颜色映射的颜色停靠点（如果没有显式配置，则使用固定默认色带）
 const colorStops = computed<ColorStop[]>({
   get() {
@@ -282,6 +318,9 @@ function close() {
             <div v-if="isColorNumeric" class="pl-1 pr-1 pb-1">
               <NumericColorStopsEditor
                 :stops="colorStops"
+                :min="colorNumericDomain.min"
+                :max="colorNumericDomain.max"
+                :decimals="colorNumericDomain.decimals"
                 @update:stops="colorStops = $event"
               />
             </div>
