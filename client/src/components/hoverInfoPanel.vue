@@ -2,8 +2,6 @@
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
-// import { useDataScaleStore } from '~/stores/dataScale'
-
 const hoverInfoPanelStore = useHoverInfoPanelStore()
 const { showPanel, markerData } = storeToRefs(hoverInfoPanelStore)
 

@@ -3,10 +3,6 @@ import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMarkInstanceStore, type ColorStop } from '~/stores/markInstance'
 import { useTableStore } from '~/stores/table'
-import MarkerCanvasArea from './MarkerCanvasArea.vue'
-import MarkerToolbar from './MarkerToolbar.vue'
-import NumericColorStopsEditor from './NumericColorStopsEditor.vue'
-import CategoricalColorEditor from './CategoricalColorEditor.vue'
 
 const markInstanceStore = useMarkInstanceStore()
 const { markInstances, selectedMarkForDetail } = storeToRefs(markInstanceStore)
@@ -14,32 +10,15 @@ const { markInstances, selectedMarkForDetail } = storeToRefs(markInstanceStore)
 const tableStore = useTableStore()
 const { tableData } = storeToRefs(tableStore)
 
-const currentMark = computed(() => {
-  const sel = selectedMarkForDetail.value
-  if (!sel) return null
-  if (sel.type === 'singleInstance') {
-    return markInstances.value.find(x => x.id === sel.markId) ?? null
-  }
-  const parent = markInstances.value.find(x => x.id === sel.parentMarkId) ?? null
-  return parent
-})
-
-const currentChild = computed(() => {
-  const sel = selectedMarkForDetail.value
-  if (!sel || sel.type !== 'childInstance') return null
-  const parent = markInstances.value.find(x => x.id === sel.parentMarkId) ?? null
-  if (!parent) return null
-  return parent.children?.find(c => c.id === sel.childId) ?? null
-})
-
 const currentEncoding = computed(() => {
   const sel = selectedMarkForDetail.value
   if (!sel) return null
   if (sel.type === 'childInstance') {
-    const child = currentChild.value as any
+    const parent = markInstances.value.find(x => x.id === sel.parentMarkId)
+    const child = parent?.children?.find(c => c.id === sel.childId) as any
     return child?.encoding ?? null
   }
-  const m = currentMark.value as any
+  const m = markInstances.value.find(x => x.id === sel.markId) as any
   return m?.encoding ?? null
 })
 
@@ -55,33 +34,12 @@ const displayName = computed(() => {
   return child?.name ?? parent?.name ?? 'Mark'
 })
 
-const encodingChannelKey: Record<string, 'color' | 'size' | 'width' | 'height'> = {
-  Color: 'color',
-  Size: 'size',
-  Width: 'width',
-  Height: 'height',
-}
-
-// 判断某个字段在当前数据中是否数值型（逻辑与 DataSection 保持一致）
-function isNumericField(fieldName: string | undefined | null): boolean {
-  if (!fieldName) return false
-  if (!tableData.value.length) return false
-  const sample = tableData.value
-    .slice(0, 50)
-    .map(row => (row as any)[fieldName])
-    .filter(v => v != null && String(v).trim() !== '')
-  if (sample.length === 0) return false
-  const allNumeric = sample.every(v => /^-?\d+(\.\d+)?$/.test(String(v).trim()))
-  return allNumeric
-}
-
 const currentColorFieldName = computed(() => {
   const enc = currentEncoding.value as any
   return enc?.color ?? null
 })
 
-// 当前 Color 通道是否绑定了数值型字段
-const isColorNumeric = computed(() => isNumericField(currentColorFieldName.value))
+const isColorNumeric = computed(() => (currentEncoding.value as any)?.colorMode === 'numeric')
 
 // 数值型颜色映射对应字段的数据范围和精度（用于 NumericColorStopsEditor 的展示/编辑）
 const colorNumericDomain = computed(() => {
@@ -214,7 +172,7 @@ function handleEncodingDragOver(e: DragEvent) {
   }
 }
 
-function handleEncodingDrop(e: DragEvent, channelLabel: 'Color' | 'Size' | 'Width' | 'Height') {
+function handleEncodingDrop(e: DragEvent, channelLabel: string) {
   e.preventDefault()
   const column = e.dataTransfer?.getData('text/plain')
   if (!column) return
@@ -222,15 +180,15 @@ function handleEncodingDrop(e: DragEvent, channelLabel: 'Color' | 'Size' | 'Widt
   const sel = selectedMarkForDetail.value
   if (!sel) return
 
-  const key = encodingChannelKey[channelLabel]
-  // 目前约束：同一 Mark / 子实例 只允许一个 channel 生效
+  const key = channelLabel.toLowerCase()
   const isColorChannel = channelLabel === 'Color'
-  // 对 Color 通道，根据字段数据类型预先写入 colorMode，数值型 -> numeric，其他 -> categorical
+  // Color 通道的 colorMode 由 DataSection 拖拽时设置的 field-type 决定
+  const fieldType = e.dataTransfer?.getData('field-type') as 'numeric' | 'categorical' | ''
   const nextEncoding: any = {
     [key]: column,
   }
-  if (isColorChannel) {
-    nextEncoding.colorMode = isNumericField(column) ? 'numeric' : 'categorical'
+  if (isColorChannel && (fieldType === 'numeric' || fieldType === 'categorical')) {
+    nextEncoding.colorMode = fieldType
   }
 
   const defaultStops: ColorStop[] = [
@@ -295,13 +253,13 @@ function close() {
             <div
               class="ml-auto shrink-0 w-[220px] rounded-full border-2 border-dashed border-[var(--border-color)] bg-white py-1.5 px-3 flex items-center justify-center min-h-[36px] gap-2"
               @dragover="handleEncodingDragOver"
-              @drop="handleEncodingDrop($event, channel as 'Color' | 'Size' | 'Width' | 'Height')"
+              @drop="handleEncodingDrop($event, channel)"
             >
               <span
-                v-if="currentEncoding && currentEncoding[encodingChannelKey[channel]]"
+                v-if="currentEncoding && currentEncoding[channel.toLowerCase()]"
                 class="text-xs font-medium text-[var(--title-color)] truncate"
               >
-                {{ currentEncoding[encodingChannelKey[channel]] }}
+                {{ currentEncoding[channel.toLowerCase()] }}
               </span>
               <span
                 v-else
@@ -313,7 +271,7 @@ function close() {
           </div>
 
           <!-- 颜色通道下方：根据字段类型切换不同取色器 -->
-          <template v-if="channel === 'Color' && currentEncoding && currentEncoding[encodingChannelKey[channel]]">
+          <template v-if="channel === 'Color' && currentEncoding && currentEncoding[channel.toLowerCase()]">
             <!-- 数值型字段：多色阶渐变编辑器（独立组件） -->
             <div v-if="isColorNumeric" class="pl-1 pr-1 pb-1">
               <NumericColorStopsEditor
