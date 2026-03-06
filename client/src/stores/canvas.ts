@@ -457,13 +457,6 @@ export const useCanvasStore = defineStore('canvas', () => {
     return []
   }
 
-  // 判断值是否为数值型
-  const isNumericValue = (value: any): boolean => {
-    if (value === undefined || value === null || value === '') return false
-    const num = Number(value)
-    return !isNaN(num) && String(value).trim() !== ''
-  }
-
   // 十六进制颜色转 RGB
   const hexToRgb = (hex: string): { r: number; g: number; b: number } | null => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
@@ -619,24 +612,18 @@ export const useCanvasStore = defineStore('canvas', () => {
     if (channelKey === 'color' && fieldForEncoding) {
       colors = []
       opacities = []
-      const rawStops = (mark as any).colorStops as ColorStop[] | undefined
-      const stops: ColorStop[] =
-        rawStops && rawStops.length >= 2
-          ? rawStops
-          : [
-              { position: 0, color: '#A7C8FB', opacity: 1 },
-              { position: 1, color: '#5592F9', opacity: 1 },
-            ]
-
-      // 判断该字段是否为数值型（当 colorMode 未显式指定时用于自动推断）
-      const firstRow = rows[0]
-      const firstValue = firstRow && fieldForEncoding in firstRow ? firstRow[fieldForEncoding] : undefined
-      const treatAsNumeric = isNumericValue(firstValue)
-
-      const useNumeric = colorMode === 'numeric' || (!colorMode && treatAsNumeric)
-      const useCategorical = colorMode === 'categorical' || (!colorMode && !treatAsNumeric)
+      const useNumeric = colorMode === 'numeric'
+      const useCategorical = colorMode === 'categorical'
 
       if (useNumeric) {
+        const rawStops = (mark as any).colorStops as ColorStop[] | undefined
+        const stops: ColorStop[] =
+          rawStops && rawStops.length >= 2
+            ? rawStops
+            : [
+                { position: 0, color: '#A7C8FB', opacity: 1 },
+                { position: 1, color: '#5592F9', opacity: 1 },
+              ]
         const numericValues = values.length ? values : [1]
         const minVal = Math.min(...numericValues)
         const maxVal = Math.max(...numericValues)
@@ -650,17 +637,12 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
       } else if (useCategorical) {
         const categoricalColors = (mark as any).categoricalColors as Record<string, string> | undefined
-        const colorMap = getStringValueColorMapForRows(rows, fieldForEncoding, stops)
-        const fallbackColor = stops[0]?.color || '#ffffff'
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i]
           const value = row && fieldForEncoding in row ? row[fieldForEncoding] : undefined
           const valueStr = value != null ? String(value) : ''
-          const mapped =
-            (categoricalColors && categoricalColors[valueStr]) ||
-            colorMap.get(valueStr) ||
-            fallbackColor
-          colors.push(mapped)
+          const mapped = categoricalColors ? categoricalColors[valueStr] : undefined
+          colors.push(mapped || '')
           opacities.push(1)
         }
       }
@@ -851,32 +833,26 @@ export const useCanvasStore = defineStore('canvas', () => {
       }
       const normalized = values.map(v => normalize(v, minValue, maxValue))
 
-      // 如果是颜色编码，预先为该子实例的每个实体计算好颜色（优先使用子实例的色带，否则使用父 mark 的色带）
+      // 如果是颜色编码，预先为该子实例的每个实体计算好颜色
       let colors: string[] | null = null
       let opacities: number[] | null = null
-      const childColorStops =
-        ((child as any).colorStops as ColorStop[] | undefined) ||
-        ((mark as any).colorStops as ColorStop[] | undefined)
       if (channelKey === 'color' && fieldForEncoding) {
         colors = []
         opacities = []
-        const stops: ColorStop[] =
-          childColorStops && childColorStops.length >= 2
-            ? childColorStops
-            : [
-                { position: 0, color: '#A7C8FB', opacity: 1 },
-                { position: 1, color: '#5592F9', opacity: 1 },
-              ]
-
-        // 判断该字段是否为数值型（当 colorMode 未显式指定时用于自动推断）
-        const firstRow = rows[0]
-        const firstValue = firstRow && fieldForEncoding in firstRow ? firstRow[fieldForEncoding] : undefined
-        const treatAsNumeric = isNumericValue(firstValue)
-
-        const useNumeric = colorMode === 'numeric' || (!colorMode && treatAsNumeric)
-        const useCategorical = colorMode === 'categorical' || (!colorMode && !treatAsNumeric)
+        const useNumeric = colorMode === 'numeric'
+        const useCategorical = colorMode === 'categorical'
 
         if (useNumeric) {
+          const childColorStops =
+            ((child as any).colorStops as ColorStop[] | undefined) ||
+            ((mark as any).colorStops as ColorStop[] | undefined)
+          const stops: ColorStop[] =
+            childColorStops && childColorStops.length >= 2
+              ? childColorStops
+              : [
+                  { position: 0, color: '#A7C8FB', opacity: 1 },
+                  { position: 1, color: '#5592F9', opacity: 1 },
+                ]
           const numericValues = values.length ? values : [1]
           const minVal = Math.min(...numericValues)
           const maxVal = Math.max(...numericValues)
@@ -892,8 +868,12 @@ export const useCanvasStore = defineStore('canvas', () => {
           const categoricalColors =
             ((child as any).categoricalColors as Record<string, string> | undefined) ||
             ((mark as any).categoricalColors as Record<string, string> | undefined)
-          const colorMap = getStringValueColorMapForRows(rows, fieldForEncoding, stops)
-          const fallbackColor = stops[0]?.color || '#ffffff'
+          const defaultStops: ColorStop[] = [
+            { position: 0, color: '#A7C8FB', opacity: 1 },
+            { position: 1, color: '#5592F9', opacity: 1 },
+          ]
+          const colorMap = getStringValueColorMapForRows(rows, fieldForEncoding, defaultStops)
+          const fallbackColor = defaultStops[0]?.color || '#ffffff'
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i]
             const value = row && fieldForEncoding in row ? row[fieldForEncoding] : undefined
