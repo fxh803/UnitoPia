@@ -165,6 +165,21 @@ const categoricalColors = computed<Record<string, string> | null>({
   },
 })
 
+function resetEncoding() {
+  const sel = selectedMarkForDetail.value
+  if (!sel) return
+
+  if (sel.type === 'childInstance') {
+    markInstanceStore.updateChildInstance(sel.parentMarkId, sel.childId, {
+      encoding: {} as any,
+    })
+  } else {
+    markInstanceStore.updateMarkInstance(sel.markId, {
+      encoding: {} as any,
+    } as any)
+  }
+}
+
 function handleEncodingDragOver(e: DragEvent) {
   e.preventDefault()
   if (e.dataTransfer) {
@@ -236,10 +251,11 @@ function close() {
         <span class="text-sm font-bold text-[var(--title-color)]">Visual Encoding</span>
         <button
           type="button"
-          class="p-1 rounded hover:bg-[var(--border-color)]/20 text-[var(--text-muted)] hover:text-[var(--title-color)]"
-          title="刷新"
+          class="px-2 py-1.5 rounded-lg hover:bg-[var(--border-color)]/20 text-[var(--text-muted)] hover:text-[var(--title-color)] flex items-center gap-1 text-sm"
+          title="reset"
+          @click="resetEncoding"
         >
-          <span class="i-carbon-renew text-base" />
+          <span class="i-carbon-renew text-lg" />
         </button>
       </div>
       <div class="flex flex-col gap-2">

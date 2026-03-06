@@ -173,7 +173,7 @@ const addMaskToCanvas = (maskData: { mask: string, bbox: { x: number, y: number 
       userSelect: 'none'
     } : {
       position: 'absolute',
-      right: '16px',
+      right: '76px',
       top: '16px',
       userSelect: 'none'
     }"
