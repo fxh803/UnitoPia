@@ -4,9 +4,11 @@ import paper from 'paper'
 import { useBackgroundStore } from '~/stores/background'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useAnimationStore } from '~/stores/animation'
-
+import { usePaperExportStore } from '~/stores/paperExport'
 
 const animationStore = useAnimationStore()
+const paperExportStore = usePaperExportStore()
+
 const paperCanvasRef = ref<HTMLCanvasElement | null>(null)
 const backgroundStore = useBackgroundStore()
 const collageSeriesStore = useCollageSeriesStore()
@@ -54,6 +56,7 @@ onMounted(() => {
             paperCanvasRef.value.height = size.value
             paper.view.viewSize = new paper.Size(size.value, size.value); 
             updateBackground()
+            paperExportStore.setPaperCanvasEl(paperCanvasRef.value)
         }
     });
 });
@@ -63,6 +66,7 @@ watch(() => animationStore.now_overview_idx,
     }
 )
 onUnmounted(() => {
+    paperExportStore.setPaperCanvasEl(null)
     // 销毁paper
     if (paper.view) {
 

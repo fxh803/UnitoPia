@@ -44,6 +44,12 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
     const stopListen = ref(false) // 添加标志
     const canvasRef = ref<(() => Canvas | null) | null>(null)
 
+    /** 右侧 Visualization Gallery 面板是否收起（true=收起） */
+    const isCollageSeriesPanelCollapsed = ref(true)
+    function setCollageSeriesPanelCollapsed(collapsed: boolean) {
+        isCollageSeriesPanelCollapsed.value = collapsed
+    }
+
     // 生成唯一的 slide ID
     function generateSlideId(): string {
         const timestamp = Date.now()
@@ -863,6 +869,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         currentSlideIndex,
         stopListen,
         canvasRef,
+        isCollageSeriesPanelCollapsed,
+        setCollageSeriesPanelCollapsed,
         setCanvas,
         initializeEmptySlide,
         updateCurrentSlide,

@@ -3,12 +3,16 @@
 //导入server composables
 import { sendDataToServer } from '~/composables/server'
 import { useAnimationStore } from '~/stores/animation'
+import { useCollageSeriesStore } from '~/stores/collageSeries'
+import { usePaperExportStore } from '~/stores/paperExport'
 import type { ProgressItem } from '~/stores/animation'
 import { useTutorialStore } from '~/stores/tutorial'
 import { storeToRefs } from 'pinia'
 import { ref, watch, computed } from 'vue'
 
 const animationStore = useAnimationStore()
+const collageSeriesStore = useCollageSeriesStore()
+const paperExportStore = usePaperExportStore()
 const tutorialStore = useTutorialStore()
 const { collaging, result_data, replaying, totalOverview, time_interval, progress_data, replayIdx } = storeToRefs(animationStore)
 // 用 computed 得到当前 progress，保证依赖 progress_data/replayIdx，进度条才能随数据更新
@@ -74,18 +78,31 @@ const handleReplay = () => {
 const handleRun = () => {
   if (collaging.value) {
     return
-  }else{
-    if (result_data.value.length>0) {
+  } else {
+    if (result_data.value.length > 0) {
       animationStore.resetData()
       animationStore.removeElements()
-      animationStore.removeAnimation() 
+      animationStore.removeAnimation()
     }
+    collageSeriesStore.setCollageSeriesPanelCollapsed(true)
     sendDataToServer()
   }
 }
 
 const handleBackToEdit = async () => {
   animationStore.backToEdit()
+}
+
+// 导出 paperCanvas 为 PNG 并下载
+const handleExport = () => {
+  if (replaying.value) return
+  const canvas = paperExportStore.paperCanvasEl
+  if (!canvas) return
+  const dataUrl = canvas.toDataURL('image/png')
+  const a = document.createElement('a')
+  a.href = dataUrl
+  a.download = `unitopia-export-${Date.now()}.png`
+  a.click()
 }
 
 // 处理调速拉条变化
@@ -155,7 +172,9 @@ const handleHelp = () => {
           class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)]"
           :class="[ 
             replaying ? 'opacity-50 cursor-not-allowed' : ''
-          ]">
+          ]"
+          :disabled="replaying"
+          @click="handleExport">
           <div class="i-carbon:export text-lg"></div>
           <span class="topbar-button-label">Export</span>
         </button>

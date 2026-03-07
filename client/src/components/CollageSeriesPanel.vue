@@ -21,8 +21,9 @@ const {
   handleDeleteOverview
 } = collageSeriesStore
 
-// 折叠状态
-const isCollapsed = ref(true)
+// 折叠状态（与 store 同步，便于 Header 等外部收起面板）
+const { isCollageSeriesPanelCollapsed } = storeToRefs(collageSeriesStore)
+const isCollapsed = isCollageSeriesPanelCollapsed
 
 // 悬停状态
 const hoveredOverviewIdx = ref<number | null>(null)
