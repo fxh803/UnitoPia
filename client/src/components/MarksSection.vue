@@ -459,38 +459,39 @@ function handleDragLeave(e: DragEvent) {
         <div
           v-for="mark in markInstances"
           :key="mark.id"
-          class="rounded-2xl bg-[var(--primary-light-color)] border border-[var(--border-color)] px-3 py-2 space-y-2"
+          class="rounded-2xl border border-[var(--border-color)] px-3 py-2 space-y-2"
+          :class="{ 'bg-white': !mark.isGroup ,'hover:bg-[#f0e8e6]': !mark.isGroup, 'transition-colors': !mark.isGroup,'cursor-pointer': !mark.isGroup }"
         >
           <!-- 父实例行 -->
           <div
-            class="flex items-center gap-2"
-            :class="{ 'cursor-pointer': !mark.isGroup }"
+            class="flex items-center gap-2 "
             draggable="true"
             @dragstart.stop="onMarkDragStart($event, mark)"
             @click="!mark.isGroup && openMarkDetail(mark.id)"
           >
             <!-- 非 group：整行可点，仅右侧删除/拖放不触发 -->
-            <template v-if="!mark.isGroup">
-              <div class="flex items-center gap-2 min-w-0 rounded-lg hover:bg-[var(--border-color)]/10 transition-colors -m-1 p-1 flex-1 min-w-0">
-                <div
-                  class="w-10 h-10 rounded-xl bg-white border border-[var(--border-color)] flex items-center justify-center overflow-hidden flex-shrink-0"
-                >
-                  <img
-                    :src="mark.markerThumbnail || '/default_mark.svg'"
-                    alt=""
-                    class="w-full h-full object-contain"
-                  />
-                </div>
-                <div class="flex flex-col min-w-0">
-                  <span class="text-[14px] font-semibold text-[var(--title-color)] truncate">
-                    {{ mark.name }}
-                  </span>
-                  <span class="text-[12px] text-[var(--text-muted)] whitespace-nowrap">
-                    {{ mark.entities }} Entities
-                  </span>
-                </div>
+            <div
+              v-if="!mark.isGroup"
+              class="flex items-center gap-2 min-w-0 rounded-lg -m-1 p-1 flex-1 min-w-0"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-white border border-[var(--border-color)] flex items-center justify-center overflow-hidden flex-shrink-0"
+              >
+                <img
+                  :src="mark.markerThumbnail || '/default_mark.svg'"
+                  alt=""
+                  class="w-full h-full object-contain"
+                />
               </div>
-            </template>
+              <div class="flex flex-col min-w-0">
+                <span class="text-[14px] font-semibold text-[var(--title-color)] truncate">
+                  {{ mark.name }}
+                </span>
+                <span class="text-[12px] text-[var(--text-muted)] whitespace-nowrap">
+                  {{ mark.entities }} Entities
+                </span>
+              </div>
+            </div>
 
             <!-- group：带折叠箭头的标题（仅标题区，不整行打开详情） -->
             <div v-else class="flex flex-col min-w-0">
@@ -504,7 +505,7 @@ function handleDragLeave(e: DragEvent) {
                     class="w-3 h-3 flex-shrink-0 transition-transform duration-200 text-[var(--text-muted)]"
                     :class="isGroupRowExpanded(mark.id) ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'"
                   />
-                  <span class="truncate max-w-[160px]">
+                  <span class="truncate max-w-[160px] text-[var(--text-muted)]">
                     {{ mark.name }}
                   </span>
                 </button>
@@ -516,7 +517,7 @@ function handleDragLeave(e: DragEvent) {
             <!-- 父行右侧字段 pill（支持重新绑定字段） -->
             <div v-if="mark.fieldName" class="flex items-center gap-2" @click.stop>
               <div
-                class="group relative px-4 py-1.5 rounded-full text-[13px] flex items-center gap-2 bg-white border border-[var(--border-color)] text-[var(--title-color)] min-w-[160px]"
+                class="group relative px-4 py-1.5 rounded-full text-[13px] flex items-center gap-2 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)] min-w-[160px]"
                 @dragover.prevent
                 @drop.prevent="handleFieldDropOnMark($event, mark.id)"
               >
@@ -526,7 +527,7 @@ function handleDragLeave(e: DragEvent) {
                 <span class="font-medium truncate max-w-[120px]">{{ mark.fieldName }}</span>
                 <span
                   v-if="mark.isGroup"
-                  class="ml-1 px-2 py-0.5 rounded-full bg-[var(--primary-light-color)] text-[11px] text-[var(--text-muted)] flex-shrink-0"
+                  class="ml-1 px-2 py-0.5 rounded-full font-semibold bg-[var(--primary-light-color)] text-[11px] text-[var(--text-muted)] flex-shrink-0"
                 >
                   Group
                 </span>
@@ -566,7 +567,7 @@ function handleDragLeave(e: DragEvent) {
               <div
                 v-for="child in mark.children"
                 :key="child.id"
-                class="flex items-center gap-2 bg-white rounded-xl border border-[var(--border-color)] px-3 py-1.5 cursor-pointer hover:bg-[var(--border-color)]/10 transition-colors"
+                class="flex items-center gap-2 bg-white rounded-xl border border-[var(--border-color)] px-3 py-1.5 cursor-pointer hover:bg-[#f0e8e6] transition-colors"
                 role="button"
                 tabindex="0"
                 @click.stop="openMarkChildDetail(mark.id, child.id)"
@@ -595,18 +596,18 @@ function handleDragLeave(e: DragEvent) {
 
                 <!-- 子实例右侧：字段 pill（大小与父一致），内部包含筛选下拉 -->
                 <div
-                  class="group relative px-4 py-1 rounded-full text-[13px] flex items-center gap-2 bg-[var(--primary-light-color)] border border-[var(--border-color)] text-[var(--title-color)]"
+                  class="group relative px-4 py-1 rounded-full text-[13px] flex items-center gap-2 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)]"
                 >
                   <span class="text-[12px] text-[var(--text-muted)]">
                     {{ mark.fieldType === 'numeric' ? '#' : 'abc' }}
                   </span>
-                  <span class="font-medium truncate max-w-[80px]">
+                  <span class="font-medium truncate max-w-[80px] text-[var(--text-muted)]">
                     {{ mark.fieldName }}
                   </span>
                   <div class="flex-1" />
-                  <div class="relative flex-shrink-0">
+                  <div class="relative  flex-shrink-0">
                     <select
-                      class="appearance-none pl-2 pr-5 py-1 rounded-full bg-white/70 border border-[var(--border-color)] text-[11px] text-[var(--text-muted)] max-w-[66px] cursor-pointer truncate"
+                      class="appearance-none pl-2 pr-5 py-1 rounded-full bg-[#f0e8e6] border font-bold border-[var(--border-color)] text-[11px] text-[var(--text-muted)] max-w-[66px] cursor-pointer truncate"
                       :value="child.selectedValue || ''"
                       @click.stop
                       @change="handleGroupValueChange(mark.id, child.id, ($event.target as HTMLSelectElement).value)"

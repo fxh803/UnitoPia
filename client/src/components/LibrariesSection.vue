@@ -302,11 +302,11 @@ async function handleContainerFileSelect(e: Event) {
               v-for="marker in markerStore.markers"
               :key="marker.id"
               type="button"
-              class="group flex flex-col items-center justify-between rounded-xl bg-[var(--primary-light-color)] border border-[var(--border-color)] px-2 pt-2 pb-1 cursor-pointer w-[110px]"
+              class="group flex flex-col items-center justify-between rounded-xl cursor-pointer w-[110px]"
               draggable="true"
               @dragstart.stop="onLibraryMarkerDragStart($event, marker)"
             >
-              <div class="w-full aspect-square rounded-lg bg-[var(--primary-light-color)] flex items-center justify-center overflow-hidden">
+              <div class="p-2 w-full aspect-square rounded-lg bg-[#ffffff] flex items-center justify-center overflow-hidden border-2 border-[var(--border-color)]">
                 <img
                   v-if="marker.thumbnail"
                   :src="marker.thumbnail"
@@ -373,11 +373,11 @@ async function handleContainerFileSelect(e: Event) {
               v-for="item in containerStore.containers"
               :key="item.id"
               type="button"
-              class="group flex flex-col items-center justify-between rounded-xl bg-[var(--primary-light-color)] border border-[var(--border-color)] px-2 pt-2 pb-1 cursor-pointer w-[110px]"
+              class="group flex flex-col items-center justify-between rounded-xl cursor-pointer w-[110px]"
               draggable="true"
               @dragstart.stop="onLibraryContainerDragStart($event, item)"
             >
-              <div class="w-full aspect-square rounded-lg bg-[var(--primary-light-color)] flex items-center justify-center overflow-hidden">
+              <div class="p-2 w-full aspect-square rounded-lg bg-[#ffffff] flex items-center justify-center overflow-hidden border-2 border-[var(--border-color)]">
                 <img
                   v-if="item.thumbnail"
                   :src="item.thumbnail"

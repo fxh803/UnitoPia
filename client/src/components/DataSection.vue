@@ -262,8 +262,8 @@ function clearData() {
                 @dragend="onFieldDragEnd"
               >
                 <span class="data-field-prefix-abc mr-1">abc</span>
-                <span class="data-field-name font-semibold mr-2">{{ tag.column }}</span>
-                <span class="data-field-group-chip">Group</span>
+                <span class="data-field-name mr-2">{{ tag.column }}</span>
+                <span class="data-field-group-chip font-semibold">Group</span>
               </span>
             </span>
           </div>
