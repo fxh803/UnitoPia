@@ -429,7 +429,7 @@ function handleDragLeave(e: DragEvent) {
           :class="isExpanded ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'"
         />
       </button>
-      <span class="text-[14px] font-bold text-[var(--title-color)]">Marks</span>
+      <span class="text-[16px] font-semibold text-[var(--title-color)]">Marks</span>
     </div>
 
     <!-- 内容区 -->

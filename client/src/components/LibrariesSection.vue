@@ -268,7 +268,7 @@ async function handleContainerFileSelect(e: Event) {
           :class="isExpanded ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'"
         />
       </button>
-      <span class="text-[14px] font-bold text-[var(--title-color)]">Libraries</span>
+      <span class="text-[16px] font-semibold text-[var(--title-color)]">Libraries</span>
     </div>
 
     <!-- 内容区：占满剩余高度，内部滚动 -->
@@ -278,7 +278,7 @@ async function handleContainerFileSelect(e: Event) {
     >
     <div class="space-y-3">
       <!-- Mark 子分组（占位内容已移除） -->
-      <section class="bg-[var(--primary-light-color)] rounded-xl border border-[var(--border-color)] px-3 py-2">
+      <section class="bg-[#efebea] rounded-xl border border-[var(--border-color)] px-3 py-2">
         <!-- Mark 头部 -->
         <button
           type="button"
@@ -290,7 +290,7 @@ async function handleContainerFileSelect(e: Event) {
               class="w-4 h-4 flex-shrink-0 transition-transform duration-200 text-[var(--text-muted)]"
               :class="isMarkExpanded ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'"
             />
-            <span class="text-[13px] font-semibold text-[var(--title-color)]">Mark</span>
+            <span class="text-[14px] font-semibold text-[var(--text-muted)]">Mark</span>
           </div>
         </button>
 
@@ -319,22 +319,22 @@ async function handleContainerFileSelect(e: Event) {
               </span>
             </button>
 
-            <!-- 上传 / 拖拽入口 -->
+            <!-- 上传 / 拖拽入口（样式与已上传卡片一致） -->
             <button
               type="button"
-              class="flex flex-col items-center justify-between rounded-xl border-2 border-dashed px-2 pt-2 pb-1 cursor-pointer transition-colors w-[110px]"
-              :class="isMarkDragOver ? 'border-[var(--primary-color)] bg-[var(--border-color)]/10' : 'border-[var(--border-color)] hover:border-[var(--text-muted-light)] bg-[var(--primary-light-color)]'"
+              class="flex flex-col items-center rounded-xl cursor-pointer w-[110px]"
               @dragover.stop.prevent="handleMarkDragOver"
               @dragleave.stop.prevent="handleMarkDragLeave"
               @drop.stop.prevent="handleMarkDrop"
               @click="markFileInput?.click()"
             >
-              <div class="w-full aspect-square rounded-lg flex items-center justify-center">
-                <span class="i-carbon-add-alt text-xl text-[var(--text-muted)]" />
+              <div
+                class="p-2 w-full aspect-square rounded-lg bg-[#ffffff]/70 flex flex-col items-center justify-center gap-1 border-2 border-dashed transition-colors"
+                :class="isMarkDragOver ? 'bg-[var(--border-color)]/10 border-[var(--text-muted)]' : 'border-[var(--border-color)]'"
+              >
+                <span class="i-carbon-add-alt text-ls text-[var(--text-muted)]" />
+                <span class="text-[11px] text-[var(--text-muted)] text-center">upload Mark</span>
               </div>
-              <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-center">
-                upload Mark
-              </span>
               <input
                 ref="markFileInput"
                 type="file"
@@ -349,7 +349,7 @@ async function handleContainerFileSelect(e: Event) {
       </section>
 
       <!-- Container 子分组（占位内容已移除） -->
-      <section class="bg-[var(--primary-light-color)] rounded-xl border border-[var(--border-color)] px-3 py-2">
+      <section class="bg-[#efebea] rounded-xl border border-[var(--border-color)] px-3 py-2">
         <!-- Container 头部 -->
         <button
           type="button"
@@ -361,7 +361,7 @@ async function handleContainerFileSelect(e: Event) {
               class="w-4 h-4 flex-shrink-0 transition-transform duration-200 text-[var(--text-muted)]"
               :class="isContainerExpanded ? 'i-carbon-chevron-down' : 'i-carbon-chevron-right'"
             />
-            <span class="text-[13px] font-semibold text-[var(--title-color)]">Container</span>
+            <span class="text-[14px] font-semibold text-[var(--text-muted)]">Container</span>
           </div>
         </button>
 
@@ -390,22 +390,22 @@ async function handleContainerFileSelect(e: Event) {
               </span>
             </button>
 
-            <!-- 上传 / 拖拽入口 -->
+            <!-- 上传 / 拖拽入口（样式与已上传卡片一致） -->
             <button
               type="button"
-              class="flex flex-col items-center justify-between rounded-xl border-2 border-dashed px-2 pt-2 pb-1 cursor-pointer transition-colors w-[110px]"
-              :class="isContainerDragOver ? 'border-[var(--primary-color)] bg-[var(--border-color)]/10' : 'border-[var(--border-color)] hover:border-[var(--text-muted-light)] bg-[var(--primary-light-color)]'"
+              class="flex flex-col items-center rounded-xl cursor-pointer w-[110px]"
               @dragover.stop.prevent="handleContainerDragOver"
               @dragleave.stop.prevent="handleContainerDragLeave"
               @drop.stop.prevent="handleContainerDrop"
               @click="containerFileInput?.click()"
             >
-              <div class="w-full aspect-square rounded-lg flex items-center justify-center">
-                <span class="i-carbon-add-alt text-xl text-[var(--text-muted)]" />
+              <div
+                class="p-2 w-full aspect-square rounded-lg bg-[#ffffff]/70 flex flex-col items-center justify-center gap-1 border-2 border-dashed transition-colors"
+                :class="isContainerDragOver ? 'bg-[var(--border-color)]/10 border-[var(--text-muted)]' : 'border-[var(--border-color)]'"
+              >
+                <span class="i-carbon-add-alt text-ls text-[var(--text-muted)]" />
+                <span class="text-[11px] text-[var(--text-muted)] text-center">upload Container</span>
               </div>
-              <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-center">
-                upload Container
-              </span>
               <input
                 ref="containerFileInput"
                 type="file"

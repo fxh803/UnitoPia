@@ -75,7 +75,7 @@ onBeforeUnmount(() => {
       <!-- 右侧：Canvas 占满剩余 -->
       <div class="h-full flex-1 min-w-0 flex flex-col">
         <div class="flex justify-between items-center p-2 bg-[var(--primary-light-color)] h-8 flex-shrink-0 shadow-sm z-10">
-          <span class="text-[14px] text-[var(--title-color)] font-bold">Canvas Editor</span>
+          <span class="text-[16px] text-[var(--title-color)] font-semibold">Canvas Editor</span>
         </div>
         <div class="flex-1 min-h-0">
           <CanvasArea />

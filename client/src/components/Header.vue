@@ -236,7 +236,7 @@ const handleHelp = () => {
     <!-- 进度条 - 移到header外部，使用fixed定位 -->
     <div 
       v-if="collaging||replaying"
-      class="fixed top-11 left-0 w-full bg-[var(--border-color)] h-2 z-50"
+      class="fixed top-11 left-0 w-full bg-[var(--border-color)] h-2 z-9999"
     >
       <div 
         class="bg-[var(--primary-color)] h-full transition-all duration-300 ease-out"
@@ -288,7 +288,7 @@ const handleHelp = () => {
 .topbar-label {
   font-family: var(--font-sans);
   font-weight: 500;
-  font-size: 20px;
+  font-size: 24px;
   line-height: 28px;
   letter-spacing: -0.2px;
 }

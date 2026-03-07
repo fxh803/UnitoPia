@@ -140,7 +140,7 @@ function clearData() {
 
       <!-- 无数据：显示 Data 文本 -->
       <template v-if="tableData.length === 0">
-        <span class="text-[14px] font-bold text-[var(--title-color)]">Data</span>
+        <span class="text-[16px] font-semibold text-[var(--title-color)]">Data</span>
       </template>
 
       <!-- 有数据：显示 Tabs + 清空按钮 -->
@@ -148,16 +148,16 @@ function clearData() {
         <div class="flex items-center gap-4">
           <button
             type="button"
-            class="px-0 py-0 text-[14px] transition-colors cursor-pointer"
-            :class="activeTab === 'fields' ? 'font-bold text-[var(--title-color)]' : 'font-normal text-[var(--text-muted)] hover:text-[var(--title-color)]'"
+            class="px-0 py-0 text-[16px] transition-colors cursor-pointer"
+            :class="activeTab === 'fields' ? 'font-semibold text-[var(--title-color)]' : 'font-semibold text-[var(--text-muted)] hover:text-[var(--title-color)]'"
             @click="activeTab = 'fields'"
           >
             Fields
           </button>
           <button
             type="button"
-            class="px-0 py-0 text-[14px] transition-colors cursor-pointer"
-            :class="activeTab === 'table' ? 'font-bold text-[var(--title-color)]' : 'font-normal text-[var(--text-muted)] hover:text-[var(--title-color)]'"
+            class="px-0 py-0 text-[16px] transition-colors cursor-pointer"
+            :class="activeTab === 'table' ? 'font-semibold text-[var(--title-color)]' : 'font-semibold text-[var(--text-muted)] hover:text-[var(--title-color)]'"
             @click="activeTab = 'table'"
           >
             Table

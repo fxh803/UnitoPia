@@ -248,10 +248,8 @@ export const useAnimationStore = defineStore('animation', () => {
 
     isUpdatingAnimation.value = true
     try {
-      const now_collage = progress.value.now_collage;
-      if (!now_collage) return
-      const type = progress.value.type;
-      if (!type) return
+      const now_collage = progress.value.now_collage??0;
+      const type = progress.value.type??0;
       if (now_collage != now_collage_idx.value && type === 1) {// 如果进行的collage变了，要绘制新的elements
         console.log('1')
       if (process_id.value) {
