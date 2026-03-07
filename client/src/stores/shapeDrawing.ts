@@ -1,10 +1,10 @@
 import { defineStore } from 'pinia'
-import { useColorPickerStore } from '~/stores/colorpicker'  
+import { ref } from 'vue' 
 import { useCanvasModeStore } from '~/stores/canvasMode' 
 import { useCanvasStore } from '~/stores/canvas'
+import type { Canvas } from 'fabric'
 import { Rect, Ellipse } from 'fabric'
 export const useShapeDrawingStore = defineStore('shapeDrawing', () => {
-    const colorPickerStore = useColorPickerStore() 
     const canvasModeStore = useCanvasModeStore()
     const canvasStore = useCanvasStore()
     const isDrawingShape = ref(false)
@@ -122,8 +122,10 @@ export const useShapeDrawingStore = defineStore('shapeDrawing', () => {
           selectable: false,
           evented: false,
         })
-      } 
-      canvasInstance.add(shapeObj)
+      }
+      if (shapeObj) {
+        canvasInstance.add(shapeObj)
+      }
       // 移除预览
       canvasInstance.remove(previewShape.value)
       previewShape.value = null

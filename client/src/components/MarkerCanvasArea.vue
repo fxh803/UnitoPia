@@ -24,7 +24,7 @@ const markerShapeDrawingStore = useMarkerShapeDrawingStore()
 // Marker Canvas store
 const markerCanvasStore = useMarkerCanvasStore()
 const { closePathConfirm } = storeToRefs(markerCanvasStore)
-const { askToClosePath, handleClosePathConfirm, addMarkerCanvasEventListeners, removeMarkerCanvasEventListeners, setSuppressClosePath } =
+const { handleClosePathConfirm, addMarkerCanvasEventListeners, removeMarkerCanvasEventListeners, setSuppressClosePath } =
   markerCanvasStore
 
 // Mark 实例 store：用于根据当前选中实例加载 / 恢复画布
@@ -233,7 +233,8 @@ function handleLibraryMarkerDrop(e: DragEvent) {
     ;(async () => {
       try {
         const loadedSVG = await fabric.loadSVGFromString(source)
-        const svgObject = fabric.util.groupSVGElements(loadedSVG.objects)
+        const objects = loadedSVG.objects.filter((o): o is fabric.FabricObject => o != null)
+        const svgObject = fabric.util.groupSVGElements(objects)
 
         svgObject.set({
           left: dropX ?? canvas!.getWidth() / 2,

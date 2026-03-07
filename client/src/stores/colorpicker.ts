@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 export const useColorPickerStore = defineStore('colorpicker', () => {
   // 颜色选择器状态

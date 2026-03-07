@@ -1,18 +1,24 @@
 <script setup lang="ts">
 // 页头无需复杂逻辑
 //导入server composables
-import { collectAllSlidesData, sendDataToServer } from '~/composables/server'
+import { sendDataToServer } from '~/composables/server'
 import { useAnimationStore } from '~/stores/animation'
-import { useCanvasStore } from '~/stores/canvas'
+import type { ProgressItem } from '~/stores/animation'
 import { useTutorialStore } from '~/stores/tutorial'
 import { storeToRefs } from 'pinia'
 import { ref, watch, computed } from 'vue'
-import {fabric} from 'fabric'
-import { FabricImage } from 'fabric'
+
 const animationStore = useAnimationStore()
-const canvasStore = useCanvasStore()
 const tutorialStore = useTutorialStore()
-const { collaging, progress, result_data, replaying,now_overview_idx,totalOverview, time_interval } = storeToRefs(animationStore)
+const { collaging, result_data, replaying, totalOverview, time_interval, progress_data, replayIdx } = storeToRefs(animationStore)
+// 用 computed 得到当前 progress，保证依赖 progress_data/replayIdx，进度条才能随数据更新
+const progress = computed(() => {
+  if (replaying.value) {
+    return progress_data.value[replayIdx.value] as ProgressItem | undefined
+  }
+  const arr = progress_data.value
+  return arr.length > 0 ? (arr[arr.length - 1] as ProgressItem) : undefined
+})
 
 // 计算进度百分比
 const percentage = ref(0)
@@ -23,20 +29,20 @@ const showBackToEditButton = computed(() => !collaging.value&&result_data.value.
 const showExportButton = computed(() => !collaging.value&&result_data.value.length>0)
 const showRunButton = computed(() => result_data.value.length===0 || collaging.value)
 
-// 监听progress变化，计算进度
+// 监听 progress 变化
 watch(progress, (newProgress) => {
-  if (newProgress && collaging.value || replaying.value) {
-    const type = newProgress.type
-    const totalsteps = newProgress.totalSteps
-    const steps = newProgress.steps
-    const now_collage = newProgress.now_collage
-    const total_collage = newProgress.total_collage
-    const now_overview = newProgress.now_overview_idx 
+  if (newProgress && (collaging.value || replaying.value)) {
+    const type = (newProgress.type ?? 0) as number
+    const totalsteps = (newProgress.totalSteps ?? 0) as number
+    const steps = (newProgress.steps ?? 0) as number
+    const now_collage = (newProgress.now_collage ?? 0) as number
+    const total_collage = (newProgress.total_collage ?? 0) as number
+    const now_overview = (newProgress.now_overview_idx ?? 0) as number
     if (totalsteps > 0 && total_collage > 0 && totalOverview.value > 0) {
       const currentTypeProgress = steps / totalsteps
       
       // 计算当前overview内的进度
-      const currentOverviewProgress = (now_collage + currentTypeProgress / 2 + 1 / 2 * type) / total_collage
+      const currentOverviewProgress = (now_collage + currentTypeProgress / 2 + (1 / 2) * type) / total_collage
       
       // 计算前面overview的累计进度
       const previousOverviewProgress = now_overview / totalOverview.value
@@ -179,6 +185,7 @@ const handleHelp = () => {
         
         <!-- Run 按钮 -->
         <button 
+          v-show="showRunButton"
           data-tutorial="run-button"
           class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)]"
           :class="[replaying ? 'opacity-50 cursor-not-allowed' : '']"

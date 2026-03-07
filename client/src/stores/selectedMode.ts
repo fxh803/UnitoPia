@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { Canvas } from 'fabric'
 
 export const useSelectedModeStore = defineStore('selectedMode', () => {
     // 颜色选择器状态

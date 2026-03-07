@@ -35,13 +35,9 @@ const brushSizeStore = useBrushSizeStore()
 const { brushWidth, isMainBrushSizePanelOpen } = storeToRefs(brushSizeStore)
 
 const collageSeriesStore = useCollageSeriesStore()
-const { collageSeries, currentSlideIndex, stopListen, currentOverviewIndex, overviews } = storeToRefs(collageSeriesStore)
+const { stopListen, currentOverviewIndex, overviews } = storeToRefs(collageSeriesStore)
 const {
-  initializeEmptySlide,
-  updateCurrentSlide,
-  addNewSlide,
-  handleCollageSeriesSelect,
-  handleDeleteCollageSeries
+  initializeEmptySlide
 } = collageSeriesStore
 
 const canvasModeStore = useCanvasModeStore()
@@ -50,16 +46,7 @@ const { mode } = storeToRefs(canvasModeStore)
 const { closePathConfirm, isSegmentLoading } = storeToRefs(canvasStore)
 const { setMode } = canvasModeStore
 const {
-  setDrawedObjectDataType,
   adjustLayer,
-  // removeObjectsByMarkerId,
-  isDropOnEmitter,
-  getBezierApproxLength,
-  calculateBezierPoint,
-  getEmitterSampledPoints,
-  // addMarkers,
-  // handleEmitterDrop,
-  handleMarkerDrop,
   handleDragOver,
   handleDrop,
   addCanvasEventListeners,
@@ -70,7 +57,6 @@ const objectActionsStore = useObjectActionsStore()
 
 
 const shapeDrawingStore = useShapeDrawingStore()
-const { isDrawingShape, shapeStart, previewShape } = storeToRefs(shapeDrawingStore)
 const {
   addShapeEventListeners,
   removeShapeEventListeners
@@ -82,7 +68,6 @@ const bezierDrawingStore = useBezierDrawingStore()
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
-const canvasWrapperRef = ref<HTMLDivElement | null>(null)
 const canvasSize = ref(400)
 let canvas: Canvas | null = null
 
@@ -246,12 +231,12 @@ watch(selectedMode, (newMode, oldMode) => {
   }
 })
 // Segment Point 点击处理
-let segmentPointListener: ((e: fabric.IEvent) => void) | null = null
+let segmentPointListener: ((e: any) => void) | null = null
 
 function addSegmentPointListener() {
   if (!canvas || segmentPointListener) return
   
-  segmentPointListener = async (e: fabric.IEvent) => {
+  segmentPointListener = async (e: any) => {
     if (mode.value !== 'segmentPoint') return
     if (!e.pointer) return
     
@@ -277,6 +262,7 @@ function addSegmentPointListener() {
         : `data:image/png;base64,${result.mask}`
       
       FabricImage.fromURL(imageDataUrl).then((fabricImg) => {
+        if (!canvas) return
         fabricImg.set({
           left: result.bbox.x,
           top: result.bbox.y,
@@ -459,7 +445,7 @@ onBeforeUnmount(() => {
       data-tutorial="canvas-editor"
       class="p-2 pl-7 border-r border-[var(--border-color)] bg-[var(--primary-light-color)] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
       @dragover="handleDragOver"
-      @drop="(e) => { handleLibraryContainerDrop(e); handleDrop(e, canvasEl) }">
+      @drop="(e) => { handleLibraryContainerDrop(e); if (canvasEl) handleDrop(e, canvasEl) }">
       <!-- 工具栏容器：垂直居中，包含所有工具栏 -->
       <div class="absolute left-0 z-10 flex flex-col items-start gap-2" style="top: 50%; transform: translateY(-50%);">
         <!-- 一级工具栏：模式选择 -->

@@ -2,7 +2,6 @@
 import { ref, computed, nextTick } from 'vue'
 import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
 import { storeToRefs } from 'pinia'
-import { watch } from 'vue'
 
 const markerObjectActionsStore = useMarkerObjectActionsStore()
 const {

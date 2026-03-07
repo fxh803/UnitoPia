@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import type { Canvas } from 'fabric'
 
 export const useBackgroundStore = defineStore('background', () => {
   // 存储每个总览的背景，key为overviewId

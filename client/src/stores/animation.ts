@@ -6,28 +6,67 @@ import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { getRenderTxtData } from '~/composables/server'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 import { ref, computed, watch } from 'vue';
+
+/** 后端返回的进度项（fetchProgressApi / processDataApi 的 progress 字段） */
+export interface ProgressItem {
+  process_id?: string
+  type?: number
+  totalSteps?: number
+  steps?: number
+  now_collage?: number
+  total_collage?: number
+  now_overview_idx?: number
+  collage_result_type?: string[]
+}
+
+/** 后端返回的拼贴结果项（fetchProgressApi 的 result 字段，用于渲染 marker 等） */
+export interface ResultItem {
+  angle: number[]
+  attributes: (string | null)[]
+  data: number[]
+  pos: [number, number][]
+  size: [number, number][]
+}
+
+/** 带自定义属性的 Raster（paper.js 扩展） */
+interface RasterWithProps extends paper.Raster {
+  imgLoaded?: boolean
+  dataLoaded?: boolean
+  startPos?: paper.Point
+  endPos?: paper.Point
+  startRotate?: number
+  endRotate?: number
+  startScaleX?: number
+  endScaleX?: number
+  startScaleY?: number
+  endScaleY?: number
+  elapsedTime?: number
+  startOpacity?: number
+  endOpacity?: number
+}
+
 export const useAnimationStore = defineStore('animation', () => {
   // 状态
   const collaging = ref(false)
-  const progress_data = ref([])
-  const collage_result_type = ref([])
+  const progress_data = ref<ProgressItem[]>([])
+  const collage_result_type = ref<string[]>([])
   const canvas_width = ref(0)
   const canvas_height = ref(0)
-  const posArray = ref([])
-  const widthArray = ref([])
-  const heightArray = ref([])
-  const txtArray = ref([])
-  const angleArray = ref([])
-  const elements = ref([])
-  const result_data = ref([])
-  const dataBindingArray = ref([])
+  const posArray = ref<number[][]>([])
+  const widthArray = ref<number[]>([])
+  const heightArray = ref<number[]>([])
+  const txtArray = ref<string[]>([])
+  const angleArray = ref<number[]>([])
+  const elements = ref<RasterWithProps[]>([])
+  const result_data = ref<ResultItem[]>([])
+  const dataBindingArray = ref<string[]>([])
   const now_collage_idx = ref(0)
   const now_start_idx = ref(0)
-  const markerAni = ref(null)
-  const containerAni = ref(null)
+  const markerAni = ref<((event: paper.Event) => void) | null>(null)
+  const containerAni = ref<((event: paper.Event) => void) | null>(null)
   const replayIdx = ref(0)
-  const process_id = ref(null)
-  const replayTimer = ref(null)
+  const process_id = ref<string | null>(null)
+  const replayTimer = ref<ReturnType<typeof setInterval> | null>(null)
   const time_interval = ref(2000)
   const replaying = ref(false)
   const totalOverview = ref(0)
@@ -80,7 +119,9 @@ export const useAnimationStore = defineStore('animation', () => {
   }
 
   function stopReplay() {
-    clearInterval(replayTimer.value);
+    if (replayTimer.value != null) {
+      clearInterval(replayTimer.value)
+    }
     removeAnimation()
     replaying.value = false
   }
@@ -118,13 +159,14 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function removeElements() {
     elements.value.forEach(element => {
-      element.remove();
-    });
+      element.remove()
+    })
     elements.value = []
   }
 
-  function setData(now_collage, startIndex) {//对最新的数据进行整理
+  function setData(now_collage: number, startIndex: number) {//对最新的数据进行整理
     const result = result_data.value[result_data.value.length - 1]
+    if (result == null) return
     const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
     // 获取当前幻灯片的 render_size
     const collageSeriesStore = useCollageSeriesStore()
@@ -134,7 +176,7 @@ export const useAnimationStore = defineStore('animation', () => {
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
       angleArray.value[i] = result['angle'][i - startIndex];
-      dataBindingArray.value[i] = dataBinding[i - startIndex];
+      dataBindingArray.value[i] = dataBinding?.[i - startIndex]??null;
       let originSize = 0
       if (collage_result_type.value[now_collage] === 'svg') {
         originSize = 100
@@ -147,8 +189,9 @@ export const useAnimationStore = defineStore('animation', () => {
     }
   }
 
-  function setReplayData(idx, now_collage, startIndex) {
+  function setReplayData(idx: number, now_collage: number, startIndex: number) {
     const result = result_data.value[idx]
+    if (result == null) return
     const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
     // 获取当前幻灯片的 render_size
     const collageSeriesStore = useCollageSeriesStore()
@@ -158,7 +201,7 @@ export const useAnimationStore = defineStore('animation', () => {
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
       angleArray.value[i] = result['angle'][i - startIndex];
-      dataBindingArray.value[i] = dataBinding[i - startIndex];
+      dataBindingArray.value[i] = dataBinding?.[i - startIndex]??null;
       let originSize = 0
       if (collage_result_type.value[now_collage] === 'svg') {
         originSize = 100
@@ -188,21 +231,6 @@ export const useAnimationStore = defineStore('animation', () => {
     return flattenedData.length > 0 ? flattenedData : null
   }
 
-  // 从 txt 文件获取 base64 数据
-  async function fetchBase64FromTxt(txtUrl: string): Promise<string> {
-    try {
-      const response = await fetch(txtUrl)
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      const base64Text = await response.text()
-      return base64Text.trim()
-    } catch (error) {
-      console.error('获取 base64 数据失败:', error, txtUrl)
-      throw error
-    }
-  }
-
   function startContainerAnimation() {
     const containerAnimationStore = useContainerAnimationStore()
     if (!containerAni.value) {
@@ -221,15 +249,16 @@ export const useAnimationStore = defineStore('animation', () => {
     isUpdatingAnimation.value = true
     try {
       const now_collage = progress.value.now_collage;
+      if (!now_collage) return
       const type = progress.value.type;
+      if (!type) return
       if (now_collage != now_collage_idx.value && type === 1) {// 如果进行的collage变了，要绘制新的elements
         console.log('1')
+      if (process_id.value) {
         const txtData = await getRenderTxtData(process_id.value, now_collage)
         txtArray.value.push(...txtData)
-        // paper.view.off('frame', markerAni.value);
-        // paper.view.off('frame', containerAni.value);
-        // markerAni.value = null
-        // containerAni.value = null
+      }
+
         now_start_idx.value = elements.value.length
         setData(now_collage, now_start_idx.value)
         for (let i = now_start_idx.value; i < posArray.value.length; i++) {
@@ -244,20 +273,22 @@ export const useAnimationStore = defineStore('animation', () => {
             dataType: 'marker',
             collage_idx: now_collage,
             onLoad: () => {
-              raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
+              const sx = widthArray.value[i] / raster.width
+              const sy = heightArray.value[i] / raster.height
+              raster.scale(sx, sy)
               raster.rotate(angleArray.value[i] * (180 / Math.PI))
-              raster.imgLoaded = true;
+              raster.imgLoaded = true
             },
             //失败提示
-            onError: (e) => {
-              console.log('onError',e)
+            onError: (e: ErrorEvent) => {
+              console.log('onError', e)
             }
-          });
-          raster.onMouseEnter = (event: any) => {
+          }) as RasterWithProps
+          raster.onMouseEnter = (event: paper.Event) => {
             const hoverInfoPanelStore = useHoverInfoPanelStore()
             hoverInfoPanelStore.handleRasterHover(event, raster)
           }
-          raster.onMouseLeave = (event: any) => {
+          raster.onMouseLeave = (event: paper.Event) => {
             const hoverInfoPanelStore = useHoverInfoPanelStore()
             hoverInfoPanelStore.handleRasterOut(event, raster)
           }
@@ -272,8 +303,10 @@ export const useAnimationStore = defineStore('animation', () => {
     else if (elements.value.length === 0) {//一开始
       setData(now_collage, 0)
       console.log('2')
-      const txtData = await getRenderTxtData(process_id.value, now_collage)
-      txtArray.value.push(...txtData)
+      if (process_id.value != null) {
+        const txtData = await getRenderTxtData(process_id.value, now_collage)
+        txtArray.value.push(...txtData)
+      }
       for (let i = 0; i < posArray.value.length; i++) {
         const base64Source = txtArray.value[i]
         const raster = new paper.Raster({
@@ -285,20 +318,22 @@ export const useAnimationStore = defineStore('animation', () => {
           dataLoaded: false,
           dataType: 'marker',
           collage_idx: now_collage,
-          onLoad: (e) => {
-            raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
+          onLoad: (_e: Event) => {
+            const sx = widthArray.value[i] / raster.width
+            const sy = heightArray.value[i] / raster.height
+            raster.scale(sx, sy)
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true
           },
-          onError: (e) => {
+          onError: (e: ErrorEvent) => {
             console.log('onError',e)
           }
-        });
-        raster.onMouseEnter = (event: any) => {
+        }) as RasterWithProps
+        raster.onMouseEnter = (event: paper.Event) => {
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterHover(event, raster)
         }
-        raster.onMouseLeave = (event: any) => {
+        raster.onMouseLeave = (event: paper.Event) => {
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterOut(event, raster)
         }
@@ -329,10 +364,10 @@ export const useAnimationStore = defineStore('animation', () => {
       }
 
       if (!markerAni.value) {
-        markerAni.value = (event) => {
-          markerAnimation(event, now_start_idx.value);
-        };
-        paper.view.on('frame', markerAni.value);
+        markerAni.value = (event: paper.Event) => {
+          markerAnimation(event, now_start_idx.value)
+        }
+        paper.view.on('frame', markerAni.value)
       }
 
     }
@@ -342,59 +377,56 @@ export const useAnimationStore = defineStore('animation', () => {
     }
   }
 
-  function markerAnimation(event, startIndex) {
+  function markerAnimation(event: paper.Event, startIndex: number) {
     for (let i = startIndex; i < elements.value.length; i++) {
-      if (elements.value[i].imgLoaded && elements.value[i].dataLoaded) {
-        const epsilon = 0.0001; // 允许的误差范围
-        const pos = new paper.Point(elements.value[i].position);
-        const startPos = elements.value[i].startPos;
-        const endPos = elements.value[i].endPos;
-        const rotate = elements.value[i].matrix.rotation;
-        const opacity = elements.value[i].opacity;
-        const startOpacity = elements.value[i].startOpacity;
-        const endOpacity = elements.value[i].endOpacity;
-        const startRotate = elements.value[i].startRotate;
-        const endRotate = elements.value[i].endRotate;
-        const scaleX = elements.value[i].matrix.scaling.x;
-        const startScaleX = elements.value[i].startScaleX;
-        const endScaleX = elements.value[i].endScaleX;
-        const scaleY = elements.value[i].matrix.scaling.y;
-        const startScaleY = elements.value[i].startScaleY;
-        const endScaleY = elements.value[i].endScaleY;
+      const el = elements.value[i] as RasterWithProps
+      if (!el?.imgLoaded || !el?.dataLoaded) continue
+      const startPos = el.startPos
+      const endPos = el.endPos
+      if (!startPos || !endPos) continue
+      const epsilon = 0.0001
+      const pos = new paper.Point(el.position)
+      const rotate = el.matrix.rotation
+      const opacity = el.opacity
+      const startOpacity = el.startOpacity ?? 0
+      const endOpacity = el.endOpacity ?? 1
+      const startRotate = el.startRotate ?? 0
+      const endRotate = el.endRotate ?? 0
+      const scaleX = el.matrix.scaling.x
+      const startScaleX = el.startScaleX ?? 1
+      const endScaleX = el.endScaleX ?? 1
+      const scaleY = el.matrix.scaling.y
+      const startScaleY = el.startScaleY ?? 1
+      const endScaleY = el.endScaleY ?? 1
 
-        elements.value[i].elapsedTime += event.delta; // 更新经过的时间
-        const t = Math.min(elements.value[i].elapsedTime / (time_interval.value / 1000), 1); // 插值比例，限制在 [0, 1]
+      const delta = (event as paper.Event & { delta: number }).delta
+      const elapsed = (el.elapsedTime ?? 0) + delta
+      el.elapsedTime = elapsed
+      const t = Math.min(elapsed / (time_interval.value / 1000), 1)
 
-        if (Math.abs(opacity - endOpacity) > epsilon) {
-          const newOpacity = opacity + (endOpacity - startOpacity) / 200
-          elements.value[i].opacity = newOpacity;
-        }
-        if (Math.abs(scaleX - endScaleX) > epsilon || Math.abs(scaleY - endScaleY) > epsilon) {
-          const newScaleX = startScaleX + (endScaleX - startScaleX) * t;
-          const newScaleY = startScaleY + (endScaleY - startScaleY) * t;
-          elements.value[i].scaling = new paper.Point(newScaleX, newScaleY);
-        }
-        if (Math.abs(rotate - endRotate) > epsilon) {
-          if (Math.abs(endRotate - startRotate) > 180) {
-            // 调整差值，使其在 -180 到 180 的范围内
-            let delta = endRotate - startRotate;
-            if (delta > 180) {
-              delta -= 360;
-            } else if (delta < -180) {
-              delta += 360;
-            }
-            const newRotate = startRotate + delta * t;
-            elements.value[i].rotate(newRotate - rotate);
-          } else {
-            const newRotate = startRotate + (endRotate - startRotate) * t;
-            elements.value[i].rotate(newRotate - rotate);
-          }
-
-        }
-        if (Math.abs(pos.x - endPos.x) > epsilon || Math.abs(pos.y - endPos.y) > epsilon) {
-          const newPosition = [startPos.x + (endPos.x - startPos.x) * t, startPos.y + (endPos.y - startPos.y) * t]
-          elements.value[i].position = newPosition;
-        }
+      if (Math.abs(opacity - endOpacity) > epsilon) {
+        el.opacity = opacity + (endOpacity - startOpacity) / 200
+      }
+      if (Math.abs(scaleX - endScaleX) > epsilon || Math.abs(scaleY - endScaleY) > epsilon) {
+        const newScaleX = startScaleX + (endScaleX - startScaleX) * t
+        const newScaleY = startScaleY + (endScaleY - startScaleY) * t
+        el.scaling = new paper.Point(newScaleX, newScaleY)
+      }
+      if (Math.abs(rotate - endRotate) > epsilon) {
+        let delta = endRotate - startRotate
+        if (delta > 180) delta -= 360
+        else if (delta < -180) delta += 360
+        const newRotate = startRotate + delta * t
+        el.rotate(newRotate - rotate)
+      } else {
+        const newRotate = startRotate + (endRotate - startRotate) * t
+        el.rotate(newRotate - rotate)
+      }
+      if (Math.abs(pos.x - endPos.x) > epsilon || Math.abs(pos.y - endPos.y) > epsilon) {
+        el.position = new paper.Point(
+          startPos.x + (endPos.x - startPos.x) * t,
+          startPos.y + (endPos.y - startPos.y) * t
+        )
       }
     }
   }
@@ -402,16 +434,17 @@ export const useAnimationStore = defineStore('animation', () => {
   // 提取replay逻辑为独立方法
   async function executeReplayStep() {
     const now_collage = progress_data.value[replayIdx.value].now_collage;
+    if (!now_collage) return
     const now_overview = progress_data.value[replayIdx.value].now_overview_idx;
-    process_id.value = progress_data.value[replayIdx.value].process_id;
-    collage_result_type.value = progress_data.value[replayIdx.value].collage_result_type;
+    process_id.value = progress_data.value[replayIdx.value].process_id??null;
+    collage_result_type.value = progress_data.value[replayIdx.value].collage_result_type??[];
 
     if (now_overview != now_overview_idx.value && now_overview_idx.value != totalOverview.value - 1) {
       nextOverview()
       return
     }
 
-    if (now_collage != now_collage_idx.value) {//进入下一个collage
+    if (now_collage && now_collage != now_collage_idx.value) {//进入下一个collage
       console.log('4')
       now_start_idx.value = elements.value.length
       setReplayData(replayIdx.value, now_collage, now_start_idx.value)
@@ -427,19 +460,21 @@ export const useAnimationStore = defineStore('animation', () => {
           dataType: 'marker',
           collage_idx: now_collage,
           onLoad: () => {
-            raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
+            const sx = widthArray.value[i] / raster.width
+            const sy = heightArray.value[i] / raster.height
+            raster.scale(sx, sy)
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true;
           },
-          onError: (e) => {
+          onError: (e: ErrorEvent) => {
             console.log('onError',e,raster)
           }
-        });
-        raster.onMouseEnter = (event: any) => {
+        }) as RasterWithProps
+        raster.onMouseEnter = (event: paper.Event) => {
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterHover(event, raster)
         }
-        raster.onMouseLeave = (event: any) => {
+        raster.onMouseLeave = (event: paper.Event) => {
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterOut(event, raster)
         }
@@ -465,19 +500,21 @@ export const useAnimationStore = defineStore('animation', () => {
           dataType: 'marker',
           collage_idx: now_collage,
           onLoad: () => {
-            raster.scale(new paper.Point(widthArray.value[i] / raster.width, heightArray.value[i] / raster.height));
+            const sx = widthArray.value[i] / raster.width
+            const sy = heightArray.value[i] / raster.height
+            raster.scale(sx, sy)
             raster.rotate(angleArray.value[i] * (180 / Math.PI))
             raster.imgLoaded = true
           },
-          onError: (e) => {
+          onError: (e: ErrorEvent) => {
             console.log('onError',e,raster)
           }
-        });
-        raster.onMouseEnter = (event: any) => {
+        }) as RasterWithProps
+        raster.onMouseEnter = (event: paper.Event) => {
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterHover(event, raster)
         }
-        raster.onMouseLeave = (event: any) => {
+        raster.onMouseLeave = (event: paper.Event) => {
           const hoverInfoPanelStore = useHoverInfoPanelStore()
           hoverInfoPanelStore.handleRasterOut(event, raster)
         }
@@ -496,7 +533,7 @@ export const useAnimationStore = defineStore('animation', () => {
           elements.value[i].startRotate = elements.value[i].matrix.rotation;
           elements.value[i].startScaleX = elements.value[i].matrix.scaling.x;
           elements.value[i].startScaleY = elements.value[i].matrix.scaling.y;
-          elements.value[i].endPos = new paper.Point(posArray.value[i]);
+          elements.value[i].endPos = new paper.Point(posArray.value[i][0], posArray.value[i][1]);
           elements.value[i].endRotate = angleArray.value[i] * (180 / Math.PI);
           elements.value[i].endScaleX = widthArray.value[i] / elements.value[i].width;
           elements.value[i].endScaleY = heightArray.value[i] / elements.value[i].height;
@@ -508,10 +545,10 @@ export const useAnimationStore = defineStore('animation', () => {
       }
 
       if (!markerAni.value) {
-        markerAni.value = (event) => {
-          markerAnimation(event, now_start_idx.value);
-        };
-        paper.view.on('frame', markerAni.value);
+        markerAni.value = (event: paper.Event) => {
+          markerAnimation(event, now_start_idx.value)
+        }
+        paper.view.on('frame', markerAni.value)
       }
     }
 

@@ -17,7 +17,7 @@ interface ContainerRecord {
 export const useContainerAnimationStore = defineStore('containerAnimation', () => {
   // 存储所有 container 记录
   const containerRecords = ref<ContainerRecord[]>([])
-  const shining_paths = ref<paper.Raster[]>([])
+  const shining_paths = ref<any[]>([])
   const collageSeriesStore = useCollageSeriesStore()
 
   // 添加 container 记录
@@ -90,7 +90,7 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
         dataType: 'container',
         initialized: false,
         changeRate: 0.2,
-        onError: (e) => {
+        onError: (e: any) => {
           console.log('onError', e)
         },
       })
@@ -106,9 +106,7 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
   // 清理 shining paths
   function clearShiningPaths() {
     shining_paths.value.forEach((path) => {
-      if (path && (path as any).remove) {
-        ;(path as any).remove()
-      }
+      path.remove();
     })
     shining_paths.value = []
   }

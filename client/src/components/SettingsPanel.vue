@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, defineProps, defineEmits, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 
@@ -114,7 +114,7 @@ const handleClose = () => emit('close')
           <el-radio-group
             :model-value="currentSlide?.orientation ?? 'free'"
             size="default"
-            @update:model-value="(v: Orientation) => { if (currentSlide) currentSlide.orientation = v }"
+            @update:model-value="(v: string | number | boolean | undefined) => { if (currentSlide && (v === 'free' || v === 'center')) currentSlide.orientation = v as Orientation }"
           >
             <el-radio value="free">free</el-radio>
             <el-radio value="center">center</el-radio>
@@ -132,7 +132,7 @@ const handleClose = () => emit('close')
             :min="60"
             :max="500"
             :step="1"
-            @update:model-value="(v:number) => { if (currentSlide) currentSlide.iterations = v }"
+            @update:model-value="(v: number | number[]) => { if (currentSlide) currentSlide.iterations = Array.isArray(v) ? v[0] ?? 150 : v }"
           />
         </div>
 
@@ -148,7 +148,7 @@ const handleClose = () => emit('close')
             :max="1000"
             :step="100"
             show-stops
-            @update:model-value="(v:number) => { if (currentSlide) currentSlide.render_size = v }"
+            @update:model-value="(v: number | number[]) => { if (currentSlide) currentSlide.render_size = Array.isArray(v) ? v[0] ?? 1000 : v }"
           />
         </div>
 
@@ -158,7 +158,7 @@ const handleClose = () => emit('close')
           <el-switch
             :model-value="currentSlide?.rotation ?? true"
             size="small"
-            @update:model-value="(v:boolean) => { if (currentSlide) currentSlide.rotation = v }"
+            @update:model-value="(v: string | number | boolean) => { if (currentSlide) currentSlide.rotation = Boolean(v) }"
           />
         </div>
 
@@ -168,7 +168,7 @@ const handleClose = () => emit('close')
           <el-switch
             :model-value="currentSlide?.hole ?? false"
             size="small"
-            @update:model-value="(v:boolean) => { if (currentSlide) (currentSlide as any).hole = v }"
+            @update:model-value="(v: string | number | boolean) => { if (currentSlide) (currentSlide as any).hole = Boolean(v) }"
           />
         </div>
 
@@ -183,7 +183,7 @@ const handleClose = () => emit('close')
             :min="0"
             :max="20"
             :step="1"
-            @update:model-value="(v:number) => { if (currentSlide) (currentSlide as any).margin = v }"
+            @update:model-value="(v: number | number[]) => { if (currentSlide) (currentSlide as any).margin = Array.isArray(v) ? v[0] ?? 0 : v }"
           />
         </div>
 
@@ -193,7 +193,7 @@ const handleClose = () => emit('close')
           <el-radio-group
             :model-value="currentSlide?.emitter_type ?? ''"
             size="default"
-            @update:model-value="(v: string) => { if (currentSlide) (currentSlide as any).emitter_type = v }"
+            @update:model-value="(v: string | number | boolean | undefined) => { if (currentSlide && typeof v === 'string') (currentSlide as any).emitter_type = v }"
           >
             <el-radio value="">空</el-radio>
             <el-radio value="1D">1D</el-radio>

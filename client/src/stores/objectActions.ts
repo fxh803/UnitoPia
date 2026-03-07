@@ -79,7 +79,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     }
     function updateActionBtnPosition() {
         const canvasInstance = canvasRef.value?.()
-        if (!currentPathObj.value) {
+        if (!currentPathObj.value || !canvasInstance) {
             return
         }
         // 获取画布的变换信息
@@ -103,12 +103,13 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     function deleteActiveObject() {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
-        if (isMultipleSelection.value) {
-            const objects = obj.getObjects()
+        if (!canvasInstance) return
+        if (isMultipleSelection.value && obj) {
+            const objects = (obj as Group).getObjects()
             canvasInstance.remove(...objects)
             canvasInstance.discardActiveObject()
             canvasInstance.renderAll()
-        } else if (obj && canvasInstance) {
+        } else if (obj) {
             canvasInstance.remove(obj)
             canvasInstance.discardActiveObject()
             canvasInstance.renderAll()
@@ -137,7 +138,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         // 检查是否为组对象（拆分组）
         if (isGroupMode.value) {
             // 使用removeAll()方法获取组中的所有对象并移除它们
-            const objects = activeObject.removeAll()
+            const objects = (activeObject as Group).removeAll()
             // 将对象重新添加到画布
             canvasInstance.add(...objects)
 
@@ -156,7 +157,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
             // 分组：检查是否为多选对象
             if (isMultipleSelection.value) {
                 // 获取所有选中的对象
-                const objects = activeObject.getObjects()
+                const objects = (activeObject as Group).getObjects()
 
                 // 从画布中移除原始对象
                 canvasInstance.remove(...objects)
@@ -164,7 +165,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
                 // 创建新的组，使用原始对象
                 const group = new Group(objects, {
                     dataType: selectedModeStore.selectedMode
-                })
+                } as any)
                 // 将组添加到画布
                 canvasInstance.add(group)
                 canvasInstance.setActiveObject(group)

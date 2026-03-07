@@ -2,19 +2,25 @@ import { defineStore, storeToRefs } from 'pinia'
 import { ref } from 'vue'
 import { useSelectedModeStore } from '~/stores/selectedMode'
 import { useBezierDrawingStore } from '~/stores/bezierDrawing'
-import { useBackgroundStore } from '~/stores/background'
 import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { useTableStore } from '~/stores/table'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
-import { useAnimationStore } from '~/stores/animation'
 import { Group } from 'fabric'
 import paper from 'paper'
 import { handleMarkerDropCanvas } from '~/composables/server'
-import { useMarkInstanceStore, type MarkInstance, type ColorStop } from '~/stores/markInstance'
-import { useMarkerStore } from '~/stores/marker'
+import {
+  useMarkInstanceStore,
+  type ColorStop,
+  type MarkEncodingChannel,
+  type MarkInstance,
+  type MarkEncoding,
+} from '~/stores/markInstance'
+import type { Canvas } from 'fabric'
 import * as fabric from 'fabric'
+import type { TableData } from '~/stores/table'
+
 export const useCanvasStore = defineStore('canvas', () => {
   const canvasRef = ref<(() => Canvas | null) | null>(null)
   const containerColor = ref([100, 100, 100, 0.8])
@@ -38,7 +44,6 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 导入其他 store
   const selectedModeStore = useSelectedModeStore()
   const bezierDrawingStore = useBezierDrawingStore()
-  const backgroundStore = useBackgroundStore()
   const canvasModeStore = useCanvasModeStore()
   const collageSeriesStore = useCollageSeriesStore()
   const objectActionsStore = useObjectActionsStore()
@@ -187,7 +192,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
         if (e.target && e.target.get('dataType') === 'emitter') {
           // emitter是group，需要遍历其中的子对象设置透明度
-          e.target.getObjects().forEach((childObj: any) => {
+          ((e.target as fabric.Group).getObjects()).forEach((childObj: fabric.FabricObject) => {
             childObj.set('opacity', 0.5)
           })
           canvasInstance.renderAll()
@@ -204,7 +209,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
         if (e.target && e.target.get('dataType') === 'emitter') {
           // emitter是group，需要遍历其中的子对象恢复透明度
-          e.target.getObjects().forEach((childObj: any) => {
+          ((e.target as fabric.Group).getObjects()).forEach((childObj: fabric.FabricObject) => {
             childObj.set('opacity', 1)
           })
           canvasInstance.renderAll()
@@ -235,7 +240,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     canvasInstance.off('mouse:move')
   }
 
-  function setDrawedObjectDataType(e) {
+  function setDrawedObjectDataType(e: { target?: fabric.FabricObject }) {
     // 监听绘制完成事件，为绘制的路径设置dataType
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
@@ -246,7 +251,7 @@ export const useCanvasStore = defineStore('canvas', () => {
       if (canvasModeStore.mode === 'bezier') {
         // 检查是否正在创建贝塞尔曲线，防止递归调用
         if (!bezierDrawingStore.isCreatingBezier) {
-          bezierDrawingStore.createBezierFromPath(path)
+          bezierDrawingStore.createBezierFromPath(path as fabric.Path)
         }
         return
       }
@@ -270,9 +275,9 @@ export const useCanvasStore = defineStore('canvas', () => {
     const objects = canvasInstance.getObjects()
 
     // 按 dataType 分组对象
-    const backgroundObjects = []
-    const containerObjects = []
-    const otherObjects = []
+    const backgroundObjects: fabric.FabricObject[] = []
+    const containerObjects: fabric.FabricObject[] = []
+    const otherObjects: fabric.FabricObject[] = []
 
     objects.forEach(obj => {
       const dataType = obj.get('dataType')
@@ -286,7 +291,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     })
     // 将 background 对象移动到最底层
     backgroundObjects.forEach(obj => {
-      canvasInstance.sendObjectToBack(obj, true)
+      canvasInstance.sendObjectToBack(obj)
     })
 
     // 将 container 对象移动到 background 之上，其他对象之下
@@ -294,7 +299,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     for (let i = containerObjects.length - 1; i >= 0; i--) {
       const obj = containerObjects[i]
       // 先移动到最底层
-      canvasInstance.sendObjectToBack(obj, true)
+      canvasInstance.sendObjectToBack(obj)
       // 然后根据 background 对象的数量，将 container 对象向前移动相应次数
       if (backgroundObjects.length > 0) {
         for (let j = 0; j < backgroundObjects.length; j++) {
@@ -383,10 +388,10 @@ export const useCanvasStore = defineStore('canvas', () => {
           p1: { x: number, y: number },
           p2: { x: number, y: number },
           p3: { x: number, y: number }
-        }> = []
+        }> = [];
 
         // 遍历 group 中的所有贝塞尔曲线段
-        obj.getObjects().forEach((groupObj: any) => {
+        (obj as fabric.Group).getObjects().forEach((groupObj: any) => {
           if (groupObj.type === 'path' && groupObj.path) {
             const path = groupObj.path
             if (Array.isArray(path)) {
@@ -616,7 +621,7 @@ export const useCanvasStore = defineStore('canvas', () => {
       const useCategorical = colorMode === 'categorical'
 
       if (useNumeric) {
-        const rawStops = (mark as any).colorStops as ColorStop[] | undefined
+        const rawStops = mark.colorStops
         const stops: ColorStop[] =
           rawStops && rawStops.length >= 2
             ? rawStops
@@ -636,7 +641,7 @@ export const useCanvasStore = defineStore('canvas', () => {
           opacities.push(opacity)
         }
       } else if (useCategorical) {
-        const categoricalColors = (mark as any).categoricalColors as Record<string, string> | undefined
+        const categoricalColors = mark.categoricalColors
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i]
           const value = row && fieldForEncoding in row ? row[fieldForEncoding] : undefined
@@ -657,12 +662,12 @@ export const useCanvasStore = defineStore('canvas', () => {
     if (dropOnEmitter) {
       pos = getEmitterSampledPoints(markerCount)
     } else {
-      const result = await handleMarkerDropCanvas([dropX, dropY], markerCount, null)
+      const result = await handleMarkerDropCanvas([dropX, dropY], markerCount)
       pos = (result.init_pos as Array<{ x: number; y: number }>) || []
     }
 
     for (let i = 0; i < pos.length; i++) {
-      const object = await fabric.util.enlivenObjects(mark.markerJsonData, 'fabric')
+      const object = await fabric.util.enlivenObjects(mark.markerJsonData) as fabric.FabricObject[]
       const group = new Group(object)
       group.set({
         left: pos[i].x,
@@ -776,7 +781,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     if (dropOnEmitter) {
       pos = getEmitterSampledPoints(totalEntities)
     } else {
-      const result = await handleMarkerDropCanvas([dropX, dropY], totalEntities, null)
+      const result = await handleMarkerDropCanvas([dropX, dropY], totalEntities)
       pos = (result.init_pos as Array<{ x: number; y: number }>) || []
     }
 
@@ -797,7 +802,7 @@ export const useCanvasStore = defineStore('canvas', () => {
       if (indices.length === 0) continue
 
       // 编码：group 子实例只使用自己的 encoding
-      const encoding = (child.encoding || {}) as any
+      const encoding: MarkEncoding = (child.encoding || {}) as MarkEncoding
       let channelKey: MarkEncodingChannel | null = null
       let fieldForEncoding: string | undefined
       let colorMode: 'numeric' | 'categorical' | undefined
@@ -810,11 +815,11 @@ export const useCanvasStore = defineStore('canvas', () => {
         fieldForEncoding = entries[0][1] as string
       }
 
-      const rows: any[] = []
+      const rows: (TableData | undefined)[] = []
       const values: number[] = []
 
       indices.forEach(idx => {
-        const row = tableStore.tableData[idx] as any
+        const row = tableStore.tableData[idx]
         rows.push(row)
         if (fieldForEncoding && row && row[fieldForEncoding] != null) {
           const v = Number(row[fieldForEncoding])
@@ -843,7 +848,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         const useCategorical = colorMode === 'categorical'
 
         if (useNumeric) {
-          const childColorStops = (child as any).colorStops as ColorStop[] | undefined
+          const childColorStops = child.colorStops
           const stops: ColorStop[] =
             childColorStops && childColorStops.length >= 2
               ? childColorStops
@@ -863,9 +868,7 @@ export const useCanvasStore = defineStore('canvas', () => {
             opacities.push(opacity)
           }
         } else if (useCategorical) {
-          const categoricalColors = (child as any).categoricalColors as
-            | Record<string, string>
-            | undefined
+          const categoricalColors = child.categoricalColors
           const defaultStops: ColorStop[] = [
             { position: 0, color: '#A7C8FB', opacity: 1 },
             { position: 1, color: '#5592F9', opacity: 1 },
@@ -893,7 +896,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         const p = pos[globalIndex]
         globalIndex += 1
 
-        const object = await fabric.util.enlivenObjects(child.markerJsonData, 'fabric')
+        const object = await fabric.util.enlivenObjects(child.markerJsonData) as fabric.FabricObject[]
         const group = new Group(object)
         group.set({
           left: p.x,
@@ -1155,7 +1158,7 @@ export const useCanvasStore = defineStore('canvas', () => {
 
   async function renderResult() { 
     const collageSeriesStore = useCollageSeriesStore()
-    const { overviews, currentOverviewIndex, currentSlideIndex } = storeToRefs(collageSeriesStore)
+    const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
     const currentOverview = overviews.value[currentOverviewIndex.value]
     if (currentOverview && currentOverview.collageSeries.length > 0) {
       const lastSlide = currentOverview.collageSeries[currentOverview.collageSeries.length - 1]
@@ -1164,10 +1167,8 @@ export const useCanvasStore = defineStore('canvas', () => {
         currentOverview.collageSeries.pop()  
       }
     }
-
+      
     collageSeriesStore.addNewSlide(true)
-    const animationStore = useAnimationStore()
-    const { process_id } = storeToRefs(animationStore)
     // 获取canvas实例
     const canvasInstance = canvasRef.value?.()
     if (canvasInstance) {
@@ -1188,14 +1189,14 @@ export const useCanvasStore = defineStore('canvas', () => {
         const markerId = `result_marker`
         const allPaperObjects = paper.project.activeLayer.children
         const markerIndices: number[] = []
-        allPaperObjects.forEach((obj, index) => {
-          if (obj.dataType === 'marker') {
+        allPaperObjects.forEach((obj: any, index) => {
+          if (obj && obj.dataType === 'marker') {
             markerIndices.push(index)
           }
         })
         console.log(markerIndices)
         // 将当前 paper.js 画布导出为 SVG
-        const paperSvgString = paper.project.exportSVG({ asString: true })
+        const paperSvgString = paper.project.exportSVG({ asString: true }) as string
 
         // 使用 Fabric.js 加载 SVG
         const loadedSVG = await fabric.loadSVGFromString(paperSvgString)
@@ -1287,7 +1288,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         // 如果有 container 对象，使用 enlivenObjects 处理
         if (containerJsonArray.length > 0) {
           try {
-            const enlivenedObjects = await fabric.util.enlivenObjects(containerJsonArray, 'fabric')
+            const enlivenedObjects = await fabric.util.enlivenObjects(containerJsonArray)
             if (enlivenedObjects && enlivenedObjects.length > 0) {
               allContainerObjects.push(...enlivenedObjects)
             }
@@ -1314,14 +1315,10 @@ export const useCanvasStore = defineStore('canvas', () => {
   removeCanvasEventListeners,
   setDrawedObjectDataType,
   adjustLayer,
-  // removeObjectsByMarkerId,
   isDropOnEmitter,
   getBezierApproxLength,
   calculateBezierPoint,
   getEmitterSampledPoints,
-  // addMarkers,
-  // handleEmitterDrop,
-  // handleMarkerDrop,
   handleDragOver,
     handleDrop,
   askToClosePath,

@@ -5,16 +5,12 @@ import ColorPicker from './ColorPicker.vue'
 import { storeToRefs } from 'pinia'
 import * as fabric from 'fabric'
 import { Canvas, Group } from 'fabric'
-import { useMarkerShapeDrawingStore } from '~/stores/markerShapeDrawing'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useMarkInstanceStore } from '~/stores/markInstance'
 
 const markerCanvasModeStore = useMarkerCanvasModeStore()
 const { mode } = storeToRefs(markerCanvasModeStore)
 const { setMode } = markerCanvasModeStore
-
-// 形状绘制store
-const markerShapeDrawingStore = useMarkerShapeDrawingStore()
 
 // Mark 实例 store（保存当前实例的 marker 可视化）
 const markInstanceStore = useMarkInstanceStore()
@@ -169,7 +165,8 @@ const addSVGToCanvas = async (svgString: string, fileName: string) => {
 
     // 使用 Fabric.js 加载 SVG
     const loadedSVG = await fabric.loadSVGFromString(svgString)
-    const svgObject = fabric.util.groupSVGElements(loadedSVG.objects)
+    const objects = loadedSVG.objects.filter((o): o is fabric.FabricObject => o != null)
+    const svgObject = fabric.util.groupSVGElements(objects)
 
     // 设置SVG对象属性
     svgObject.set({
@@ -214,6 +211,7 @@ const triggerFileUpload = () => {
 // 保存当前画布上的所有 marker 对象
 const saveMarkers = async () => {
   const canvasInstance = markerCanvasModeStore.getCanvas()
+  if (!canvasInstance) return
   // 获取画布上所有对象
   const allObjects = canvasInstance.getObjects()
   //新建一个fabricjs的group，将所有objectsgroup一起

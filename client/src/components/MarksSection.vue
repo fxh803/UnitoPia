@@ -51,7 +51,7 @@ function handleGroupValueChange(parentId: string, childId: string, value: string
   // 计算这个子实例对应的行索引
   const indices: number[] = []
   tableData.value.forEach((row, idx) => {
-    const raw = (row as Record<string, unknown>)[fieldName]
+    const raw = (row as Record<string, string | number | null>)[fieldName]
     if (raw == null) return
     const str = String(raw).trim()
     if (str === value) {
@@ -102,7 +102,7 @@ function handleAddGroupChild(parentId: string) {
   // 基于当前 fieldName 构建 value -> 行索引列表的映射
   const map = new Map<string, number[]>()
   tableData.value.forEach((row, idx) => {
-    const raw = (row as Record<string, unknown>)[fieldName]
+    const raw = (row as Record<string, string | number | null>)[fieldName]
     if (raw == null) return
     const str = String(raw).trim()
     if (!str) return
@@ -172,7 +172,7 @@ function handleFieldDropOnMark(e: DragEvent, markId: string) {
   if (!mark.isGroup) {
     const entityIndices: number[] = []
     tableData.value.forEach((row, idx) => {
-      const raw = (row as Record<string, unknown>)[fieldName]
+      const raw = (row as Record<string, string | number | null>)[fieldName]
       if (raw == null) return
       const str = String(raw).trim()
       if (!str) return
@@ -195,7 +195,7 @@ function handleFieldDropOnMark(e: DragEvent, markId: string) {
   if (mark.isGroup) {
     const map = new Map<string, number[]>()
     tableData.value.forEach((row, idx) => {
-      const raw = (row as Record<string, unknown>)[fieldName]
+      const raw = (row as Record<string, string | number | null>)[fieldName]
       if (raw == null) return
       const str = String(raw).trim()
       if (!str) return
@@ -283,7 +283,7 @@ function handleDrop(e: DragEvent) {
   if (!isGroup) {
     const entityIndices: number[] = []
     tableData.value.forEach((row, idx) => {
-      const raw = (row as Record<string, unknown>)[fieldName]
+      const raw = (row as Record<string, string | number | null>)[fieldName]
       if (raw == null) return
       const str = String(raw).trim()
       if (!str) return
@@ -307,7 +307,7 @@ function handleDrop(e: DragEvent) {
   if (isGroup) {
     const map = new Map<string, number[]>()
     tableData.value.forEach((row, idx) => {
-      const raw = (row as Record<string, unknown>)[fieldName]
+      const raw = (row as Record<string, string | number | null>)[fieldName]
       if (raw == null) return
       const str = String(raw).trim()
       if (!str) return

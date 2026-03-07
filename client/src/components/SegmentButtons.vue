@@ -4,7 +4,7 @@ import { useCanvasStore } from '~/stores/canvas'
 import { storeToRefs } from 'pinia'
 import { sendBackgroundToSegmentAll } from '~/composables/server'
 import { FabricImage } from 'fabric'
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, onBeforeUnmount } from 'vue'
 
 const canvasModeStore = useCanvasModeStore()
 const canvasStore = useCanvasStore()

@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
+import { ref } from 'vue'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
+import type { Canvas } from 'fabric'
 import { Rect, Ellipse } from 'fabric'
 
 export const useMarkerShapeDrawingStore = defineStore('markerShapeDrawing', () => {

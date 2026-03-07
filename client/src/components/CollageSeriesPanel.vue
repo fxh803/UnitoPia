@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useAnimationStore } from '~/stores/animation'
@@ -9,7 +9,7 @@ const selectedModeStore = useSelectedModeStore()
 
 const collageSeriesStore = useCollageSeriesStore()
 const animationStore = useAnimationStore()
-const { collageSeries, overviews, currentOverviewIndex, currentSlideIndex } = storeToRefs(collageSeriesStore)
+const { overviews, currentOverviewIndex, currentSlideIndex } = storeToRefs(collageSeriesStore)
 const { collaging, result_data } = storeToRefs(animationStore)
 const {
   handleCollageSeriesSelect,
@@ -52,11 +52,6 @@ function toggleSettings(overviewIdx: number, slideIdx: number, e?: MouseEvent) {
 
 // 总览收起状态 - 初始时所有总览都是收起的
 const collapsedOverviews = ref<Set<number>>(new Set())
-
-// 当前总览
-const currentOverview = computed(() => {
-  return overviews.value[currentOverviewIndex.value] || null
-})
 
 function handleClick(overviewIdx: number, slideIdx: number) {
   selectedModeStore.setSelectedMode(null)

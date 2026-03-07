@@ -145,8 +145,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const dataArray = objects.map((obj: any) => obj.get('data'))
         const origOpacityArray = objects.map((obj: any) => {
             // 如果有自定义的 _origOpacity，则优先使用，否则使用当前不透明度
-            const anyObj = obj as any
-            if (typeof anyObj._origOpacity === 'number') return anyObj._origOpacity as number
+            if (typeof obj._origOpacity === 'number') return obj._origOpacity
             const current = obj.opacity
             return typeof current === 'number' ? current : 1
         })
@@ -416,7 +415,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             render_size: 1000,
             rotation: true,
             hole: false,
-            orientation: 'free',
+            orientation: 'free' as 'free' | 'center',
             margin: 0,
             emitter_type: '',
             isResult: isResult
@@ -427,7 +426,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             // 查找结果 slide 的索引（结果必定在最后）
             const lastIndex = currentOverview.collageSeries.length - 1
             const lastSlide = currentOverview.collageSeries[lastIndex]
-            if (lastSlide && (lastSlide as any).isResult === true) {
+            if (lastSlide && lastSlide.isResult === true) {
                 // 如果最后一个 slide 是结果，在它之前插入
                 currentOverview.collageSeries.splice(lastIndex, 0, newSlide)
                 currentSlideIndex.value = lastIndex
@@ -515,11 +514,11 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             dataArray: [...(originalSlide.dataArray || [])],
             origOpacityArray: [...(originalSlide.origOpacityArray || [])],
             // 复制个性化设置
-            iterations: (originalSlide as any).iterations ?? 150,
-            render_size: (originalSlide as any).render_size ?? 1000,
-            rotation: (originalSlide as any).rotation ?? true,
-            hole: (originalSlide as any).hole ?? false,
-            orientation: (originalSlide as any).orientation ?? 'free'
+            iterations: originalSlide.iterations ?? 150,
+            render_size: originalSlide.render_size ?? 1000,
+            rotation: originalSlide.rotation ?? true,
+            hole: originalSlide.hole ?? false,
+            orientation: originalSlide.orientation ?? 'free'
         }
 
         // 在复制目标后面插入新幻灯片
@@ -612,7 +611,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             }
             if (origOpacityArray[index] !== undefined && origOpacityArray[index] !== null) {
                 const baseOpacity = origOpacityArray[index]
-                ;(obj as any)._origOpacity = baseOpacity
+                const extendedObj = obj as { _origOpacity?: number }
+                extendedObj._origOpacity = baseOpacity
                 obj.set('opacity', baseOpacity)
             }
         })

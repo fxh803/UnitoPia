@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref } from 'vue'
 import { useObjectColorPickerStore } from '~/stores/objectColorPicker'
 import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
 import { storeToRefs } from 'pinia' 

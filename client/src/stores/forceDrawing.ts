@@ -89,7 +89,8 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
       
       // 使用 Fabric.js v6 的新 API 加载 SVG
       const loadedSVG = await fabric.loadSVGFromString(svgString)
-      const svgObject = fabric.util.groupSVGElements(loadedSVG.objects)
+      const objects = loadedSVG.objects.filter((o): o is fabric.FabricObject => o != null)
+      const svgObject = fabric.util.groupSVGElements(objects)
       
              // 计算画布和SVG对象的尺寸比例
        const canvasWidth = canvasInstance.width!
@@ -146,8 +147,8 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
     if (!canvasInstance) return
 
     // 清理所有 fieldForce 类型的对象
-    canvasInstance.getObjects().forEach(obj => {
-      if (obj.forceType === 'fieldForce') {
+    canvasInstance.getObjects().forEach((obj: fabric.FabricObject) => {
+      if (obj.get('forceType') === 'fieldForce') {
         canvasInstance.remove(obj)
       }
     })
@@ -165,8 +166,8 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
     stopBlinkAnimation()
 
     // 清理所有 force 类型的对象
-    canvasInstance.getObjects().forEach(obj => {
-      if (obj.dataType === 'force') {
+    canvasInstance.getObjects().forEach((obj: fabric.FabricObject) => {
+      if (obj.get('dataType') === 'force') {
         canvasInstance.remove(obj)
       }
     })
@@ -216,8 +217,8 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
         }
 
         // 只对force类型的对象应用动画
-        canvasInstance.getObjects().forEach(obj => {
-          if (obj.dataType === 'force') {
+        canvasInstance.getObjects().forEach((obj: fabric.FabricObject) => {
+          if (obj.get('dataType') === 'force') {
             obj.set('opacity', opacity)
           }
         })
@@ -230,7 +231,7 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
       animationId.value = requestAnimationFrame(animate)
     }
 
-    animate()
+    animate(performance.now())
   }
 
   // 停止闪烁动画

@@ -235,10 +235,6 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
     markInstanceStore.updateMarkInstance(sel.markId, payload)
   }
 }
-
-function close() {
-  markInstanceStore.clearSelectedMarkForDetail()
-}
 </script>
 
 <template>

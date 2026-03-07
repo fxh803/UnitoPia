@@ -14,11 +14,6 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
     }>
   }>>([])
 
-  // 当前悬浮的 marker 对象
-  let currentMarker: any = null
-  // 当前悬浮的 raster 对象
-  let currentRaster: any = null
-
   // 处理 marker 悬浮
   function handleMarkerHover(e: any, canvasInstance: Canvas | null) {
     // 如果有选中的对象，忽略 hover
@@ -31,7 +26,6 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
     if (target && target.get('data')) {
       const data = target.get('data')
       if (data) {
-        currentMarker = target
         markerData.value = data
         showPanel.value = true
       }
@@ -47,14 +41,12 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
     }
     showPanel.value = false
     markerData.value = null
-    currentMarker = null
   }
 
   // 处理 raster 悬浮
   function handleRasterHover(event: any, raster: any) {
     if (!raster || !raster.dataBinding) return
 
-    currentRaster = raster
     // raster.dataBinding 是一个数组，格式为 Array<{ data: Array<any>, markerId: string }>
     // 我们需要将其转换为类似 marker data 的格式，或者直接使用 dataBinding
     markerData.value = raster.dataBinding
@@ -63,10 +55,9 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
 
   // 处理鼠标离开 raster
   function handleRasterOut(event: any, raster: any) {
-    if (raster && raster === currentRaster) {
+    if (raster) {
       showPanel.value = false
       markerData.value = null
-      currentRaster = null
     }
   }
 
@@ -82,7 +73,6 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
       if (activeObject.get('data')) {
         const data = activeObject.get('data')
         if (data) {
-          currentMarker = activeObject
           markerData.value = data
           showPanel.value = true
         }
@@ -94,7 +84,6 @@ export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
   function handleSelectionCleared() {
     showPanel.value = false
     markerData.value = null
-    currentMarker = null
   }
 
   return {

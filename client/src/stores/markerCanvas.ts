@@ -1,17 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { Canvas } from 'fabric'
-import { Canvas as FabricCanvas, Group } from 'fabric'
 import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
-
+import * as fabric from 'fabric'
 export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
   const canvasRef = ref<(() => Canvas | null) | null>(null)
   
   // 路径闭合确认对话框状态
   const closePathConfirm = ref<{
     show: boolean
-    path: any
+    path: fabric.FabricObject | null
     position: { x: number; y: number }
   }>({
     show: false,
@@ -21,50 +20,6 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
 
   // 是否暂时抑制路径闭合确认（例如从 JSON 批量恢复画布时）
   const suppressClosePath = ref(false)
-
-  // 实时预览图状态
-  const previewDataUrl = ref<string>('')
-  const previewGroup = ref<Group | null>(null)
-
-  // 更新预览图
-  async function updatePreview() {
-    const canvasInstance = canvasRef.value?.()
-    if (!canvasInstance) return
-
-    // 获取画布上的所有对象
-    const allObjects = canvasInstance.getObjects()
-    //新建一个fabricjs的group，将所有objectsgroup一起
-    const cloneObjects = await Promise.all(allObjects.map(async (obj) => {
-      return obj.clone()
-    }))
-    previewGroup.value = new Group(cloneObjects)
-    const tempCanvas = document.createElement('canvas')
-    tempCanvas.width = 60
-    tempCanvas.height = 60
-
-    const tempFabricCanvas = new FabricCanvas(tempCanvas, {
-      width: 60,
-      height: 60,
-      backgroundColor: '#fffef8'
-    })
-    const originWidth = previewGroup.value.width
-    const originHeight = previewGroup.value.height
-    // 计算缩放比例，确保对象适合缩略图 
-    const scaleX = 50 / Math.max(originWidth, 1)
-    const scaleY = 50 / Math.max(originHeight, 1)
-    const scale = Math.min(scaleX, scaleY, 1) // 不超过原始大小
-    //把克隆对象放到画布正中央，做好缩放，并导出给previewDataUrl
-    previewGroup.value.set('left', 30)
-    previewGroup.value.set('top', 30)
-    previewGroup.value.set('scaleX', scale)
-    previewGroup.value.set('scaleY', scale)
-    previewGroup.value.set('originX', 'center')
-    previewGroup.value.set('originY', 'center')
-    previewGroup.value.set('opacity', 1)
-    tempFabricCanvas.add(previewGroup.value)
-    tempFabricCanvas.renderAll()
-    previewDataUrl.value = tempFabricCanvas.toDataURL({ format: 'png', multiplier: 1, enableRetinaScaling: false as any })
-  }
 
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
@@ -86,8 +41,6 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
 
     canvasInstance.on({
       'object:added': (e) => {
-        updatePreview()
-        
         // 确保新添加的对象不可选（除非当前模式是 move）
         // 如果当前模式是 move，会根据对象类型在 markerCanvasModeStore.setMode 中设置
         if (markerCanvasModeStore.mode !== 'move') {
@@ -124,10 +77,6 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
         markerObjectActionsStore.setCurrentPathObj()
         markerObjectActionsStore.updateActionBtnVisble()
         markerObjectActionsStore.updateActionBtnPosition()
-        updatePreview()
-      },
-      'object:removed': () => {
-        updatePreview()
       }
     })
   }
@@ -145,7 +94,6 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     canvasInstance.off('object:scaling')
     canvasInstance.off('object:rotating')
     canvasInstance.off('object:modified')
-    canvasInstance.off('object:removed')
   }
 
   // 获取路径的起点和终点
@@ -269,11 +217,9 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
   return {
     canvasRef,
     closePathConfirm,
-    previewDataUrl,
     setCanvas,
     addMarkerCanvasEventListeners,
     removeMarkerCanvasEventListeners,
-    updatePreview,
     askToClosePath,
     handleClosePathConfirm,
     setSuppressClosePath

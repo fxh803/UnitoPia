@@ -83,7 +83,7 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
     if (!canvasInstance) return
 
     // 检查是否已存在 emitter，如果存在则先清除
-    const existingEmitter = canvasInstance.getObjects().find(obj => obj.dataType === 'emitter')
+    const existingEmitter = canvasInstance.getObjects().find((obj: fabric.FabricObject) => obj.get('dataType') === 'emitter')
     if (existingEmitter) {
       canvasInstance.remove(existingEmitter)
       canvasInstance.renderAll()
@@ -120,7 +120,7 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
         selectable: false,
         evented: false,
         hasControls: false
-      })
+      } as any)
       
       // 将group添加到画布
       canvasInstance.add(bezierGroup) 
@@ -160,9 +160,9 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
         offset -= pixelsPerFrame
         
         // 只对emitter类型的对象应用动画
-        canvasInstance.getObjects().forEach(obj => {
-          if (obj.dataType === 'emitter') {
-            obj.getObjects().forEach((groupObj: any) => {
+        canvasInstance.getObjects().forEach((obj: fabric.FabricObject) => {
+          if (obj.get('dataType') === 'emitter') {
+            (obj as fabric.Group).getObjects().forEach((groupObj: fabric.FabricObject) => {
               if (groupObj.type === 'path') {
                 groupObj.set('strokeDashOffset', offset)
               }
@@ -178,7 +178,7 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
       animationId.value = requestAnimationFrame(animate)
     }
 
-    animate()
+    animate(performance.now())
   }
 
   // 停止虚线动画
@@ -198,8 +198,8 @@ export const useBezierDrawingStore = defineStore('bezierDrawing', () => {
     stopDashAnimation()
 
     // 清理所有绘制的线条
-    canvasInstance.getObjects().forEach(obj => {
-      if (obj.dataType === 'emitter') {
+    canvasInstance.getObjects().forEach((obj: fabric.FabricObject) => {
+      if (obj.get('dataType') === 'emitter') {
         canvasInstance.remove(obj)
       }
     })

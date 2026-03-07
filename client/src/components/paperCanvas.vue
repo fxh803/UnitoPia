@@ -4,6 +4,12 @@ import paper from 'paper'
 import { useBackgroundStore } from '~/stores/background'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useAnimationStore } from '~/stores/animation'
+
+/** 带 dataType 的 Raster（paper.Raster 扩展） */
+interface RasterWithDataType extends paper.Raster {
+  dataType?: string
+}
+
 const animationStore = useAnimationStore()
 const paperCanvasRef = ref<HTMLCanvasElement | null>(null)
 const backgroundStore = useBackgroundStore()
@@ -12,17 +18,18 @@ const size = ref(0)
 function updateBackground() {
     //先删除现有背景
     const objects = paper.project.activeLayer.children
-    objects.forEach(obj => {
-        if (obj.dataType === 'background') {
-            obj.remove()
-        }
+    objects.forEach((obj: any) => {
+      if (obj && obj.dataType === 'background') {
+        obj.remove()
+      }
     })
     //这里只更新激活的overview的background，不会跟据动画改变背景
     const currentOverview = collageSeriesStore.overviews[collageSeriesStore.currentOverviewIndex]
     const overviewId = currentOverview?.overviewId 
     // 如果background存在，绘制到画布上
-    if (backgroundStore.getCurrentOverviewBackground(overviewId)) {
-        const backgroundImage = new paper.Raster(backgroundStore.getCurrentOverviewBackground(overviewId));
+    const bg = backgroundStore.getCurrentOverviewBackground(overviewId)
+    if (bg) {
+        const backgroundImage = new paper.Raster(bg) as RasterWithDataType
         backgroundImage.onLoad = () => {
             // 计算合适的缩放比例，使图片完全适应画布
             const scaleX = size.value / backgroundImage.width;
@@ -35,25 +42,24 @@ function updateBackground() {
             backgroundImage.dataType = 'background'
             // 将背景图片添加到画布并置于最底层
             backgroundImage.sendToBack();
-
-            // 重新渲染画布
-            paper.view.draw();
         };
     }
 }
 onMounted(() => {
     nextTick(() => {
         // 绑定 Paper.js 到 canvas
-        paper.setup(paperCanvasRef.value);
+        paper.setup(paperCanvasRef.value as HTMLCanvasElement);
         const canvasSize = document.querySelector('.canvas-wrapper')?.getBoundingClientRect()
-        const width = Math.floor(canvasSize.width);
-        const height = Math.floor(canvasSize.height);
+        const width = Math.floor(canvasSize?.width ?? 0);
+        const height = Math.floor(canvasSize?.height ?? 0);
         // 保证宽高比 1:1
         size.value = Math.min(width, height);
-        paperCanvasRef.value.width = size.value
-        paperCanvasRef.value.height = size.value
-        paper.view.viewSize = new paper.Size(size.value, size.value); 
-        updateBackground()
+        if (paperCanvasRef.value) {
+            paperCanvasRef.value.width = size.value
+            paperCanvasRef.value.height = size.value
+            paper.view.viewSize = new paper.Size(size.value, size.value); 
+            updateBackground()
+        }
     });
 });
 watch(() => animationStore.now_overview_idx,
@@ -64,12 +70,6 @@ watch(() => animationStore.now_overview_idx,
 onUnmounted(() => {
     // 销毁paper
     if (paper.view) {
-        // 移除所有事件监听器
-        paper.view.off('frame')
-        paper.view.off('mousedown')
-        paper.view.off('mousemove')
-        paper.view.off('mouseup')
-        paper.view.off('click')
 
         // 清除所有图层和对象
         paper.project.clear()
@@ -82,9 +82,6 @@ onUnmounted(() => {
     if (paper.project) {
         paper.project.remove()
     }
-
-    // 重置paper到初始状态
-    paper.setup(null)
 })
 </script>
 

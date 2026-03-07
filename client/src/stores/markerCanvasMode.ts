@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { Canvas } from 'fabric'
 import { useColorPickerStore } from '~/stores/colorpicker'
 import { useBrushSizeStore } from '~/stores/brushsize'
 import { useMarkerCanvasStore } from '~/stores/markerCanvas'

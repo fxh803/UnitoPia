@@ -1,32 +1,29 @@
 import { useCollageSeriesStore } from '~/stores/collageSeries'
-import { Canvas, FabricImage } from 'fabric'
+import { Canvas } from 'fabric'
 import * as fabric from 'fabric'
 import { storeToRefs } from 'pinia'
 import { useAnimationStore } from '~/stores/animation'
 import { useSelectedModeStore } from '~/stores/selectedMode'
-import { useMarkerStore } from '~/stores/marker'
-import { useCanvasModeStore } from '~/stores/canvasMode'
 import { useCanvasStore } from '~/stores/canvas'
 import { useContainerAnimationStore } from '~/stores/containerAnimation'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 import { useMarkInstanceStore } from '~/stores/markInstance'
-import { ElMessage } from 'element-plus'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
     thumbnail: string
     markerId: string
     pos: Array<{ x: number, y: number }>
-    width: number[]
-    height: number[]
-    angle: number[] // 弧度制
+    widths: number[]
+    heights: number[]
+    angles: number[] // 弧度制
     colors: string[] | null // 颜色数组，如果映射是color则收集，否则为null
   }> // base64 字符串数组
   container: string // 整个画布的 base64（隐藏除 container 元素以外的对象）
   emitter: Array<{ x: number; y: number }>
   forces: Array<{
     type: 'pointForce' | 'fieldForce'
-    coordinates?: Array<{ x: number; y: number }> // pointForce 的坐标
+    coordinates?: { x: number; y: number } // pointForce 的坐标
     rotation?: number // fieldForce 的旋转角度
   }>
   dataBinding: Array<{ data: Array<any>, markerId: string}>
@@ -72,16 +69,18 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         const result: ProcessedData = {
           markers: [],
           container: '',
-          emitter: null,
-          forces: []
+          emitter: [],
+          forces: [],
+          dataBinding: []
         }
         const canvas = collageSeriesStore.canvasRef?.()
+        if (!canvas) continue
         //新建临时画布
         // 画布大小与原fabric画布一致
         const originalWidth = canvas.width
         const originalHeight = canvas.height
 
-        const tempCanvas = new Canvas(null, {
+        const tempCanvas = new Canvas(undefined, {
           width: originalWidth,
           height: originalHeight
         })
@@ -261,9 +260,9 @@ function processMarker(tempCanvas: Canvas) {
       thumbnail,
       markerId,
       pos: positions,
-      width: widths,
-      height: heights,
-      angle: angles,
+      widths,
+      heights,
+      angles,
       colors: hasColorMapping ? colors : null
     })
   }
@@ -317,8 +316,9 @@ function processEmitter(tempCanvas: Canvas) {
   for (const obj of canvasObjects) {
     if (obj.get('dataType') === 'emitter') {
       const addedPoints = new Set<string>() // 用于去重
-      // 遍历 group 中的所有对象
-      obj.getObjects().forEach((groupObj: any) => {
+      // 遍历 group 中的所有对象（此处 obj 一定是 Group）
+      const group = obj as fabric.Group
+      group.getObjects().forEach((groupObj: any) => {
         if (groupObj.type === 'path' && groupObj.path) {
           // 解析路径数据，提取控制点
           const path = groupObj.path
@@ -361,7 +361,7 @@ function processEmitter(tempCanvas: Canvas) {
 function processForce(tempCanvas: Canvas) {
   const forces: Array<{
     type: 'pointForce' | 'fieldForce'
-    coordinates?: Array<{ x: number; y: number }> // pointForce 的坐标
+    coordinates?: { x: number; y: number } // pointForce 的坐标
     rotation?: number // fieldForce 的旋转角度
   }> = []
   const canvasObjects = tempCanvas.getObjects()
@@ -445,7 +445,7 @@ function processDataBinding(tempCanvas: Canvas) {
 // 轮询处理状态的函数
 async function startProgressTimer() {
   const animationStore = useAnimationStore()
-  const { process_id, progress_data, result_data ,now_overview_idx, collage_result_type, now_collage_idx, txtArray } = storeToRefs(animationStore)
+  const { process_id, progress_data, result_data ,now_overview_idx, collage_result_type } = storeToRefs(animationStore)
   try {
     const response = await fetch(`${ip}/fetchProgressApi?id=` + process_id.value)
     if (response.ok) {
@@ -468,13 +468,12 @@ async function startProgressTimer() {
 }
 
 export async function sendDataToServer(): Promise<boolean> {
-  const progressTimer = ref(null)
+  const progressTimer = ref<ReturnType<typeof setInterval> | null>(null)
   const animationStore = useAnimationStore()
   const { process_id, collage_result_type, canvas_width, canvas_height, collaging, totalOverview, now_overview_idx } = storeToRefs(animationStore)
   const selectedModeStore = useSelectedModeStore()
   const fetchInterval = 500
   try {
-    animationStore.ip = ip
     // 设置系统为拼贴处理状态
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
@@ -516,6 +515,7 @@ export async function sendDataToServer(): Promise<boolean> {
       process_id.value = time.toString()
       const collageSeriesStore = useCollageSeriesStore()
       const canvas = collageSeriesStore.canvasRef?.()
+      if (!canvas) break
       const originalWidth = canvas.width
       const originalHeight = canvas.height
       canvas_width.value = originalWidth
@@ -568,7 +568,9 @@ export async function sendDataToServer(): Promise<boolean> {
     console.error('发送数据时出错:', error)
     // 出错时也要停止拼贴处理状态
     collaging.value = false
-    clearInterval(progressTimer.value)
+    if (progressTimer.value) {
+      clearInterval(progressTimer.value)
+    }
     return false
   }
 }
@@ -649,7 +651,7 @@ export async function sendBackgroundToSegmentAll(canvas: Canvas | null): Promise
     const originalWidth = canvas.width
     const originalHeight = canvas.height
 
-    tempCanvas = new Canvas(null, {
+    tempCanvas = new Canvas(undefined, {
       width: originalWidth,
       height: originalHeight
     })
@@ -739,7 +741,7 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
     const originalWidth = canvas.width
     const originalHeight = canvas.height
 
-    tempCanvas = new Canvas(null, {
+    tempCanvas = new Canvas(undefined, {
       width: originalWidth,
       height: originalHeight
     })
@@ -819,6 +821,7 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
 export async function handleMarkerDropCanvas(pos: [number,number], num: number) {
   const collageSeriesStore = useCollageSeriesStore()
   const canvas = collageSeriesStore.canvasRef?.()
+  if (!canvas) return
   const container = processContainer(canvas) 
   const response = await fetch(`${ip}/markerDropApi`, {
     method: 'POST',

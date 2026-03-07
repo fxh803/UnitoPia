@@ -44,7 +44,6 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
     }
 
     function updateActionBtnVisble() {
-        const canvasInstance = canvasRef.value?.()
         showDeleteBtn.value = true
         showClosePathBtn.value = true
         showGroupBtn.value = true
@@ -73,7 +72,7 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
 
     function updateActionBtnPosition() {
         const canvasInstance = canvasRef.value?.()
-        if (!currentPathObj.value) {
+        if (!currentPathObj.value || !canvasInstance) {
             return
         }
 
@@ -99,13 +98,13 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
     function deleteActiveObject() {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
-        
-        if (isMultipleSelection.value) {
-            const objects = obj.getObjects()
+        if (!canvasInstance) return
+        if (isMultipleSelection.value && obj) {
+            const objects = (obj as Group).getObjects()
             canvasInstance.remove(...objects)
             canvasInstance.discardActiveObject()
             canvasInstance.renderAll()
-        } else if (obj && canvasInstance) {
+        } else if (obj) {
             canvasInstance.remove(obj)
             canvasInstance.discardActiveObject()
             canvasInstance.renderAll()
@@ -134,7 +133,7 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
         // 检查是否为组对象（拆分组）
         if (isGroupMode.value) {
             // 使用removeAll()方法获取组中的所有对象并移除它们
-            const objects = activeObject.removeAll()
+            const objects = (activeObject as Group).removeAll()
             // 将对象重新添加到画布
             canvasInstance.add(...objects)
 
@@ -153,7 +152,7 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
             // 分组：检查是否为多选对象
             if (isMultipleSelection.value) {
                 // 获取所有选中的对象
-                const objects = activeObject.getObjects()
+                const objects = (activeObject as Group).getObjects()
 
                 // 从画布中移除原始对象
                 canvasInstance.remove(...objects)
@@ -207,7 +206,7 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
 
         if (isMultipleSelection.value) {
             // 多选对象：将所有对象移到前面
-            const objects = activeObject.getObjects()
+            const objects = (activeObject as Group).getObjects()
             objects.forEach((obj: any) => {
                 canvasInstance.bringObjectForward(obj)
             })
@@ -231,7 +230,7 @@ export const useMarkerObjectActionsStore = defineStore('markerObjectActions', ()
 
         if (isMultipleSelection.value) {
             // 多选对象：将所有对象移到后面
-            const objects = activeObject.getObjects()
+            const objects = (activeObject as Group).getObjects()
             objects.forEach((obj: any) => {
                 canvasInstance.sendObjectBackwards(obj)
             })

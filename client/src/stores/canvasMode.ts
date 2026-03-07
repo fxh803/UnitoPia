@@ -1,29 +1,25 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import type { Canvas } from 'fabric'
 import { useSelectedModeStore } from '~/stores/selectedMode'
-import { useColorPickerStore } from '~/stores/colorpicker'
 import { useBrushSizeStore } from '~/stores/brushsize'
-import { useBezierDrawingStore } from '~/stores/bezierDrawing'
-import { useForceDrawingStore } from '~/stores/forceDrawing'
-import { useBackgroundStore } from '~/stores/background'
 import { useCanvasStore } from '~/stores/canvas'
 export const useCanvasModeStore = defineStore('canvasMode', () => {
   const mode = ref<'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force' | 'segmentPoint' | null>(null)
   const canvasRef = ref<(() => Canvas | null) | null>(null)
   // 导入其他 store
   const selectedModeStore = useSelectedModeStore()
-  const colorPickerStore = useColorPickerStore()
   const brushSizeStore = useBrushSizeStore()
-  const bezierDrawingStore = useBezierDrawingStore()
-  const forceDrawingStore = useForceDrawingStore()
-  const backgroundStore = useBackgroundStore()
-  const canvasStore = useCanvasStore()
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
     canvasRef.value = canvas
   }
 
-  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force' | 'segmentPoint') {
+  function setMode(m: 'draw' | 'move' | 'erase' | 'rect' | 'ellipse' | 'bezier' | 'force' | 'segmentPoint' | null) {
+    if (m === null) {
+      mode.value = null
+      return
+    }
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
 

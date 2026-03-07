@@ -96,7 +96,7 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
     canvasInstance.add(fabricImg)
     
     // 将背景图片移动到最底层
-    canvasInstance.sendObjectToBack(fabricImg, true)
+    canvasInstance.sendObjectToBack(fabricImg)
     //保证当前幻灯片的缩略图更新
     updateCurrentSlide()
     // 重新渲染画布

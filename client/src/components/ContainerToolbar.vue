@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useCanvasModeStore } from '~/stores/canvasMode'
-import { useSelectedModeStore } from '~/stores/selectedMode'
 import { storeToRefs } from 'pinia'
 import { FabricImage } from 'fabric'
 import { sendUploadContainerToServer } from '~/composables/server'
@@ -9,7 +8,6 @@ const canvasModeStore = useCanvasModeStore()
 const { mode } = storeToRefs(canvasModeStore)
 const { setMode } = canvasModeStore
 
-const selectedModeStore = useSelectedModeStore()
 
 // 画笔大小 store
 const brushSizeStore = useBrushSizeStore()
