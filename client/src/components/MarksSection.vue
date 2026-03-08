@@ -571,7 +571,7 @@ function handleDragLeave(e: DragEvent) {
               <div
                 v-for="child in mark.children"
                 :key="child.id"
-                class="flex items-center gap-2 bg-white rounded-xl border border-[var(--border-color)] px-3 py-1.5 cursor-pointer hover:bg-[#f0e8e6] transition-colors"
+                class="group flex items-center gap-2 bg-white rounded-xl border border-[var(--border-color)] px-3 py-1.5 cursor-pointer hover:bg-[#f0e8e6] transition-colors"
                 role="button"
                 tabindex="0"
                 @click.stop="openMarkChildDetail(mark.id, child.id)"
@@ -600,7 +600,7 @@ function handleDragLeave(e: DragEvent) {
 
                 <!-- 子实例右侧：字段 pill（大小与父一致），内部包含筛选下拉 -->
                 <div
-                  class="group relative px-4 py-1 rounded-full text-[13px] flex items-center gap-2 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)] cursor-auto"
+                  class="group relative px-3 py-1 rounded-full text-[13px] flex items-center gap-1 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)] cursor-auto"
                 >
                   <span class="text-[12px] text-[var(--text-muted)]">
                     {{ mark.fieldType === 'numeric' ? '#' : 'abc' }}
@@ -611,7 +611,7 @@ function handleDragLeave(e: DragEvent) {
                   <div class="flex-1" />
                   <div class="relative  flex-shrink-0">
                     <select
-                      class="appearance-none pl-2 pr-5 py-1 rounded-full bg-[#f0e8e6] border font-bold border-[var(--border-color)] text-[11px] text-[var(--text-muted)] max-w-[66px] cursor-pointer truncate"
+                      class="appearance-none pl-2 pr-2 py-1 rounded-full bg-[#f0e8e6] border font-bold border-[var(--border-color)] text-[11px] text-[var(--text-muted)] max-w-[66px] cursor-pointer truncate"
                       :value="child.selectedValue || ''"
                       @click.stop
                       @change="handleGroupValueChange(mark.id, child.id, ($event.target as HTMLSelectElement).value)"
@@ -639,10 +639,10 @@ function handleDragLeave(e: DragEvent) {
                 <!-- 删除子实例按钮：圆形叉号 -->
                 <button
                   type="button"
-                  class="ml-1 flex items-center justify-center w-5 h-5 rounded-full border border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--title-color)] hover:bg-[var(--border-color)]/10 cursor-pointer transition-colors"
+                  class=" flex items-center justify-center w-4 h-4 rounded text-[var(--text-muted)] hover:text-[var(--title-color)] hover:bg-[var(--border-color)]/10 cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
                   @click.stop="handleRemoveGroupChild(mark.id, child.id)"
                 >
-                  <span class="i-carbon-close text-xs leading-none" />
+                  <span class="i-carbon-close text-xs w-4 h-4 leading-none" />
                 </button>
               </div>
 
