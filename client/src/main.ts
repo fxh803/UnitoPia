@@ -4,6 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { routes } from 'vue-router/auto-routes'
 import App from './App.vue'
 import { useMarkerStore } from '~/stores/marker'
+import { useContainerStore } from '~/stores/container'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import VxeUIAll from 'vxe-pc-ui'
@@ -25,6 +26,7 @@ const router = createRouter({
 })
 app.use(pinia)
 useMarkerStore().loadPreloadedMarks()
+useContainerStore().loadPreloadedContainers()
 app.use(VxeUIAll)
 app.use(VxeUITable)
 app.use(router)

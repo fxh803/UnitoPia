@@ -295,8 +295,8 @@ async function handleContainerFileSelect(e: Event) {
         </button>
 
         <!-- Mark 内容：已上传的 Mark + 上传入口 -->
-        <div v-show="isMarkExpanded" class="mt-2 max-h-[280px] overflow-y-auto">
-          <div class="flex flex-wrap gap-3">
+        <div v-show="isMarkExpanded" class="mt-2 max-h-[260px] overflow-y-auto">
+          <div class="flex flex-wrap gap-x-3 gap-y-0.5">
             <!-- 已上传 Mark 卡片 -->
             <button
               v-for="marker in markerStore.markers"
@@ -314,7 +314,7 @@ async function handleContainerFileSelect(e: Event) {
                   class="w-full h-full object-contain"
                 >
               </div>
-              <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-center">
+              <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-left">
                 {{ marker.name || 'Marker' }}
               </span>
             </button>
@@ -366,8 +366,8 @@ async function handleContainerFileSelect(e: Event) {
         </button>
 
         <!-- Container 内容：已上传的 Container + 上传入口 -->
-        <div v-show="isContainerExpanded" class="mt-2 max-h-[280px] overflow-y-auto">
-          <div class="flex flex-wrap gap-3">
+        <div v-show="isContainerExpanded" class="mt-2 max-h-[260px] overflow-y-auto">
+          <div class="flex flex-wrap gap-x-3 gap-y-0.5">
             <!-- 已上传 Container 卡片 -->
             <button
               v-for="item in containerStore.containers"
@@ -385,7 +385,7 @@ async function handleContainerFileSelect(e: Event) {
                   class="w-full h-full object-contain"
                 >
               </div>
-              <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-center">
+              <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-left">
                 {{ item.name }}
               </span>
             </button>
