@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTableStore } from '~/stores/table'
 import TableDataView from './TableData.vue'
@@ -15,6 +15,7 @@ const draggingFieldKey = ref<string | null>(null)
 
 const fileInput = ref<HTMLInputElement>()
 const isDragOver = ref(false)
+const presetDropdownVisible = ref(false)
 
 // 根据列数据推断类型前缀：# 数值型，abc 分类型/文本
 function getFieldPrefix(column: string): string {
@@ -110,6 +111,27 @@ function handleFileSelect(e: Event) {
 function clearData() {
   tableStore.clearTableData()
 }
+
+/** 预制数据：public/csv 下可直接加载的 CSV */
+const PRESET_DATA = [
+  { url: '/csv/nobel_prize.csv', name: 'Nobel_Prize' },
+  { url: '/csv/paralympics_2024_medal_table.csv', name: 'Paralympics_2024_Medal' },
+]
+
+function loadPreset(item: { url: string; name: string }) {
+  presetDropdownVisible.value = false
+  tableStore.loadFromUrl(item.url, item.name)
+}
+
+// 点击外部关闭「更多」下拉
+watch(presetDropdownVisible, (visible) => {
+  if (!visible) return
+  const close = () => {
+    presetDropdownVisible.value = false
+    document.removeEventListener('click', close)
+  }
+  nextTick(() => setTimeout(() => document.addEventListener('click', close), 0))
+})
 </script>
 
 <template>
@@ -138,9 +160,33 @@ function clearData() {
         />
       </button>
 
-      <!-- 无数据：显示 Data 文本 -->
+      <!-- 无数据：Data 标题 + 更多（预制数据下拉） -->
       <template v-if="tableData.length === 0">
         <span class="text-[16px] font-semibold text-[var(--title-color)]">Data</span>
+        <div class="relative transform translate-y-0.5">
+          <button
+            type="button"
+            class="p-0.5 rounded hover:bg-[var(--border-color)]/20 text-[var(--text-muted)] cursor-pointer"
+            title="预设数据"
+            @click.stop="presetDropdownVisible = !presetDropdownVisible"
+          >
+            <span class="i-carbon:ibm-cloud-vpc-file-storage w-4.2 h-4.2 block" />
+          </button>
+          <div
+            v-show="presetDropdownVisible"
+            class="absolute left-0 top-full mt-1 py-1 min-w-[160px] rounded-lg border border-[var(--border-color)] bg-[var(--primary-light-color)] shadow-lg z-50"
+          >
+            <button
+              v-for="item in PRESET_DATA"
+              :key="item.url"
+              type="button"
+              class="w-full px-3 py-2 text-left text-[13px] text-[var(--title-color)] hover:bg-[var(--border-color)]/20 transition-colors"
+              @click="loadPreset(item)"
+            >
+              {{ item.name }}
+            </button>
+          </div>
+        </div>
       </template>
 
       <!-- 有数据：显示 Tabs + 清空按钮 -->

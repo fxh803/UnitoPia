@@ -35,6 +35,52 @@ export const useTableStore = defineStore('table', () => {
     return result
   }
 
+  const maxRows = 300 // 限制最大行数
+
+  /** 从 CSV 文本解析出 data 和 columns */
+  const parseCSVText = (text: string): { data: TableData[]; headers: string[] } => {
+    const lines = text.split('\n').filter(line => line.trim())
+    if (lines.length === 0) return { data: [], headers: [] }
+    const headers = parseCSVLine(lines[0])
+    const data: TableData[] = []
+    const rowsToProcess = Math.min(lines.length - 1, maxRows)
+    for (let i = 1; i <= rowsToProcess; i++) {
+      const values = parseCSVLine(lines[i])
+      const row: TableData = {}
+      headers.forEach((header, index) => {
+        row[header] = values[index] || ''
+      })
+      data.push(row)
+    }
+    return { data, headers }
+  }
+
+  /** 从 URL 加载预制 CSV（如 public/csv/xxx.csv） */
+  const loadFromUrl = async (url: string, displayName: string) => {
+    try {
+      isLoading.value = true
+      const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+      const fullUrl = url.startsWith('/') ? base + url : base + '/' + url
+      const res = await fetch(fullUrl)
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const text = await res.text()
+      const { data, headers } = parseCSVText(text)
+      if (headers.length === 0 || data.length === 0) {
+        ElMessage.error('CSV is empty')
+        return
+      }
+      tableData.value = data
+      tableColumns.value = headers
+      fileName.value = displayName
+      ElMessage.success(`Loaded ${displayName}, ${data.length} rows`)
+    } catch (error) {
+      ElMessage.error('Failed to load preset data')
+      console.error('Load CSV from URL error:', error)
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   // 处理文件上传
   const handleFileUpload = async (file: File) => {
     if (!file.name.toLowerCase().endsWith('.csv')) {
@@ -45,34 +91,18 @@ export const useTableStore = defineStore('table', () => {
     try {
       isLoading.value = true
       const text = await file.text()
-      const lines = text.split('\n').filter(line => line.trim())
+      const { data, headers } = parseCSVText(text)
 
-      if (lines.length === 0) {
+      if (headers.length === 0 || data.length === 0) {
         ElMessage.error('CSV file is empty')
         return
       }
 
-      // 解析 CSV
-      const headers = parseCSVLine(lines[0])
-      const data: TableData[] = []
-      const maxRows = 300 // 限制最大行数
-      const rowsToProcess = Math.min(lines.length - 1, maxRows)
-
-      for (let i = 1; i <= rowsToProcess; i++) {
-        const values = parseCSVLine(lines[i])
-        const row: TableData = {}
-        headers.forEach((header, index) => {
-          row[header] = values[index] || ''
-        })
-        data.push(row)
-      }
-
-      // 更新状态
       tableData.value = data
       tableColumns.value = headers
       fileName.value = file.name
 
-      const totalRows = lines.length - 1
+      const totalRows = text.split('\n').filter(l => l.trim()).length - 1
       const loadedRows = data.length
       ElMessage.success(`Successfully uploaded ${file.name}, loaded ${loadedRows} rows${totalRows > maxRows ? ` (${totalRows} total rows, showing first ${maxRows} rows)` : ''}`)
     } catch (error) {
@@ -104,6 +134,7 @@ export const useTableStore = defineStore('table', () => {
     isLoading,
     // 方法
     handleFileUpload,
+    loadFromUrl,
     clearTableData,
     setTableData
   }

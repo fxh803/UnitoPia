@@ -3,7 +3,7 @@ import { ref } from 'vue'
 
 /** public/marks 下预置的 SVG 文件名（预加载用，与目录内文件名一致） */
 const PRELOAD_MARK_FILES = [
-  'coin.svg', 'bubble.svg', 'ball.svg', 'bee.svg', 'Cactus.svg', 'cat.svg', 'crown.svg', 'earth.svg',
+  'coin.svg', 'bubble.svg', 'ball.svg', 'bee.svg', 'cactus.svg', 'cat.svg', 'crown.svg', 'earth.svg',
   'flower.svg', 'flower2.svg', 'flowers.svg',
   'heart.svg', 'icecream.svg', 'leaf.svg', 'lollipop.svg', 'note.svg',
   'plant.svg', 'rabbit.svg', 'rookie.svg', 'smile.svg', 'star.svg', 'sugar.svg', 'sun.svg',
