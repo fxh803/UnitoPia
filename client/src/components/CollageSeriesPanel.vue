@@ -178,8 +178,8 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
       </button>
 
       <!-- 标题 -->
-      <div  class="w-full h-42px mb-2 border-b border-[var(--border-color)] flex items-center justify-center bg-[var(--primary-light-color)]">
-        <div v-if="!isCollapsed" class="text-[14px] text-[var(--text-muted)] font-bold">Visualization Gallery</div>
+      <div class="w-full h-42px mb-2 border-b border-[var(--border-color)] flex items-center justify-center bg-[var(--primary-light-color)]">
+        <div v-if="!isCollapsed" class="text-[16px] text-[var(--title-color)] font-semibold">Visualization Gallery</div>
       </div>
 
       <div v-if="!isCollapsed" class="w-full px-2 flex flex-col h-full overflow-y-auto">

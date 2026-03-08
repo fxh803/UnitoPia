@@ -459,12 +459,16 @@ function handleDragLeave(e: DragEvent) {
         <div
           v-for="mark in markInstances"
           :key="mark.id"
-          class="rounded-2xl border border-[var(--border-color)] px-3 py-2 space-y-2"
-          :class="{ 'bg-white': !mark.isGroup ,'hover:bg-[#f0e8e6]': !mark.isGroup, 'transition-colors': !mark.isGroup,'cursor-pointer': !mark.isGroup }"
+          class="rounded-2xl border border-[var(--border-color)] px-3 py-2 space-y-2 transition-colors"
+          :class="{
+            'bg-white hover:bg-[#f0e8e6] cursor-pointer': !mark.isGroup,
+            'bg-[#faf8f7]': mark.isGroup
+          }"
         >
-          <!-- 父实例行 -->
+          <!-- 父实例行（仅此行悬浮变色，子实例列表悬浮不变） -->
           <div
-            class="flex items-center gap-2 "
+            class="flex items-center gap-2 cursor-pointer rounded-lg -m-1 p-1"
+            :class="{ 'hover:bg-[#f0e8e6] transition-colors': mark.isGroup }"
             draggable="true"
             @dragstart.stop="onMarkDragStart($event, mark)"
             @click="!mark.isGroup && openMarkDetail(mark.id)"
@@ -515,7 +519,7 @@ function handleDragLeave(e: DragEvent) {
             <div class="flex-1" />
 
             <!-- 父行右侧字段 pill（支持重新绑定字段） -->
-            <div v-if="mark.fieldName" class="flex items-center gap-2" @click.stop>
+            <div v-if="mark.fieldName" class="flex items-center gap-2 cursor-auto" @click.stop>
               <div
                 class="group relative px-4 py-1.5 rounded-full text-[13px] flex items-center gap-2 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)] min-w-[160px]"
                 @dragover.prevent
@@ -562,7 +566,7 @@ function handleDragLeave(e: DragEvent) {
           </div>
 
           <!-- 子实例列表：仅 group 父实例有，可折叠 -->
-          <div v-if="mark.isGroup && mark.fieldName">
+          <div v-if="mark.isGroup && mark.fieldName" class="select-none">
             <div v-show="isGroupRowExpanded(mark.id)" class="space-y-1">
               <div
                 v-for="child in mark.children"
@@ -596,7 +600,7 @@ function handleDragLeave(e: DragEvent) {
 
                 <!-- 子实例右侧：字段 pill（大小与父一致），内部包含筛选下拉 -->
                 <div
-                  class="group relative px-4 py-1 rounded-full text-[13px] flex items-center gap-2 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)]"
+                  class="group relative px-4 py-1 rounded-full text-[13px] flex items-center gap-2 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)] cursor-auto"
                 >
                   <span class="text-[12px] text-[var(--text-muted)]">
                     {{ mark.fieldType === 'numeric' ? '#' : 'abc' }}

@@ -88,7 +88,7 @@ const handleClose = () => emit('close')
 <template>
   <teleport to="body">
     <div 
-      class="fixed z-[1000] -translate-x-full"
+      class="fixed z-[9999] -translate-x-full"
       :style="coordsStyle"
       ref="panelRef"
       role="dialog"
