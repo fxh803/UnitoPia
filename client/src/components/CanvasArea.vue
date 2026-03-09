@@ -474,7 +474,7 @@ onBeforeUnmount(() => {
       <!-- canvas-wrapper：包裹 Fabric 画布和 overlay，铺满可用空间 -->
       <div ref="canvasWrapperRef" class="canvas-wrapper w-full h-full" style="position: relative;">
         <!-- 画布本体 -->
-        <canvas ref="canvasEl" class="block w-full h-full" />
+        <canvas ref="canvasEl" class="fabric-canvas block w-full h-full" />
         <paperCanvas v-if="collaging || result_data.length > 0" :key="paperCanvasKey" />
         <!-- 对象操作按钮 -->
         <ObjectActionButtons />

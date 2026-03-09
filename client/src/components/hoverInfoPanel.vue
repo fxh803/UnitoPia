@@ -59,7 +59,7 @@ const formattedData = computed(() => {
 .hover-info-panel {
   position: absolute;
   bottom: 20px;
-  right: 20px;
+  right: 100px;
   background: white;
   border: 1px solid #e6e6e6;
   border-radius: 8px;

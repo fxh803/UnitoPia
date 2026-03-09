@@ -47,7 +47,7 @@ onMounted(() => {
     nextTick(() => {
         // 绑定 Paper.js 到 canvas
         paper.setup(paperCanvasRef.value as HTMLCanvasElement);
-        const rect = document.querySelector('.canvas-wrapper')?.getBoundingClientRect()
+        const rect = document.querySelector('.fabric-canvas')?.getBoundingClientRect()
         const width = Math.floor(rect?.width ?? 0)
         const height = Math.floor(rect?.height ?? 0)
         canvasWidth.value = width
