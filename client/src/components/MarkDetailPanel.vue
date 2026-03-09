@@ -316,10 +316,8 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
       <div class="flex items-center justify-between">
         <span class="text-sm font-semibold text-[var(--title-color)] truncate">
           {{ displayName }}
-        </span>
-        <div class="px-2 py-1 border border-[#f0e6e0] rounded-full bg-white/80 shadow-sm">
-          <MarkerToolbar />
-        </div>
+        </span> 
+          <MarkerToolbar /> 
       </div>
 
       <!-- 画布区域 -->

@@ -300,19 +300,21 @@ const saveMarkers = async () => {
 </script>
 
 <template>
-  <!-- 横向排列的矩形工具栏 -->
-  <div class="flex items-center gap-2 p-1">
+  <!-- 横向排列的圆角胶囊工具栏 -->
+  <div
+    class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#efebea] border border-[#e1e1e6]"
+  >
     <!-- 颜色选择器 -->
     <ColorPicker />
 
      <!-- 画笔大小调节按钮 - 仅在绘制/擦除模式下显示 -->
      <div v-if="mode === 'draw' || mode === 'erase'" class="relative brush-size-menu">
       <button
-        class="rounded flex h-7 w-7 items-center justify-center cursor-pointer relative text-black"
+        class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer relative text-[#3d3d3d]"
         :class="[
           showBrushSizeMenu
-            ? 'bg-[var(--primary-color)]'
-            : 'bg-white hover:bg-[#f5f5f5]'
+            ? 'bg-[var(--primary-color)] text-[#3d3d3d]'
+            : 'hover:bg-white/80'
         ]"
         title="Brush Size"
         @click="toggleBrushSizeMenu"
@@ -320,10 +322,10 @@ const saveMarkers = async () => {
       <div class="i-carbon:settings-adjust"></div>
       </button>
 
-      <!-- 展开面板 - 在按钮上方垂直显示 -->
+      <!-- 展开面板 - 在按钮垂直显示 -->
       <div
         v-if="showBrushSizeMenu"
-        class="absolute left-0 bottom-full mb-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 brush-size-menu"
+        class="absolute left-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 brush-size-menu"
       >
         <div class="flex flex-col items-center gap-2">
           <div class="flex flex-col items-center gap-1">
@@ -346,11 +348,11 @@ const saveMarkers = async () => {
     <div class="toolbar-divider" />
     <!-- 自由绘制按钮 -->
     <button
-      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer text-black"
+      class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer text-[#3d3d3d]"
       :class="[
         mode === 'draw'
-          ? 'bg-[var(--primary-color)]'
-          : 'bg-white hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)] text-[#3d3d3d]'
+          : 'hover:bg-white/80'
       ]"
       title="Free Draw"
       @click="() => setMode('draw')"
@@ -361,25 +363,25 @@ const saveMarkers = async () => {
     <!-- 形状绘制工具聚合按钮 -->
     <div class="relative draw-tool-menu">
       <button
-        class="rounded flex h-7 w-7 items-center justify-center cursor-pointer relative text-black"
+        class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer relative text-[#3d3d3d]"
         :class="[
           (mode === 'rect' || mode === 'ellipse')
-            ? 'bg-[var(--primary-color)]'
-            : 'bg-white hover:bg-[#f5f5f5]'
+            ? 'bg-[var(--primary-color)] text-[#3d3d3d]'
+            : 'hover:bg-white/80'
         ]"
         title="Shape Tools"
         @click="toggleDrawMenu"
       >
         <span v-if="mode === 'ellipse'" class="i-carbon-circle-outline" />
         <span v-else class="i-carbon:checkbox" />
-        <!-- 右下角黑三角 -->
-        <div class="absolute bottom-0 right-0 w-0 h-0 border-l-[5px] border-t-[5px] border-l-transparent border-t-black transform rotate-90"></div>
+        <!-- 右下角小三角 -->
+        <div class="absolute bottom-[3px] right-[3px] w-0 h-0 border-l-[5px] border-t-[5px] border-l-transparent transform rotate-90 border-t-[#3d3d3d]/70"></div>
       </button>
 
-      <!-- 形状绘制工具上拉菜单 -->
+      <!-- 形状绘制工具下拉菜单 -->
       <div
         v-if="showDrawMenu"
-        class="absolute left-0 bottom-full mb-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px] draw-tool-menu"
+        class="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 min-w-[120px] draw-tool-menu"
       >
         <!-- 圆形 -->
         <button
@@ -403,31 +405,39 @@ const saveMarkers = async () => {
       </div>
     </div>
 
-    <!-- 移动模式按钮 -->
+    <!-- 移动模式按钮（内联 SVG，使用 currentColor 控制颜色） -->
     <button
-      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer"
+      class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer text-[#3d3d3d]"
       :class="[
         mode === 'move'
-          ? 'bg-[var(--primary-color)]'
-          : 'bg-white hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)] text-[#3d3d3d]'
+          : 'hover:bg-white/80'
       ]"
       title="Move Mode"
       @click="() => setMode('move')"
     >
-      <img
-        src="/cc-hand.svg"
-        class="w-4 h-4"
-        alt="Move"
-      />
+      <svg
+        viewBox="0 0 1024 1024"
+        class="w-5 h-5"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <path
+          fill="currentColor"
+          stroke="currentColor"
+          stroke-width="10"
+          d="M824.515155 243.164159c-16.249079 0-31.582299 4.389984-44.734854 12.033058l0-56.767911c0-49.345871-40.10337-89.468684-89.468684-89.468684-18.438954 0-35.519981 5.591345-49.800219 15.155165-12.236696-34.83539-45.433772-59.890019-84.405365-59.890019-38.968523 0-72.189136 25.054629-84.420715 59.890019-14.21884-9.56382-31.343869-15.155165-49.7818-15.155165-49.343825 0-89.467661 40.122813-89.467661 89.468684l0 329.831031-60.22157-104.365976c-11.664667-21.25407-30.735002-36.369326-53.626361-42.637076-22.321378-6.072299-45.541219-2.863211-65.399499 9.041934-40.582277 24.332175-56.048527 79.356372-34.444487 122.669854 1.333368 2.708692 29.879518 61.160965 118.979812 239.312434 41.960671 83.877339 88.004333 143.902434 136.845715 178.239474 38.334073 26.956955 64.831564 28.353768 69.746504 28.353768l223.674269 0c38.047548 0 73.438593-12.362562 105.236809-36.785811 29.794583-22.935362 55.745628-56.136531 76.933183-98.596576 41.765219-83.532485 63.869656-199.123107 63.869656-334.333578L914.029888 332.587817c0-49.342802-40.148395-89.469708-89.467661-89.469708L824.515155 243.164159zM869.250008 489.203808c0 128.264269-20.444635 236.908688-59.150168 314.276776-25.255197 50.504254-70.422909 110.702288-142.157697 110.702288l-223.234247 0c-1.726318-0.130983-20.576641-2.228761-48.974411-23.502273-28.308743-21.186532-71.795163-65.835428-118.017904-158.318772-90.669022-181.384094-118.541837-238.506069-118.803803-239.050468-0.041956-0.089028-0.041956-0.130983-0.085958-0.176009-11.228739-22.499433-3.276626-51.988048 17.388019-64.36903 9.304923-5.593392 20.180622-7.057743 30.645974-4.239558 11.138688 3.036149 20.488637 10.552334 26.253944 21.100574 0.10847 0.130983 0.198521 0.326435 0.284479 0.458441l69.829392 121.009028c14.264888 26.079982 30.319539 37.004799 47.730071 32.593326 17.452487-4.414543 26.253944-21.889543 26.253944-51.770084L377.211643 198.429305c0-24.64019 20.09671-44.734854 44.732807-44.734854 24.642237 0 44.738947 20.094664 44.738947 44.734854l0 290.774503c0 12.342096 10.021238 22.367427 22.366404 22.367427 12.341073 0 22.36538-10.025331 22.36538-22.367427L511.415181 153.694451c0-24.641213 20.09671-44.73383 44.735877-44.73383 24.638143 0 44.735877 20.092617 44.735877 44.73383l0 335.509357c0 12.342096 10.002818 22.367427 22.36538 22.367427 12.363585 0 22.367427-10.025331 22.367427-22.367427L645.619742 198.429305c0-24.64019 20.098757-44.734854 44.73383-44.734854 24.63712 0 44.735877 20.094664 44.735877 44.734854l0 335.509357c0 12.319583 10.001795 22.367427 22.367427 22.367427 12.363585 0 22.366404-10.047844 22.366404-22.367427L779.82328 332.632843c0-24.641213 20.09671-44.73383 44.735877-44.73383 24.635073 0 44.731784 20.092617 44.731784 44.73383l0 156.570965L869.250008 489.203808z"
+        />
+      </svg>
     </button>
 
     <!-- 橡皮擦按钮 -->
     <button
-      class="rounded flex h-7 w-7 items-center justify-center cursor-pointer text-black"
+      class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer text-[#3d3d3d]"
       :class="[
         mode === 'erase'
-          ? 'bg-[var(--primary-color)]'
-          : 'bg-white hover:bg-[#f5f5f5]'
+          ? 'bg-[var(--primary-color)] text-[#3d3d3d]'
+          : 'hover:bg-white/80'
       ]"
       title="Eraser"
       @click="() => setMode('erase')"
@@ -437,7 +447,7 @@ const saveMarkers = async () => {
 
     <!-- 上传Marker按钮 -->
     <button
-      class="rounded flex h-7 w-7 items-center justify-center bg-white text-black hover:bg-[#f5f5f5] cursor-pointer"
+      class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer text-[#3d3d3d] hover:bg-white/80"
       title="Upload Marker"
       @click="triggerFileUpload"
     >
@@ -449,7 +459,7 @@ const saveMarkers = async () => {
 
     <!-- 保存按钮 -->
     <button
-      class="rounded flex h-7 w-7 items-center justify-center bg-white text-black hover:bg-[#f5f5f5] cursor-pointer"
+      class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer text-[#3d3d3d] hover:bg-white/80"
       title="Save Marker"
       @click="saveMarkers"
     >
@@ -458,12 +468,11 @@ const saveMarkers = async () => {
 
     <!-- 清除按钮 -->
     <button
-      class="text-black rounded bg-white flex h-7 w-7 items-center justify-center hover:bg-[#f5f5f5] cursor-pointer"
+      class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer text-[#3d3d3d] hover:bg-white/80"
       title="Clear Canvas / Renew"
       @click="clearCanvas"
     >
       <span class="i-carbon-trash-can" />
-      <!-- <div class="i-carbon:add-alt"></div> -->
     </button>
 
     <!-- 隐藏的文件输入框 -->
@@ -534,8 +543,9 @@ const saveMarkers = async () => {
 }
 
 .toolbar-divider {
-  height: 28px;
-  border-left: 2px dashed #8a8a8a;
+  height: 22px;
+  border-left: 1px solid #b7b7be;
+  margin: 0 6px;
 }
 
 </style>
