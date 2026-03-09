@@ -96,10 +96,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     forceTypeArray: [],
                     dataArray: [],
                     origOpacityArray: [],
-                    // 每个 slide 的个性化设置
+                    // 每个 slide 的个性化设置（render_size 默认留空，动画/SettingsPanel 按当前画布决定）
                     iterations: 150,
-                    // 默认 render_size 为当前主画布的宽高
-                    render_size: [canvasInstance.width || 1000, canvasInstance.height || 1000],
                     rotation: true,
                     hole: false,
                     orientation: 'free',
@@ -409,12 +407,6 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
         const slideId = generateSlideId()
 
-        const newSlideCanvas = canvasRef.value?.()
-        const defaultRenderSize: [number, number] = [
-            newSlideCanvas?.width || 1000,
-            newSlideCanvas?.height || 1000
-        ]
-
         const newSlide = {
             slideId,
             json,
@@ -424,9 +416,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             forceTypeArray,
             dataArray,
             origOpacityArray: [],
-            // 初始化个性化设置默认值
+            // 初始化个性化设置默认值（render_size 仍留空，按当前画布尺寸推导）
             iterations: 150,
-            render_size: defaultRenderSize,
             rotation: true,
             hole: false,
             orientation: 'free' as 'free' | 'center',
@@ -518,12 +509,6 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         const newSlideId = generateSlideId()
 
         // 复制幻灯片数据
-        const duplicateCanvas = canvasRef.value?.()
-        const defaultRenderSize: [number, number] = [
-            duplicateCanvas?.width || 1000,
-            duplicateCanvas?.height || 1000
-        ]
-
         const duplicatedSlide = {
             slideId: newSlideId,
             json: originalSlide.json,
@@ -533,9 +518,9 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             forceTypeArray: [...originalSlide.forceTypeArray],
             dataArray: [...(originalSlide.dataArray || [])],
             origOpacityArray: [...(originalSlide.origOpacityArray || [])],
-            // 复制个性化设置
+            // 复制个性化设置（render_size 直接复制原值，若原来为空则继续为空）
             iterations: originalSlide.iterations ?? 150,
-            render_size: (originalSlide.render_size as [number, number] | undefined) ?? defaultRenderSize,
+            render_size: originalSlide.render_size as [number, number] | undefined,
             rotation: originalSlide.rotation ?? true,
             hole: originalSlide.hole ?? false,
             orientation: originalSlide.orientation ?? 'free'

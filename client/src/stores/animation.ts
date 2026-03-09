@@ -171,10 +171,9 @@ export const useAnimationStore = defineStore('animation', () => {
     // 获取当前幻灯片的 render_size
     const collageSeriesStore = useCollageSeriesStore()
     const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
-    const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as any
-    // 默认值：使用当前主画布宽高
-    let renderSizeWidth = renderSizeSetting[0] ?? canvas_width.value
-    let renderSizeHeight = renderSizeSetting[1] ?? canvas_height.value
+    const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as [number, number] | undefined
+    let renderSizeWidth = renderSizeSetting?.[0] ?? canvas_width.value
+    let renderSizeHeight = renderSizeSetting?.[1] ?? canvas_height.value
 
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
@@ -199,9 +198,9 @@ export const useAnimationStore = defineStore('animation', () => {
     // 获取当前幻灯片的 render_size
     const collageSeriesStore = useCollageSeriesStore()
     const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
-    const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as any
-    let renderSizeWidth = renderSizeSetting[0] ?? canvas_width.value
-    let renderSizeHeight = renderSizeSetting[1] ?? canvas_height.value
+    const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as [number, number] | undefined
+    let renderSizeWidth = renderSizeSetting?.[0] ?? canvas_width.value
+    let renderSizeHeight = renderSizeSetting?.[1] ?? canvas_height.value
 
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
