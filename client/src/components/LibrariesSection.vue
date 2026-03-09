@@ -296,17 +296,17 @@ async function handleContainerFileSelect(e: Event) {
 
         <!-- Mark 内容：已上传的 Mark + 上传入口 -->
         <div v-show="isMarkExpanded" class="mt-2 max-h-[260px] overflow-y-auto">
-          <div class="flex flex-wrap gap-x-3 gap-y-0.5">
+          <div class="flex flex-wrap gap-x-2 gap-y-0.5">
             <!-- 已上传 Mark 卡片 -->
             <button
               v-for="marker in markerStore.markers"
               :key="marker.id"
               type="button"
-              class="group flex flex-col items-center justify-between rounded-xl cursor-pointer w-[110px]"
+              class="group flex flex-col items-center justify-between rounded-lg cursor-pointer w-[96px]"
               draggable="true"
               @dragstart.stop="onLibraryMarkerDragStart($event, marker)"
             >
-              <div class="p-2 w-full aspect-square rounded-lg bg-[#ffffff] flex items-center justify-center overflow-hidden border-2 border-[var(--border-color)]">
+              <div class="p-1.5 w-full aspect-square rounded-md bg-[#ffffff] flex items-center justify-center overflow-hidden border-2 border-[var(--border-color)]">
                 <img
                   v-if="marker.thumbnail"
                   :src="marker.thumbnail"
@@ -314,7 +314,7 @@ async function handleContainerFileSelect(e: Event) {
                   class="w-full h-full object-contain"
                 >
               </div>
-              <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-left">
+              <span class="mt-0.5 text-[11px] text-[var(--text-muted)] truncate w-full text-left">
                 {{ marker.name || 'Marker' }}
               </span>
             </button>
@@ -322,18 +322,18 @@ async function handleContainerFileSelect(e: Event) {
             <!-- 上传 / 拖拽入口（样式与已上传卡片一致） -->
             <button
               type="button"
-              class="flex flex-col items-center rounded-xl cursor-pointer w-[110px]"
+              class="flex flex-col items-center rounded-lg cursor-pointer w-[96px]"
               @dragover.stop.prevent="handleMarkDragOver"
               @dragleave.stop.prevent="handleMarkDragLeave"
               @drop.stop.prevent="handleMarkDrop"
               @click="markFileInput?.click()"
             >
               <div
-                class="p-2 w-full aspect-square rounded-lg bg-[#ffffff]/70 flex flex-col items-center justify-center gap-1 border-2 border-dashed transition-colors"
+                class="p-1.5 w-full aspect-square rounded-md bg-[#ffffff]/70 flex flex-col items-center justify-center gap-1 border-2 border-dashed transition-colors"
                 :class="isMarkDragOver ? 'bg-[var(--border-color)]/10 border-[var(--text-muted)]' : 'border-[var(--border-color)]'"
               >
                 <span class="i-carbon-add-alt text-ls text-[var(--text-muted)]" />
-                <span class="text-[11px] text-[var(--text-muted)] text-center">upload Mark</span>
+                <span class="text-[10px] text-[var(--text-muted)] text-center">upload Mark</span>
               </div>
               <input
                 ref="markFileInput"
@@ -367,17 +367,17 @@ async function handleContainerFileSelect(e: Event) {
 
         <!-- Container 内容：已上传的 Container + 上传入口 -->
         <div v-show="isContainerExpanded" class="mt-2 max-h-[260px] overflow-y-auto">
-          <div class="flex flex-wrap gap-x-3 gap-y-0.5">
+          <div class="flex flex-wrap gap-x-2 gap-y-0.5">
             <!-- 已上传 Container 卡片 -->
             <button
               v-for="item in containerStore.containers"
               :key="item.id"
               type="button"
-              class="group flex flex-col items-center justify-between rounded-xl cursor-pointer w-[110px]"
+              class="group flex flex-col items-center justify-between rounded-lg cursor-pointer w-[96px]"
               draggable="true"
               @dragstart.stop="onLibraryContainerDragStart($event, item)"
             >
-              <div class="p-2 w-full aspect-square rounded-lg bg-[#ffffff] flex items-center justify-center overflow-hidden border-2 border-[var(--border-color)]">
+              <div class="p-1.5 w-full aspect-square rounded-md bg-[#ffffff] flex items-center justify-center overflow-hidden border-2 border-[var(--border-color)]">
                 <img
                   v-if="item.thumbnail"
                   :src="item.thumbnail"
@@ -385,7 +385,7 @@ async function handleContainerFileSelect(e: Event) {
                   class="w-full h-full object-contain"
                 >
               </div>
-              <span class="mt-1 text-[11px] text-[var(--text-muted)] truncate w-full text-left">
+              <span class="mt-0.5 text-[11px] text-[var(--text-muted)] truncate w-full text-left">
                 {{ item.name }}
               </span>
             </button>
@@ -393,18 +393,18 @@ async function handleContainerFileSelect(e: Event) {
             <!-- 上传 / 拖拽入口（样式与已上传卡片一致） -->
             <button
               type="button"
-              class="flex flex-col items-center rounded-xl cursor-pointer w-[110px]"
+              class="flex flex-col items-center rounded-lg cursor-pointer w-[96px]"
               @dragover.stop.prevent="handleContainerDragOver"
               @dragleave.stop.prevent="handleContainerDragLeave"
               @drop.stop.prevent="handleContainerDrop"
               @click="containerFileInput?.click()"
             >
               <div
-                class="p-2 w-full aspect-square rounded-lg bg-[#ffffff]/70 flex flex-col items-center justify-center gap-1 border-2 border-dashed transition-colors"
+                class="p-1.5 w-full aspect-square rounded-md bg-[#ffffff]/70 flex flex-col items-center justify-center gap-1 border-2 border-dashed transition-colors"
                 :class="isContainerDragOver ? 'bg-[var(--border-color)]/10 border-[var(--text-muted)]' : 'border-[var(--border-color)]'"
               >
                 <span class="i-carbon-add-alt text-ls text-[var(--text-muted)]" />
-                <span class="text-[11px] text-[var(--text-muted)] text-center">upload Container</span>
+                <span class="text-[10px] text-[var(--text-muted)] text-center">upload Container</span>
               </div>
               <input
                 ref="containerFileInput"

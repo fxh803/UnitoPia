@@ -25,12 +25,12 @@ watch(
 )
 
 const contentWrapRef = ref<HTMLElement | null>(null)
-const leftColumnWidth = ref(320)
+const leftColumnWidth = ref(400)
 
 function updateLeftWidth() {
   if (!contentWrapRef.value) return
   const w = contentWrapRef.value.offsetWidth
-  if (w > 0) leftColumnWidth.value = Math.floor(w / 4)
+  if (w > 0) leftColumnWidth.value = Math.max(400, Math.floor(w / 4))
 }
 
 function toggleDetailPanel() {

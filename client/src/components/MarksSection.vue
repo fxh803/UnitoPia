@@ -516,7 +516,8 @@ function handleDragLeave(e: DragEvent) {
               </div>
             </div>
 
-            <div class="flex-1" />
+            <!-- 仅留小间隙，把剩余空间留给名称 -->
+            <div class="flex-shrink-0 w-2" />
 
             <!-- 父行右侧字段 pill（支持重新绑定字段） -->
             <div v-if="mark.fieldName" class="flex items-center gap-2 cursor-auto" @click.stop>

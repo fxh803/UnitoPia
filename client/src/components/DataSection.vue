@@ -140,8 +140,8 @@ watch(presetDropdownVisible, (visible) => {
     :class="
       tableData.length > 0 && isExpanded
         ? activeTab === 'table'
-          ? 'h-[500px]'
-          : 'max-h-[500px]'
+          ? 'h-[400px]'
+          : 'max-h-[400px]'
         : ''
     "
   >

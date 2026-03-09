@@ -239,7 +239,7 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
 
 <template>
   <aside
-    class="h-full w-full flex flex-col min-h-0 overflow-hidden border border-[var(--border-color)] bg-[var(--primary-muted-color)] space-y-2"
+    class="h-full w-full flex flex-col min-h-0 overflow-y-auto border border-[var(--border-color)] bg-[var(--primary-muted-color)] space-y-2"
   >
     <!-- Visual Encoding：卡片 -->
     <div class="space-y-2 bg-[var(--primary-light-color)] shadow-sm px-3 py-3">
@@ -311,7 +311,7 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
     </div>
 
     <!-- Mark 编辑面板 -->
-    <div class="flex-1 min-h-0 bg-[var(--primary-light-color)] px-4 py-3 flex flex-col gap-3 overflow-hidden">
+    <div class="flex-1 min-h-[50%] bg-[var(--primary-light-color)] px-4 py-3 flex flex-col gap-3 overflow-hidden">
       <!-- 顶部标题 + 工具栏 -->
       <div class="flex items-center justify-between">
         <span class="text-sm font-semibold text-[var(--title-color)] truncate">
