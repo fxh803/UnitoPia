@@ -165,11 +165,9 @@ function updateCanvasSize() {
   const parent = canvasAreaRef.value
   if (parent) {
     const rect = parent.getBoundingClientRect()
-    // 按父容器宽高分别计算尺寸，不再强制正方形
-    const paddingX = 150
-    const paddingY = 20
-    const width = Math.floor(rect.width - paddingX)
-    const height = Math.floor(rect.height - paddingY)
+    // 按父容器宽高分别计算尺寸，占满可用空间（不再额外留 padding）
+    const width = Math.floor(rect.width)
+    const height = Math.floor(rect.height)
     canvasWidth.value = Math.max(width, 200)
     canvasHeight.value = Math.max(height, 200)
     if (canvas) {
@@ -450,7 +448,7 @@ onBeforeUnmount(() => {
     <div
       ref="canvasAreaRef"
       data-tutorial="canvas-editor"
-      class="p-2 pl-7 border-r border-[var(--border-color)] bg-[var(--primary-light-color)] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
+      class="border-r border-[var(--border-color)] bg-[var(--primary-light-color)] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
       @dragover="handleDragOver"
       @drop="(e) => { handleLibraryContainerDrop(e); if (canvasEl) handleDrop(e, canvasEl) }">
       <!-- 工具栏容器：垂直居中，包含所有工具栏 -->
@@ -473,10 +471,10 @@ onBeforeUnmount(() => {
         <SegmentButtons />
       </div>
       
-      <!-- 新增canvas-wrapper，包裹canvas和button -->
-      <div ref="canvasWrapperRef" class="canvas-wrapper" style="position: relative;">
+      <!-- canvas-wrapper：包裹 Fabric 画布和 overlay，铺满可用空间 -->
+      <div ref="canvasWrapperRef" class="canvas-wrapper w-full h-full" style="position: relative;">
         <!-- 画布本体 -->
-        <canvas ref="canvasEl" class="border border-[var(--border-color)] rounded-2xl" />
+        <canvas ref="canvasEl" class="block w-full h-full" />
         <paperCanvas v-if="collaging || result_data.length > 0" :key="paperCanvasKey" />
         <!-- 对象操作按钮 -->
         <ObjectActionButtons />
@@ -491,7 +489,7 @@ onBeforeUnmount(() => {
         <!-- Segment 加载动画 -->
         <div 
           v-if="isSegmentLoading" 
-          class="absolute inset-0 bg-black/20 rounded-2xl flex items-center justify-center z-50 pointer-events-auto"
+          class="absolute inset-0 bg-black/20 flex items-center justify-center z-50 pointer-events-auto"
         >
           <div class="segment-loading-grid">
             <div v-for="i in 100" :key="i" class="segment-loading-dot" :style="{ animationDelay: `${(i % 10) * 0.1 + Math.floor(i / 10) * 0.1}s` }"></div>

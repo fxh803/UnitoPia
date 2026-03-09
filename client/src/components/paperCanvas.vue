@@ -88,6 +88,6 @@ onUnmounted(() => {
 <template>
     <canvas
       ref="paperCanvasRef"
-      class="absolute top-0 left-0 paper-canvas rounded-2xl border border-[var(--border-color)] bg-[var(--primary-light-color)]"
+      class="absolute inset-0 paper-canvas bg-[var(--primary-light-color)]"
     />
 </template>
