@@ -69,6 +69,7 @@ onBeforeUnmount(() => {
          <MarkDetailToggle
           :open="showMarkDetailPanel"
           :disabled="!hasMarkDetail"
+          data-tutorial="mark-detail-toggle"
           @toggle="toggleDetailPanel"
         />
       </div>

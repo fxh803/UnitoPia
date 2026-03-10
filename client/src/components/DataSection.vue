@@ -137,6 +137,7 @@ watch(presetDropdownVisible, (visible) => {
 <template>
   <div
     class="border-b border-[var(--border-color)] flex flex-col min-h-0 bg-[var(--primary-light-color)]"
+    data-tutorial="data-section"
     :class="
       tableData.length > 0 && isExpanded
         ? activeTab === 'table'

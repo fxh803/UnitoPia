@@ -414,7 +414,10 @@ function handleDragLeave(e: DragEvent) {
 </script>
 
 <template>
-  <div class="border-b border-[var(--border-color)] flex flex-col min-h-0 bg-[var(--primary-light-color)]">
+  <div
+    class="border-b border-[var(--border-color)] flex flex-col min-h-0 bg-[var(--primary-light-color)]"
+    data-tutorial="marks-section"
+  >
     <!-- 标题栏：左侧折叠按钮 + 标题（只有箭头可点击） -->
     <div
       class="flex items-center w-full px-3 py-2 bg-[var(--primary-light-color)] hover:bg-[var(--border-color)]/10 transition-colors text-left gap-2"

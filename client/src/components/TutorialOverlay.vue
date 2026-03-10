@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTutorialStore } from '~/stores/tutorial'
 
@@ -8,43 +8,46 @@ const { isTutorialOpen } = storeToRefs(tutorialStore)
 
 const steps = [
   {
-    id: 'data-table',
-    title: 'Data Table',
-    desc: '在此上传与管理数据。支持表格视图(data table)与映射视图(mapping view)。在映射视图中可以对数据进行筛选操作，选中目标数据。'
+    id: 'data-section',
+    title: 'Data Panel',
+    desc: 'Step 1: Upload and manage your data in the Data Panel. Switch between Table and Fields views, and start from local CSV files or the built‑in presets.'
   },
   {
-    id: 'mark-editor',
-    title: 'Mark Editor',
-    desc: '在画布上绘制图形，保存到标记库（Marker Library）后可拖动到data table的筛选好的数据，实现数据与图形的关联。'
+    id: 'marks-section',
+    title: 'Marks Panel',
+    desc: 'Step 2: Use the Marks Panel to drag fields from Data and create mark instances. Manage how single marks or mark groups are linked to rows in your dataset.'
+  },
+  {
+    id: 'mark-detail-panel',
+    title: 'Mark Detail Panel',
+    desc: 'Step 3: In the Mark Detail Panel, edit the selected mark instance in detail, including visual encodings (color, size, etc.) and edit mark on the canvas.'
+  },
+  {
+    id: 'libraries-section',
+    title: 'Libraries',
+    desc: 'Step 4: Use the Libraries Panel to upload and manage Mark and Container assets. Drag mark assets to the Mark Detail Panel canvas, and container assets to the main canvas.'
   },
   {
     id: 'canvas-editor',
-    title: 'Canvas Editor',
-    desc: '主画布编辑区。放置容器、发射器与力场，构建单元可视化布局。'
+    title: 'Main Canvas',
+    desc: 'Step 5: In the Main Canvas, place Containers, Emitters, and Forces, then drag Marks and Containers to compose your unit visualization layout.'
   },
   {
     id: 'visualization-gallery',
-    title: 'Visualization Gallery',
-    desc: '管理单元可视化序列，可删除，复制场景以及自定义每个场景的渲染参数，系统将根据选中场景所属序列进行多轮渲染。'
+    title: 'Collage Series Panel',
+    desc: 'Step 6: Use the Visualization Gallery to manage sequences of unit visualizations. Expand the panel, select or duplicate slides, and adjust rendering parameters.'
   },
   {
     id: 'run-button',
-    title: 'Render',
-    desc: '点击 Run 按钮启动渲染流程，生成当前场景的可视化结果。'
+    title: 'Run',
+    desc: 'Final step: Click the Run button to start rendering and generate the final visualization for the current series and settings.'
   }
 ]
 
 const currentStep = ref(0)
-// 每个步骤单独配置卡片宽度
-const stepWidths = [
-  'w-[600px]', // 第一步
-  'w-[600px]', // 第二步
-  'w-[900px]', // 第三步
-  'w-[400px]', // 第四步
-  'w-[360px]'  // 第五步：Run 按钮小提示
-]
-const stepWidthClass = computed(() => stepWidths[currentStep.value] ?? 'w-[300px]')
 const spotlightRect = ref<{ top: number; left: number; width: number; height: number } | null>(null)
+// 说明卡片相对高亮区域的位置
+const cardPosition = ref<{ top: number; left: number } | null>(null)
 const PADDING = 8
 
 function getPanelRect(selector: string): DOMRect | null {
@@ -58,7 +61,11 @@ function updateSpotlight() {
   const step = steps[currentStep.value]
   if (!step) return
   nextTick(() => {
-    const rect = getPanelRect(step.id)
+    let rect = getPanelRect(step.id)
+    // Mark Detail 步骤：如果详情面板未展开，则优先高亮中间的 MarkDetailToggle
+    if (!rect && step.id === 'mark-detail-panel') {
+      rect = getPanelRect('mark-detail-toggle')
+    }
     if (rect) {
       spotlightRect.value = {
         top: rect.top - PADDING,
@@ -66,8 +73,32 @@ function updateSpotlight() {
         width: rect.width + PADDING * 2,
         height: rect.height + PADDING * 2
       }
+      // 计算说明卡片位置：尽量贴在高亮区域左右侧，不遮挡高亮
+      const viewportWidth = window.innerWidth || 0
+      const viewportHeight = window.innerHeight || 0
+      const CARD_WIDTH = 520
+      const CARD_HEIGHT = 200 // 估算高度，用于避免超出视口
+      const margin = 16
+
+      // 优先放在右侧，如果空间不足则放在左侧
+      let left = rect.left + rect.width + margin
+      if (left + CARD_WIDTH > viewportWidth - margin) {
+        left = rect.left - CARD_WIDTH - margin
+        if (left < margin) {
+          left = margin
+        }
+      }
+
+      // 垂直方向尽量与高亮对齐，并防止越界
+      let top = rect.top
+      if (top + CARD_HEIGHT > viewportHeight - margin) {
+        top = Math.max(margin, viewportHeight - CARD_HEIGHT - margin)
+      }
+
+      cardPosition.value = { top, left }
     } else {
       spotlightRect.value = null
+      cardPosition.value = null
     }
   })
 }
@@ -99,7 +130,9 @@ watch(isTutorialOpen, (open) => {
   }
 })
 
-watch(currentStep, () => updateSpotlight())
+watch(currentStep, () => {
+  updateSpotlight()
+})
 
 onMounted(() => {
   if (isTutorialOpen.value) updateSpotlight()
@@ -134,65 +167,24 @@ onBeforeUnmount(() => {
             height: `${spotlightRect.height}px`
           }"
         />
-        <!-- 说明卡片 -->
+        <!-- 说明卡片：优先贴在高亮区域旁边；没有高亮时回退到底部居中 -->
         <div
-          class="tutorial-card pointer-events-auto absolute left-1/2 bottom-16 -translate-x-1/2 max-w-[90vw] bg-white rounded-xl shadow-xl border border-[var(--border-color)] p-5"
-          :class="stepWidthClass"
+          class="tutorial-card pointer-events-auto max-w-[90vw] bg-white rounded-xl shadow-xl border border-[var(--border-color)] p-5 w-[520px] absolute"
+          :class="!spotlightRect ? 'left-1/2 bottom-16 -translate-x-1/2' : ''"
+          :style="spotlightRect && cardPosition
+            ? {
+                top: `${cardPosition.top}px`,
+                left: `${cardPosition.left}px`,
+                transform: 'translate(0, 0)'
+              }
+            : {}"
         >
-          <!-- 第一步：Data Table 演示视频（按视频自身比例，无黑边） -->
-          <div v-if="currentStep === 0" class="tutorial-video-wrap mb-4 rounded-lg overflow-hidden bg-black">
-            <video
-              src="/data Table演示.mp4"
-              class="tutorial-video w-full h-auto block"
-              controls
-              autoplay
-              muted
-              loop
-              playsinline
-            />
-          </div>
-          <!-- 第二步：Mark Editor 演示视频（按视频自身比例，无黑边） -->
-          <div v-if="currentStep === 1" class="tutorial-video-wrap mb-4 rounded-lg overflow-hidden bg-black">
-            <video
-              src="/markereditor演示2.mp4"
-              class="tutorial-video w-full h-auto block"
-              controls
-              autoplay
-              muted
-              loop
-              playsinline
-            />
-          </div>
-          <!-- 第三步：Canvas Editor 演示视频（按视频自身比例，无黑边） -->
-          <div v-if="currentStep === 2" class="tutorial-video-wrap mb-4 rounded-lg overflow-hidden bg-black">
-            <video
-              src="/canvas演示.mp4"
-              class="tutorial-video w-full h-auto block"
-              controls
-              autoplay
-              muted
-              loop
-              playsinline
-            />
-          </div>
-          <!-- 第四步：Visualization Gallery 演示视频（按视频自身比例，无黑边） -->
-          <div v-if="currentStep === 3" class="tutorial-video-wrap mb-4 rounded-lg overflow-hidden bg-black">
-            <video
-              src="/gallery演示.mp4"
-              class="tutorial-video w-full h-auto block"
-              controls
-              autoplay
-              muted
-              loop
-              playsinline
-            />
-          </div>
           <div class="flex items-center justify-between mb-3">
             <h3 class="text-lg font-bold text-[var(--title-color)]">
               {{ steps[currentStep].title }}
             </h3>
             <span class="text-sm text-[var(--text-muted)]">
-              {{ currentStep + 1 }} / {{ steps.length }}
+              Step {{ currentStep + 1 }} / {{ steps.length }}
             </span>
           </div>
           <p class="text-[var(--text-muted)] text-sm leading-relaxed mb-5">
@@ -206,14 +198,14 @@ onBeforeUnmount(() => {
               :disabled="currentStep === 0"
               @click="goPrev"
             >
-              上一步
+              Previous
             </button>
             <button
               type="button"
               class="px-4 py-2 text-sm font-medium bg-[var(--primary-color)] text-white rounded-lg hover:opacity-90 transition-opacity"
               @click="goNext"
             >
-              {{ currentStep === steps.length - 1 ? '完成' : '下一步' }}
+              {{ currentStep === steps.length - 1 ? 'Done' : 'Next' }}
             </button>
           </div>
         </div>

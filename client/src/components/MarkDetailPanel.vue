@@ -240,6 +240,7 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
 <template>
   <aside
     class="h-full w-full flex flex-col min-h-0 overflow-y-auto border border-[var(--border-color)] bg-[var(--primary-muted-color)] space-y-2"
+    data-tutorial="mark-detail-panel"
   >
     <!-- Visual Encoding：卡片 -->
     <div class="space-y-2 bg-[var(--primary-light-color)] shadow-sm px-3 py-3">
