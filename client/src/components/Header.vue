@@ -152,7 +152,7 @@ const handleHelp = () => {
         <!-- Replay 按钮 - 当result_data不为空时显示 -->
         <button 
           v-if="showReplayButton"
-          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)]"
+          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
           @click="handleReplay"
         >
           <div 
@@ -168,7 +168,7 @@ const handleHelp = () => {
         
         <!-- Export 按钮 -->
         <button v-show="showExportButton" 
-          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)]"
+          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)] cursor-pointer"
           :class="[ 
             replaying ? 'opacity-50 cursor-not-allowed' : ''
           ]"
@@ -181,7 +181,7 @@ const handleHelp = () => {
         <!-- Back to Edit 按钮 -->
         <button 
           v-show="showBackToEditButton"
-          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)]"
+          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)] cursor-pointer"
           :class="[
             replaying ? 'opacity-50 cursor-not-allowed' : ''
           ]"
@@ -204,7 +204,7 @@ const handleHelp = () => {
         <!-- Run 按钮 -->
         <button
           data-tutorial="run-button"
-          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)]"
+          class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
           :class="[replaying ? 'opacity-50 cursor-not-allowed' : '']"
           :disabled="replaying"
           @click="handleRun"
@@ -222,7 +222,7 @@ const handleHelp = () => {
 
         <!-- Help 按钮 - 最后一个 -->
         <button
-          class="flex items-center gap-2 px-4 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)]"
+          class="flex items-center gap-2 px-4 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
           @click="handleHelp"
         >
           <span class="i-carbon:help text-lg"></span>
