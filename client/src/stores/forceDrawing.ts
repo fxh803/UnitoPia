@@ -91,19 +91,22 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
       const loadedSVG = await fabric.loadSVGFromString(svgString)
       const objects = loadedSVG.objects.filter((o): o is fabric.FabricObject => o != null)
       const svgObject = fabric.util.groupSVGElements(objects)
-      
-             // 计算画布和SVG对象的尺寸比例
-       const canvasWidth = canvasInstance.width!
-       const canvasHeight = canvasInstance.height!
-       const svgWidth = 300
-       const svgHeight = 300
-       
-       // 计算缩放比例，使SVG对象占据画布的大部分空间（比如80%）
-       const scaleX = (canvasWidth * 1) / svgWidth
-       const scaleY = (canvasHeight * 1) / svgHeight
-       
-       // 设置 SVG 对象的属性
-       svgObject.set({
+
+      // 计算画布和 SVG 对象的尺寸比例，保持纵横比不被拉伸
+      const canvasWidth = canvasInstance.width!
+      const canvasHeight = canvasInstance.height!
+      // 使用实际 SVG 包围盒尺寸，而不是写死 300
+      const bounds = svgObject.getBoundingRect()
+      const svgWidth = bounds.width || 1
+      const svgHeight = bounds.height || 1
+
+      // 计算统一缩放比例，使 SVG 占据画布的一部分（这里用 80%），并保持纵横比
+      const maxScaleX = (canvasWidth * 0.8) / svgWidth
+      const maxScaleY = (canvasHeight * 0.8) / svgHeight
+      const uniformScale = Math.min(maxScaleX, maxScaleY)
+
+      // 设置 SVG 对象的属性
+      svgObject.set({
          left: centerX,
          top: centerY,
          originX: 'center',
@@ -114,8 +117,8 @@ export const useForceDrawingStore = defineStore('forceDrawing', () => {
          evented: false,
          lockMovementX: true,  // 锁定X轴移动
          lockMovementY: true,  // 锁定Y轴移动
-         scaleX: scaleX,
-         scaleY: scaleY,
+         scaleX: uniformScale,
+         scaleY: uniformScale,
          visible: true,
          centeredScaling: true
        })
