@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useMarkInstanceStore } from '~/stores/markInstance'
 
 export interface TableData {
   [key: string]: any
@@ -118,6 +119,11 @@ export const useTableStore = defineStore('table', () => {
     tableData.value = []
     tableColumns.value = []
     fileName.value = ''
+
+    // 同时清空所有 marks（图案和配置）
+    const markInstanceStore = useMarkInstanceStore()
+    markInstanceStore.clearAllMarkInstances()
+    markInstanceStore.clearSelectedMarkForDetail()
   }
 
   // 设置表格数据

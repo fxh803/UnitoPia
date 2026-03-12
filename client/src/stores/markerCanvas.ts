@@ -41,6 +41,9 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     const markerObjectActionsStore = useMarkerObjectActionsStore()
     const markInstanceStore = useMarkInstanceStore()
 
+    // 对保存做一个简单防抖，避免连续频繁操作时重复生成缩略图
+    let saveTimer: number | null = null
+
     async function saveCurrentMarker() {
       const canvas = canvasRef.value?.()
       if (!canvas) return
@@ -51,7 +54,34 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
       }
 
       const allObjects = canvas.getObjects()
+
+      // 画布上已经没有任何对象了：把当前 mark 恢复为默认（无图案）
       if (!allObjects.length) {
+        if (sel.type === 'singleInstance') {
+          markInstanceStore.updateMarkInstance(sel.markId, {
+            markerThumbnail: null,
+            markerJsonData: [],
+          })
+        } else {
+          const parent = markInstanceStore.markInstances.find(m => m.id === sel.parentMarkId)
+          if (!parent) {
+            return
+          }
+
+          const nextChildren = parent.children.map(child =>
+            child.id === sel.childId
+              ? {
+                  ...child,
+                  markerThumbnail: null,
+                  markerJsonData: [],
+                }
+              : child,
+          )
+
+          markInstanceStore.updateMarkInstance(sel.parentMarkId, {
+            children: nextChildren,
+          })
+        }
         return
       }
 
@@ -130,6 +160,15 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
       tempFabricCanvas.dispose()
     }
 
+    function scheduleSave() {
+      if (saveTimer !== null) {
+        window.clearTimeout(saveTimer)
+      }
+      saveTimer = window.setTimeout(() => {
+        saveCurrentMarker()
+      }, 100)
+    }
+
     canvasInstance.on({
       'object:added': (e) => {
         // 确保新添加的对象不可选（除非当前模式是 move）
@@ -141,7 +180,7 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
 
         // 询问是否闭合路径
         askToClosePath(e.target)
-        saveCurrentMarker()
+        scheduleSave()
       },
       'selection:created': () => {
         markerObjectActionsStore.setCurrentPathObj()
@@ -169,15 +208,15 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
         markerObjectActionsStore.setCurrentPathObj()
         markerObjectActionsStore.updateActionBtnVisble()
         markerObjectActionsStore.updateActionBtnPosition()
-        saveCurrentMarker()
+        scheduleSave()
       },
       'object:removed': () => {
-        saveCurrentMarker()
+        scheduleSave()
       },
       'path:created': (e) => {
         if (e.path) {
           askToClosePath(e.path)
-          saveCurrentMarker()
+          scheduleSave()
         }
       },
     })
