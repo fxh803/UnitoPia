@@ -440,8 +440,10 @@ function handleDragLeave(e: DragEvent) {
       <!-- 拖拽上传区域 -->
       <div class="w-full">
         <div
-          class="marks-upload-area h-full min-h-[100px] w-full border-2 border-dashed rounded-lg transition-colors flex flex-col justify-center items-center gap-2"
+          class="marks-upload-area h-full w-full border-2 border-dashed rounded-lg transition-colors flex items-center justify-center gap-2"
           :class="{
+            'min-h-[100px]': !hasMarks,
+            'min-h-[50px]': hasMarks,
             'border-[var(--text-muted-light)] bg-[var(--border-color)]/10': isDragOver,
             'border-[var(--border-color)]': !isDragOver,
           }"
