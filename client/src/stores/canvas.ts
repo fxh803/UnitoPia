@@ -24,6 +24,8 @@ import type { TableData } from '~/stores/table'
 export const useCanvasStore = defineStore('canvas', () => {
   const canvasRef = ref<(() => Canvas | null) | null>(null)
   const containerColor = ref([100, 100, 100, 0.8])
+  const hasMarker = ref(false)
+  const hasContainer = ref(false)
   // Segment 加载状态
   const isSegmentLoading = ref(false)
   
@@ -64,6 +66,29 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
     canvasRef.value = canvas
+    updateCanvasDataTypePresence()
+  }
+
+  function updateCanvasDataTypePresence() {
+    const canvasInstance = canvasRef.value?.()
+    if (!canvasInstance) {
+      hasMarker.value = false
+      hasContainer.value = false
+      return
+    }
+
+    let nextHasMarker = false
+    let nextHasContainer = false
+    const objects = canvasInstance.getObjects()
+    for (const obj of objects as any[]) {
+      const t = obj?.get?.('dataType')
+      if (t === 'marker') nextHasMarker = true
+      if (t === 'container') nextHasContainer = true
+      if (nextHasMarker && nextHasContainer) break
+    }
+
+    hasMarker.value = nextHasMarker
+    hasContainer.value = nextHasContainer
   }
 
   // 更新marker透明度：选中的marker保持正常，其他变低
@@ -180,9 +205,11 @@ export const useCanvasStore = defineStore('canvas', () => {
         adjustLayer()
         // 询问是否闭合路径
         askToClosePath(e.target)
+        updateCanvasDataTypePresence()
       },
       'object:removed': () => {
         debouncedUpdateCurrentSlide()
+        updateCanvasDataTypePresence()
       },
       'mouse:over': (e) => {
         // 鼠标悬停在对象上时添加偏透明蓝色效果
@@ -1307,10 +1334,13 @@ export const useCanvasStore = defineStore('canvas', () => {
   return {
   canvasRef,
   containerColor,
+  hasMarker,
+  hasContainer,
   closePathConfirm,
   isSegmentLoading,
   setSegmentLoading,
   setCanvas,
+  updateCanvasDataTypePresence,
   addCanvasEventListeners,
   removeCanvasEventListeners,
   setDrawedObjectDataType,

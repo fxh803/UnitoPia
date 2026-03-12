@@ -25,10 +25,10 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
 })
 app.use(pinia)
-useMarkerStore().loadPreloadedMarks()
-useContainerStore().loadPreloadedContainers()
+// useMarkerStore().loadPreloadedMarks()
+// useContainerStore().loadPreloadedContainers()
 app.use(VxeUIAll)
 app.use(VxeUITable)
 app.use(router)
 app.use(ElementPlus)
-app.mount('#app') 
+app.mount('#app')

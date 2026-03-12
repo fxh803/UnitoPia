@@ -41,7 +41,9 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
   function containerAnimation(event: any) {
     const animationStore = useAnimationStore()
     const { collaging, now_overview_idx, now_collage_idx } = storeToRefs(animationStore)
-
+    const changeRate = 0.3
+    const maxOpacity = 0.8
+    const minOpacity = 0.1
     // 检查 collaging 状态，如果为 false 则停止动画
     if (!collaging.value)
       return
@@ -49,17 +51,17 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
     for (const path of shining_paths.value) {
       if (path.overviewIdx === now_overview_idx.value && path.slideIndex === now_collage_idx.value) {
         path.opacity += path.changeRate * event.delta
-        if (path.opacity >= 0.3 && !path.initialized) {
+        if (path.opacity >= minOpacity && !path.initialized) {
           path.initialized = true
         }
         if (path.initialized) {
-          if (path.opacity > 0.5) {
-            path.opacity = 0.5
-            path.changeRate = -0.2
+          if (path.opacity > maxOpacity) {
+            path.opacity = maxOpacity
+            path.changeRate = -changeRate
           }
-          else if (path.opacity < 0.3) {
-            path.opacity = 0.3
-            path.changeRate = 0.2
+          else if (path.opacity < minOpacity) {
+            path.opacity = minOpacity
+            path.changeRate = changeRate
           }
         }
       }
@@ -69,7 +71,7 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
           continue
         }
         path.opacity += path.changeRate * event.delta
-        path.changeRate = -0.2
+        path.changeRate = -changeRate
       }
     }
   }

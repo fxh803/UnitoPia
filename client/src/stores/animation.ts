@@ -67,7 +67,7 @@ export const useAnimationStore = defineStore('animation', () => {
   const replayIdx = ref(0)
   const process_id = ref<string | null>(null)
   const replayTimer = ref<ReturnType<typeof setInterval> | null>(null)
-  const time_interval = ref(2000)
+  const time_interval = ref(1000)
   const replaying = ref(false)
   const totalOverview = ref(0)
   const now_overview_idx = ref(0)
@@ -115,7 +115,7 @@ export const useAnimationStore = defineStore('animation', () => {
     replaying.value = false
     now_overview_idx.value = 0
     totalOverview.value = 0
-    time_interval.value = 2000
+    time_interval.value = 1000
   }
 
   function stopReplay() {
@@ -140,7 +140,7 @@ export const useAnimationStore = defineStore('animation', () => {
     now_collage_idx.value = 0
     now_start_idx.value = 0
     now_overview_idx.value = 0
-    time_interval.value = 2000
+    time_interval.value = 1000
   }
 
   function removeAnimation() {

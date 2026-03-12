@@ -5,6 +5,7 @@ import { sendDataToServer } from '~/composables/server'
 import { useAnimationStore } from '~/stores/animation'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { usePaperExportStore } from '~/stores/paperExport'
+import { useCanvasStore } from '~/stores/canvas'
 import type { ProgressItem } from '~/stores/animation'
 import { useTutorialStore } from '~/stores/tutorial'
 import { storeToRefs } from 'pinia'
@@ -14,6 +15,8 @@ const animationStore = useAnimationStore()
 const collageSeriesStore = useCollageSeriesStore()
 const paperExportStore = usePaperExportStore()
 const tutorialStore = useTutorialStore()
+const canvasStore = useCanvasStore()
+const { hasMarker, hasContainer } = storeToRefs(canvasStore)
 const { collaging, result_data, replaying, totalOverview, time_interval, progress_data, replayIdx } = storeToRefs(animationStore)
 // 用 computed 得到当前 progress，保证依赖 progress_data/replayIdx，进度条才能随数据更新
 const progress = computed(() => {
@@ -32,6 +35,12 @@ const showReplayButton = computed(() => result_data.value && result_data.value.l
 const showBackToEditButton = computed(() => !collaging.value&&result_data.value.length>0)
 const showExportButton = computed(() => !collaging.value&&result_data.value.length>0)
 
+// Run 按钮变绿：画布同时存在 marker 与 container
+const runReadyGreen = ref(false)
+watch([hasMarker, hasContainer], ([m, c]) => {
+  runReadyGreen.value = !!m && !!c
+}, { immediate: true })
+
 // 监听 progress 变化
 watch(progress, (newProgress) => {
   if (newProgress && (collaging.value || replaying.value)) {
@@ -43,19 +52,19 @@ watch(progress, (newProgress) => {
     const now_overview = (newProgress.now_overview_idx ?? 0) as number
     if (totalsteps > 0 && total_collage > 0 && totalOverview.value > 0) {
       const currentTypeProgress = steps / totalsteps
-      
+
       // 计算当前overview内的进度
       const currentOverviewProgress = (now_collage + currentTypeProgress / 2 + (1 / 2) * type) / total_collage
-      
+
       // 计算前面overview的累计进度
       const previousOverviewProgress = now_overview / totalOverview.value
-      
+
       // 计算当前overview占总进度的比例
       const currentOverviewWeight = 1 / totalOverview.value
-      
+
       // 总进度 = 前面overview的进度 + 当前overview的进度
       percentage.value = (previousOverviewProgress + currentOverviewProgress * currentOverviewWeight) * 100
-      
+
       // 确保百分比在0-100之间
       percentage.value = Math.min(Math.max(percentage.value, 0), 100)
     }
@@ -108,12 +117,12 @@ const handleExport = () => {
 const handleSpeedChange = (event: Event) => {
   const target = event.target as HTMLInputElement
   const speedMultiplier = parseFloat(target.value)
-  
+
   // 将倍速转换为时间间隔 (基础时间2000ms / 倍速)
-  const baseInterval = 2000
+  const baseInterval = 1000
   const newInterval = Math.round(baseInterval / speedMultiplier)
   animationStore.time_interval = newInterval
-  
+
   // 如果正在replay，需要重新设定timer
   if (replaying.value) {
     animationStore.updateReplayTimer()
@@ -142,34 +151,45 @@ const handleHelp = () => {
 <template>
   <div class="relative">
     <header class="px-6 border-b-2 border-[#ded9d8] bg-[var(--primary-muted-color)] flex h-12 w-full items-center z-20 shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
-      <h1 class="topbar-label text-[#565151] flex items-center gap-2">
-        <!-- <img src="/UNITVIZ2.svg" alt="UnitoPia Logo" class="h-8 w-auto" /> -->
-        UnitoPia
-      </h1>
+      <div class="flex items-center gap-3">
+        <h1 class="topbar-label text-[#565151] flex items-center gap-2">
+          <!-- <img src="/UNITVIZ2.svg" alt="UnitoPia Logo" class="h-8 w-auto" /> -->
+          UnitoPia
+        </h1>
+
+        <!-- New Workspace 按钮（放在标题右侧） -->
+        <button
+          class="flex items-center gap-2 px-4 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] cursor-pointer border border-[var(--border-color)]"
+          @click="handleRefresh"
+        >
+          <span class="i-carbon:document-add text-base"></span>
+          <span class="topbar-button-label">New Workspace</span>
+        </button>
+      </div>
 
       <!-- 右侧按钮组：整体靠右，最后是 Help -->
       <div class="ml-auto flex items-center gap-2">
         <!-- Replay 按钮 - 当result_data不为空时显示 -->
-        <button 
+        <button
           v-if="showReplayButton"
           class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
           @click="handleReplay"
         >
-          <div 
+          <div
             v-if="!replaying"
-            class="i-carbon:reset text-lg" 
+            class="i-carbon:reset text-lg"
           ></div>
-          <div 
+          <div
             v-else
             class="i-carbon:renew animate-spin text-lg"
           ></div>
           <span class="topbar-button-label">{{ replaying ? 'replaying...' : 'replay' }}</span>
         </button>
-        
+
         <!-- Export 按钮 -->
-        <button v-show="showExportButton" 
+        <button v-show="showExportButton"
           class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)] cursor-pointer"
-          :class="[ 
+          :class="[
             replaying ? 'opacity-50 cursor-not-allowed' : ''
           ]"
           :disabled="replaying"
@@ -177,9 +197,9 @@ const handleHelp = () => {
           <div class="i-carbon:export text-lg"></div>
           <span class="topbar-button-label">Export</span>
         </button>
-        
+
         <!-- Back to Edit 按钮 -->
-        <button 
+        <button
           v-show="showBackToEditButton"
           class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium border border-[var(--border-color)] cursor-pointer"
           :class="[
@@ -192,28 +212,22 @@ const handleHelp = () => {
           <span class="topbar-button-label">Back to Edit</span>
         </button>
 
-        <!-- New Workspace 按钮 -->
-        <button
-          class="flex items-center gap-2 px-4 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] cursor-pointer border border-[var(--border-color)]"
-          @click="handleRefresh"
-        >
-          <span class="i-carbon:document-add text-base"></span>
-          <span class="topbar-button-label">New Workspace</span>
-        </button>
-        
         <!-- Run 按钮 -->
         <button
           data-tutorial="run-button"
           class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
-          :class="[replaying ? 'opacity-50 cursor-not-allowed' : '']"
+          :class="[
+            replaying ? 'opacity-50 cursor-not-allowed' : '',
+            runReadyGreen ? 'bg-green-500 hover:bg-green-600 border-green-600 text-white' : ''
+          ]"
           :disabled="replaying"
           @click="handleRun"
         >
-          <div 
+          <div
             v-if="!collaging"
             class="i-carbon:play text-lg"
           ></div>
-          <div 
+          <div
             v-else
             class="i-carbon:renew animate-spin text-lg"
           ></div>
@@ -228,9 +242,9 @@ const handleHelp = () => {
           <span class="i-carbon:help text-lg"></span>
           <span class="topbar-button-label">Help</span>
         </button>
-        
+
         <!-- 调速拉条 - 只在replay模式下显示 -->
-        <div 
+        <div
           v-if="replaying"
           class="flex items-center gap-3 px-6 py-1 rounded-md bg-[var(--primary-light-color)] border-l border-[var(--border-color)] ml-2"
         >
@@ -239,7 +253,7 @@ const handleHelp = () => {
         <input
           type="range"
           min="0.5"
-          max="4.0"
+          max="16.0"
           step="0.1"
           :value="currentSpeedMultiplier"
           @input="handleSpeedChange"
@@ -251,11 +265,11 @@ const handleHelp = () => {
     </header>
 
     <!-- 进度条 - 移到header外部，使用fixed定位 -->
-    <div 
+    <div
       v-if="collaging||replaying"
       class="fixed top-11 left-0 w-full bg-[var(--border-color)] h-2 z-9999"
     >
-      <div 
+      <div
         class="bg-[var(--primary-color)] h-full transition-all duration-300 ease-out"
         :style="{ width: percentage + '%' }"
       ></div>
