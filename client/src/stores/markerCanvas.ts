@@ -3,10 +3,11 @@ import { ref } from 'vue'
 import type { Canvas } from 'fabric'
 import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import { useMarkerObjectActionsStore } from '~/stores/markerObjectActions'
+import { useMarkInstanceStore } from '~/stores/markInstance'
 import * as fabric from 'fabric'
 export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
   const canvasRef = ref<(() => Canvas | null) | null>(null)
-  
+
   // 路径闭合确认对话框状态
   const closePathConfirm = ref<{
     show: boolean
@@ -38,6 +39,96 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     // 在函数内导入 store，避免循环依赖
     const markerCanvasModeStore = useMarkerCanvasModeStore()
     const markerObjectActionsStore = useMarkerObjectActionsStore()
+    const markInstanceStore = useMarkInstanceStore()
+
+    async function saveCurrentMarker() {
+      const canvas = canvasRef.value?.()
+      if (!canvas) return
+
+      const sel = markInstanceStore.selectedMarkForDetail
+      if (!sel) {
+        return
+      }
+
+      const allObjects = canvas.getObjects()
+      if (!allObjects.length) {
+        return
+      }
+
+      const clonedObjects = await Promise.all(
+        allObjects.map(async (obj) => obj.clone()),
+      )
+      const group = new fabric.Group(clonedObjects)
+
+      const thumbnailSize = 200
+      const padding = 20
+      const contentSize = thumbnailSize - padding * 2
+
+      const tempCanvasEl = document.createElement('canvas')
+      tempCanvasEl.width = thumbnailSize
+      tempCanvasEl.height = thumbnailSize
+
+      const tempFabricCanvas = new fabric.Canvas(tempCanvasEl, {
+        width: thumbnailSize,
+        height: thumbnailSize,
+        backgroundColor: '#fffef8',
+      })
+
+      const originWidth = group.width || 1
+      const originHeight = group.height || 1
+
+      const scaleX = contentSize / originWidth
+      const scaleY = contentSize / originHeight
+      const scale = Math.min(scaleX, scaleY, 1)
+
+      group.set('left', thumbnailSize / 2)
+      group.set('top', thumbnailSize / 2)
+      group.set('scaleX', scale)
+      group.set('scaleY', scale)
+      group.set('originX', 'center')
+      group.set('originY', 'center')
+      group.set('opacity', 1)
+
+      tempFabricCanvas.add(group)
+      tempFabricCanvas.renderAll()
+
+      const thumbnail = tempFabricCanvas.toDataURL({
+        format: 'png',
+        multiplier: 2,
+        enableRetinaScaling: false as any,
+      })
+
+      const jsonData = allObjects.map(obj => obj.toJSON())
+
+      if (sel.type === 'singleInstance') {
+        markInstanceStore.updateMarkInstance(sel.markId, {
+          markerThumbnail: thumbnail,
+          markerJsonData: jsonData,
+        })
+      } else {
+        const parent = markInstanceStore.markInstances.find(m => m.id === sel.parentMarkId)
+        if (!parent) {
+          tempFabricCanvas.dispose()
+          return
+        }
+
+        const nextChildren = parent.children.map(child =>
+          child.id === sel.childId
+            ? {
+                ...child,
+                markerThumbnail: thumbnail,
+                markerJsonData: jsonData,
+              }
+            : child,
+        )
+
+        markInstanceStore.updateMarkInstance(sel.parentMarkId, {
+          children: nextChildren,
+        })
+      }
+
+      tempFabricCanvas.dispose()
+    }
 
     canvasInstance.on({
       'object:added': (e) => {
@@ -47,9 +138,10 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
           e.target.set('selectable', false)
           e.target.set('evented', false)
         }
-        
+
         // 询问是否闭合路径
         askToClosePath(e.target)
+        saveCurrentMarker()
       },
       'selection:created': () => {
         markerObjectActionsStore.setCurrentPathObj()
@@ -77,7 +169,17 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
         markerObjectActionsStore.setCurrentPathObj()
         markerObjectActionsStore.updateActionBtnVisble()
         markerObjectActionsStore.updateActionBtnPosition()
-      }
+        saveCurrentMarker()
+      },
+      'object:removed': () => {
+        saveCurrentMarker()
+      },
+      'path:created': (e) => {
+        if (e.path) {
+          askToClosePath(e.path)
+          saveCurrentMarker()
+        }
+      },
     })
   }
 
@@ -147,18 +249,18 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance || !path) return
     if (suppressClosePath.value) return
-    
+
     // 跳过预览形状
     if (path.get('isPreview')) return
-    
+
     // 只有mode为draw或rect或ellipse的状态才询问是否闭合路径
     const markerCanvasModeStore = useMarkerCanvasModeStore()
     if (markerCanvasModeStore.mode !== 'draw' && markerCanvasModeStore.mode !== 'rect' && markerCanvasModeStore.mode !== 'ellipse') return
-    
+
     // 对于 draw 模式，检查起点和终点距离
     if (markerCanvasModeStore.mode === 'draw' && path.type === 'path' && path.path) {
       const { start, end } = getPathStartAndEndPoints(path)
-      
+
       if (start && end) {
         // 计算起点和终点的距离
         const distance = calculateDistance(start, end)
@@ -168,21 +270,21 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
         }
       }
     }
-     
-    
+
+
     // 获取对象在画布上的位置
     const zoom = canvasInstance.getZoom()
     const vpt = canvasInstance.viewportTransform
     const pathBounds = path.getBoundingRect()
-    
+
     // 计算对象在页面中的位置
     const canvasEl = canvasInstance.getElement()
     if (!canvasEl) return
-    
+
     const canvasRect = canvasEl.getBoundingClientRect()
     const x = (pathBounds.left * zoom) + (vpt[4] || 0) + canvasRect.left
     const y = (pathBounds.top * zoom) + (vpt[5] || 0) + canvasRect.top
-    
+
     // 设置确认对话框状态
     closePathConfirm.value = {
       show: true,
@@ -195,17 +297,19 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
   function handleClosePathConfirm(confirmed: boolean) {
     const { path } = closePathConfirm.value
     if (!path) return
-    
+
     const canvasInstance = canvasRef.value?.()
     if (!canvasInstance) return
-    
+
     if (confirmed) {
       // 闭合路径：设置 fill 为 stroke 颜色
       const strokeColor = path.stroke || '#000'
-      path.set('fill', strokeColor) 
+      path.set('fill', strokeColor)
       canvasInstance.requestRenderAll()
+      // 触发一次 object:modified 事件，让自动保存逻辑生效
+      canvasInstance.fire('object:modified', { target: path })
     }
-    
+
     // 关闭确认对话框
     closePathConfirm.value = {
       show: false,

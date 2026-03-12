@@ -3,18 +3,11 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useMarkerCanvasModeStore } from '~/stores/markerCanvasMode'
 import ColorPicker from './ColorPicker.vue'
 import { storeToRefs } from 'pinia'
-import * as fabric from 'fabric'
-import { Canvas, Group } from 'fabric'
 import { useBrushSizeStore } from '~/stores/brushsize'
-import { useMarkInstanceStore } from '~/stores/markInstance'
 
 const markerCanvasModeStore = useMarkerCanvasModeStore()
 const { mode } = storeToRefs(markerCanvasModeStore)
 const { setMode } = markerCanvasModeStore
-
-// Mark 实例 store（保存当前实例的 marker 可视化）
-const markInstanceStore = useMarkInstanceStore()
-const { selectedMarkForDetail } = storeToRefs(markInstanceStore)
 
 // 画笔大小 store
 const brushSizeStore = useBrushSizeStore()
@@ -207,96 +200,6 @@ const triggerFileUpload = () => {
   markerCanvasModeStore.setMode(null)
   fileInputRef.value?.click()
 }
-
-// 保存当前画布上的所有 marker 对象
-const saveMarkers = async () => {
-  const canvasInstance = markerCanvasModeStore.getCanvas()
-  if (!canvasInstance) return
-  // 获取画布上所有对象
-  const allObjects = canvasInstance.getObjects()
-  //新建一个fabricjs的group，将所有objectsgroup一起
-  const cloneObjects = await Promise.all(allObjects.map(async (obj) => {
-    return obj.clone()
-  }))
-  const group = new Group(cloneObjects)
-  // 使用更大的画布尺寸以提高清晰度
-  const thumbnailSize = 200
-  const padding = 20
-  const contentSize = thumbnailSize - padding * 2
-
-  const tempCanvas = document.createElement('canvas')
-  tempCanvas.width = thumbnailSize
-  tempCanvas.height = thumbnailSize
-
-  const tempFabricCanvas = new Canvas(tempCanvas, {
-    width: thumbnailSize,
-    height: thumbnailSize,
-    backgroundColor: '#fffef8'
-  })
-  const originWidth = group.width
-  const originHeight = group.height
-  // 计算缩放比例，确保对象适合缩略图
-  const scaleX = contentSize / Math.max(originWidth, 1)
-  const scaleY = contentSize / Math.max(originHeight, 1)
-  const scale = Math.min(scaleX, scaleY, 1) // 不超过原始大小
-  //把克隆对象放到画布正中央，做好缩放，并导出给previewDataUrl
-  group.set('left', thumbnailSize / 2)
-  group.set('top', thumbnailSize / 2)
-  group.set('scaleX', scale)
-  group.set('scaleY', scale)
-  group.set('originX', 'center')
-  group.set('originY', 'center')
-  group.set('opacity', 1)
-  tempFabricCanvas.add(group)
-  tempFabricCanvas.renderAll()
-  // 使用更高的 multiplier 提高清晰度
-  const thumbnail = tempFabricCanvas.toDataURL({
-    format: 'png',
-    multiplier: 2,
-    enableRetinaScaling: false as any,
-  })
-
-  // 获取当前画布的完整 JSON 数据（单个对象）
-  // const jsonData = canvasInstance.toJSON()
-  const jsonData = allObjects.map(obj => obj.toJSON())
-  console.log('jsonData', jsonData)
-  // 找到当前正在编辑的 mark 或 child 实例（如果有）
-  const sel = selectedMarkForDetail.value
-
-  if (!sel) {
-    // 没有选中任何 Mark，直接结束
-    return
-  }
-
-  // 编辑的是普通（非 group）实例：直接写到该实例本身
-  if (sel.type === 'singleInstance') {
-    markInstanceStore.updateMarkInstance(sel.markId, {
-      markerThumbnail: thumbnail,
-      markerJsonData: jsonData,
-    })
-  } else {
-    // 编辑的是 group 的某个 child：只更新这个 child，不动其它兄弟
-    const parent = markInstanceStore.markInstances.find(m => m.id === sel.parentMarkId)
-    if (!parent) return
-
-    const nextChildren = parent.children.map(child =>
-      child.id === sel.childId
-        ? {
-            ...child,
-            markerThumbnail: thumbnail,
-            markerJsonData: jsonData,
-          }
-        : child,
-    )
-
-    markInstanceStore.updateMarkInstance(sel.parentMarkId, {
-      children: nextChildren,
-    })
-  }
-
-  // 清理临时画布
-  tempFabricCanvas.dispose()
-}
 </script>
 
 <template>
@@ -452,18 +355,6 @@ const saveMarkers = async () => {
       @click="triggerFileUpload"
     >
       <span class="i-carbon-upload" />
-    </button>
-
-    <!-- 分割线 -->
-    <div class="toolbar-divider" />
-
-    <!-- 保存按钮 -->
-    <button
-      class="rounded-full flex h-8 w-8 items-center justify-center cursor-pointer text-[#3d3d3d] hover:bg-white/80"
-      title="Save Marker"
-      @click="saveMarkers"
-    >
-      <span class="i-carbon-save" />
     </button>
 
     <!-- 清除按钮 -->
