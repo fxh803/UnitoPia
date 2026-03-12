@@ -131,7 +131,7 @@ const handleSpeedChange = (event: Event) => {
 
 // 计算当前倍速显示
 const currentSpeedMultiplier = computed(() => {
-  const baseInterval = 2000
+  const baseInterval = 1000
   return (baseInterval / time_interval.value).toFixed(1)
 })
 
