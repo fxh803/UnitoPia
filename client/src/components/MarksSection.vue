@@ -636,13 +636,13 @@ function handleDragLeave(e: DragEvent) {
                 type="button"
                 role="switch"
                 :aria-checked="!!mark.shuffleOnDrop"
-                class="relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border border-[var(--border-color)] transition-colors focus:outline-none"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 items-center rounded-full border border-[var(--border-color)] transition-colors focus:outline-none"
                 :class="mark.shuffleOnDrop ? 'bg-[var(--primary-color)]' : 'bg-[var(--border-color)]/50'"
                 @click.stop="markInstanceStore.updateMarkInstance(mark.id, { shuffleOnDrop: !mark.shuffleOnDrop })"
               >
                 <span
-                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition-transform translate-x-0.5 mt-0.5"
-                  :class="mark.shuffleOnDrop ? 'translate-x-5' : 'translate-x-0.5'"
+                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition-transform translate-x-0.5"
+                  :class="mark.shuffleOnDrop ? 'translate-x-4' : 'translate-x-0.5'"
                 />
               </button>
             </div>
