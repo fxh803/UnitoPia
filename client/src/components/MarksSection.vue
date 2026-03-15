@@ -82,7 +82,38 @@ function onMarkDragStart(e: DragEvent, mark: any) {
     pointer-events: none;
     opacity: 1;
   `
-  ghost.appendChild(createSimpleDragImage(mark.markerThumbnail || '/default_mark.svg'))
+  const thumb =
+    mark.isGroup && mark.children?.length
+      ? (mark.children[0].markerThumbnail || mark.markerThumbnail || '/default_mark.svg')
+      : (mark.markerThumbnail || '/default_mark.svg')
+  const dragImageWrap = document.createElement('div')
+  dragImageWrap.style.position = 'relative'
+  dragImageWrap.style.display = 'inline-block'
+  dragImageWrap.appendChild(createSimpleDragImage(thumb))
+  if (mark.isGroup && mark.children?.length) {
+    const badge = document.createElement('span')
+    badge.textContent = String(mark.children.length)
+    badge.style.cssText = `
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      border-radius: 50%;
+      background: #9ca3af;
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      box-sizing: border-box;
+    `
+    dragImageWrap.appendChild(badge)
+  }
+  ghost.appendChild(dragImageWrap)
   document.body.appendChild(ghost)
 
   const dragEl = e.currentTarget as HTMLElement
@@ -559,7 +590,7 @@ function handleDragLeave(e: DragEvent) {
             <!-- 父行右侧字段 pill（支持重新绑定字段） -->
             <div v-if="mark.fieldName" class="flex items-center gap-2 cursor-auto" @click.stop>
               <div
-                class="group relative px-4 py-1.5 rounded-full text-[13px] flex items-center gap-2 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)] min-w-[160px]"
+                class="group relative px-2 py-1.5 rounded-full text-[13px] flex items-center gap-2 bg-[#f7f3f2] border border-[var(--border-color)] text-[var(--title-color)] min-w-[160px]"
                 @dragover.prevent
                 @drop.prevent="handleFieldDropOnMark($event, mark.id)"
               >
@@ -569,7 +600,7 @@ function handleDragLeave(e: DragEvent) {
                 <span class="font-medium truncate max-w-[120px]">{{ mark.fieldName }}</span>
                 <span
                   v-if="mark.isGroup"
-                  class="ml-1 px-2 py-0.5 rounded-full font-semibold bg-[var(--primary-light-color)] text-[11px] text-[var(--text-muted)] flex-shrink-0"
+                  class="ml-1 px-2 py-0.5 rounded-full font-semibold bg-[#efe6e1] text-[11px] text-[var(--text-muted)] flex-shrink-0"
                 >
                   Group
                 </span>
@@ -593,10 +624,33 @@ function handleDragLeave(e: DragEvent) {
               </div>
             </div>
 
-            <!-- 删除整个父实例 -->
+            <!-- group 专用：放置时是否打乱位置 -->
+            <div
+              v-if="mark.isGroup"
+              class="flex items-center gap-1.5 flex-shrink-0 cursor-auto"
+              @click.stop
+              title="放置时打乱位置顺序"
+            >
+              <span class="text-[11px] text-[var(--text-muted)] whitespace-nowrap">Shuffle</span>
+              <button
+                type="button"
+                role="switch"
+                :aria-checked="!!mark.shuffleOnDrop"
+                class="relative inline-flex h-5 w-9 flex-shrink-0 rounded-full border border-[var(--border-color)] transition-colors focus:outline-none"
+                :class="mark.shuffleOnDrop ? 'bg-[var(--primary-color)]' : 'bg-[var(--border-color)]/50'"
+                @click.stop="markInstanceStore.updateMarkInstance(mark.id, { shuffleOnDrop: !mark.shuffleOnDrop })"
+              >
+                <span
+                  class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition-transform translate-x-0.5 mt-0.5"
+                  :class="mark.shuffleOnDrop ? 'translate-x-5' : 'translate-x-0.5'"
+                />
+              </button>
+            </div>
+
+            <!-- 删除整个父实例（贴右） -->
             <button
               type="button"
-              class="ml-1 text-[var(--text-muted)] hover:text-[var(--title-color)] cursor-pointer"
+              class="ml-auto flex-shrink-0 text-[var(--text-muted)] hover:text-[var(--title-color)] cursor-pointer"
               @click.stop="markInstanceStore.removeMarkInstance(mark.id)"
             >
               <img src="/Icon-Trash.svg" alt="" class="w-6 h-6" />

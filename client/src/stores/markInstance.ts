@@ -61,6 +61,8 @@ export interface MarkInstance {
   categoricalColors?: Record<string, string>
   // 当前 mark 的可视编码设置（Color / Size / Width / Height）
   encoding?: MarkEncoding
+  // group 专用：拖拽放置到画布时是否打乱位置顺序
+  shuffleOnDrop?: boolean
 }
 
 /** 当前在左侧栏弹出的「Mark 详情面板」对应的选中项：单实例 或 group 的子实例 */

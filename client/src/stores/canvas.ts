@@ -817,6 +817,14 @@ export const useCanvasStore = defineStore('canvas', () => {
       return
     }
 
+    // 若勾选「放置时打乱」，对位置数组做 Fisher-Yates 洗牌
+    if (mark.shuffleOnDrop && pos.length > 1) {
+      for (let i = pos.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pos[i], pos[j]] = [pos[j], pos[i]]
+      }
+    }
+
     // 4. 依次遍历每个合格子实例，把它覆盖的实体映射到全局 pos 上
     const minDisplaySize = 20
     const maxDisplaySize = 70
