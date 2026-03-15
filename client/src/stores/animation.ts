@@ -1,8 +1,8 @@
 // src/stores/counterStore.js
-import { defineStore, storeToRefs } from 'pinia'
+import { defineStore } from 'pinia'
 import paper from "paper";
 import { useContainerAnimationStore } from '~/stores/containerAnimation'
-import { useCollageSeriesStore } from '~/stores/collageSeries'
+// import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { getRenderTxtData } from '~/composables/server'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 import { ref, computed, watch } from 'vue';
@@ -26,6 +26,11 @@ export interface ResultItem {
   data: number[]
   pos: [number, number][]
   size: [number, number][]
+  /** 多分辨率信息，含渲染尺寸（可选） */
+  multi_res?: {
+    render_size_w?: number
+    render_size_h?: number
+  }
 }
 
 /** 带自定义属性的 Raster（paper.js 扩展） */
@@ -166,14 +171,15 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function setData(now_collage: number, startIndex: number) {//对最新的数据进行整理
     const result = result_data.value[result_data.value.length - 1]
+    console.log('result', result)
     if (result == null) return
     const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
     // 获取当前幻灯片的 render_size
-    const collageSeriesStore = useCollageSeriesStore()
-    const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
-    const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as [number, number] | undefined
-    let renderSizeWidth = renderSizeSetting?.[0] ?? canvas_width.value
-    let renderSizeHeight = renderSizeSetting?.[1] ?? canvas_height.value
+    // const collageSeriesStore = useCollageSeriesStore()
+    // const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
+    // const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as [number, number] | undefined
+    let renderSizeWidth = result.multi_res?.render_size_w ?? canvas_width.value
+    let renderSizeHeight = result.multi_res?.render_size_h ?? canvas_height.value
 
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
@@ -196,11 +202,11 @@ export const useAnimationStore = defineStore('animation', () => {
     if (result == null) return
     const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
     // 获取当前幻灯片的 render_size
-    const collageSeriesStore = useCollageSeriesStore()
-    const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
-    const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as [number, number] | undefined
-    let renderSizeWidth = renderSizeSetting?.[0] ?? canvas_width.value
-    let renderSizeHeight = renderSizeSetting?.[1] ?? canvas_height.value
+    // const collageSeriesStore = useCollageSeriesStore()
+    // const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
+    // const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as [number, number] | undefined
+    let renderSizeWidth = result.multi_res?.render_size_w ?? canvas_width.value
+    let renderSizeHeight = result.multi_res?.render_size_h ?? canvas_height.value
 
     for (let i = startIndex; i < result['pos'].length + startIndex; i++) {
       posArray.value[i] = [result['pos'][i - startIndex][0] * canvas_width.value, result['pos'][i - startIndex][1] * canvas_height.value];
