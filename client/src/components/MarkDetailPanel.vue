@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useMarkInstanceStore, type ColorStop } from '~/stores/markInstance'
 import { useTableStore } from '~/stores/table'
@@ -180,6 +180,41 @@ function resetEncoding() {
   }
 }
 
+// 拖拽悬停：在 Visual Encoding 外围时 4 个 pill 都高亮，进入某个 pill 时只高亮该 pill
+const encodingSectionRef = ref<HTMLElement | null>(null)
+const isDragOverEncodingSection = ref(false)
+const dragOverEncodingChannel = ref<string | null>(null)
+
+function onEncodingSectionDragOver(e: DragEvent) {
+  e.preventDefault()
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+  isDragOverEncodingSection.value = true
+}
+
+function onEncodingSectionDragLeave(e: DragEvent) {
+  const el = encodingSectionRef.value
+  const related = e.relatedTarget as Node | null
+  if (!related || !el?.contains(related)) {
+    isDragOverEncodingSection.value = false
+    dragOverEncodingChannel.value = null
+  }
+}
+
+function onEncodingPillDragEnter(channel: string) {
+  dragOverEncodingChannel.value = channel
+}
+
+function onEncodingPillDragLeave(e: DragEvent) {
+  const related = e.relatedTarget as Node | null
+  const current = e.currentTarget as HTMLElement
+  if (!related || !current.contains(related)) dragOverEncodingChannel.value = null
+}
+
+function isPillHighlighted(channel: string): boolean {
+  if (dragOverEncodingChannel.value) return dragOverEncodingChannel.value === channel
+  return isDragOverEncodingSection.value
+}
+
 function handleEncodingDragOver(e: DragEvent) {
   e.preventDefault()
   if (e.dataTransfer) {
@@ -189,6 +224,8 @@ function handleEncodingDragOver(e: DragEvent) {
 
 function handleEncodingDrop(e: DragEvent, channelLabel: string) {
   e.preventDefault()
+  isDragOverEncodingSection.value = false
+  dragOverEncodingChannel.value = null
   const column = e.dataTransfer?.getData('text/plain')
   if (!column) return
 
@@ -255,7 +292,12 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
           <span class="i-carbon-renew text-lg" />
         </button>
       </div>
-      <div class="flex flex-col gap-2">
+      <div
+        ref="encodingSectionRef"
+        class="flex flex-col gap-2 rounded-lg transition-colors"
+        @dragover.prevent="onEncodingSectionDragOver"
+        @dragleave="onEncodingSectionDragLeave"
+      >
         <div
           v-for="channel in ['Color', 'Size', 'Width', 'Height']"
           :key="channel"
@@ -264,13 +306,18 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
           <div class="flex items-center gap-2">
             <span class="text-sm font-bold text-[var(--title-color)] shrink-0 w-16">{{ channel }}</span>
             <div
-              class="ml-auto shrink-0 w-[220px] rounded-full border-2 border-dashed border-[var(--border-color)] bg-white py-1.5 px-3 flex items-center justify-center min-h-[36px] gap-2"
+              class="ml-auto shrink-0 w-[220px] rounded-full border-2 py-1.5 px-3 flex items-center justify-center min-h-[36px] gap-2 transition-[border-color,box-shadow]"
+              :class="isPillHighlighted(channel)
+                ? 'border-dashed border-2 border-[var(--text-muted-light)] bg-[var(--border-color)]/10'
+                : 'border-dashed border-[var(--border-color)] bg-white'"
               @dragover="handleEncodingDragOver"
+              @dragenter.prevent="onEncodingPillDragEnter(channel)"
+              @dragleave="onEncodingPillDragLeave"
               @drop="handleEncodingDrop($event, channel)"
             >
               <span
                 v-if="currentEncoding && currentEncoding[channel.toLowerCase()]"
-                class="text-xs font-medium text-[var(--title-color)] truncate"
+                class="text-xs font-semibold text-[var(--title-color)] truncate"
               >
                 {{ currentEncoding[channel.toLowerCase()] }}
               </span>
