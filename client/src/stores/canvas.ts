@@ -23,7 +23,8 @@ import type { TableData } from '~/stores/table'
 
 export const useCanvasStore = defineStore('canvas', () => {
   const canvasRef = ref<(() => Canvas | null) | null>(null)
-  const containerColor = ref([100, 100, 100, 0.8])
+  // primary-color (#EB7678) 的透明版，用于 container 绘制
+  const containerColor = ref([235, 118, 120, 0.4])
   const hasMarker = ref(false)
   const hasContainer = ref(false)
   // Segment 加载状态
