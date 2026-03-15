@@ -378,12 +378,21 @@ const handleKeyDown = (e: KeyboardEvent) => {
   }
 }
 
+let resizeObserver: ResizeObserver | null = null
+
 onMounted(async () => {
   await nextTick()
   // 延迟一下确保DOM完全渲染
   setTimeout(() => {
     updateCanvasSize()
   }, 200)
+
+  // 根据窗口或容器尺寸变化更新画布大小
+  window.addEventListener('resize', updateCanvasSize)
+  if (canvasAreaRef.value) {
+    resizeObserver = new ResizeObserver(() => updateCanvasSize())
+    resizeObserver.observe(canvasAreaRef.value)
+  }
 
   if (canvasEl.value) {
     canvas = new Canvas(canvasEl.value, {
@@ -433,6 +442,11 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateCanvasSize)
+  if (resizeObserver && canvasAreaRef.value) {
+    resizeObserver.unobserve(canvasAreaRef.value)
+    resizeObserver = null
+  }
   // 移除键盘事件监听
   document.removeEventListener('keydown', handleKeyDown)
   // 移除 segmentPoint 监听
