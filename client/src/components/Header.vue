@@ -220,7 +220,7 @@ const handleHelp = () => {
           class="flex items-center gap-2 px-6 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
           :class="[
             replaying ? 'opacity-50 cursor-not-allowed' : '',
-            runReadyGreen ? 'bg-green-500 hover:bg-green-600 border-green-600 text-white' : ''
+            runReadyGreen ? 'bg-green-600 hover:bg-green-700 text-white' : ''
           ]"
           :disabled="replaying"
           @click="handleRun"
