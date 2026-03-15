@@ -245,7 +245,7 @@ function handleFieldDropOnMark(e: DragEvent, markId: string) {
   e.preventDefault()
   const fieldName = e.dataTransfer?.getData('text/plain')
   const fieldType = e.dataTransfer?.getData('field-type') as 'numeric' | 'categorical'
-  const variant = e.dataTransfer?.getData('field-variant') || 'field'
+  const variant = e.dataTransfer?.getData('field-variant') || 'single'
 
   if (!fieldName || !fieldType) return
 
@@ -363,7 +363,7 @@ function handleDrop(e: DragEvent) {
   isDragOver.value = false
   const fieldName = e.dataTransfer?.getData('text/plain')
   const fieldType = e.dataTransfer?.getData('field-type') as 'numeric' | 'categorical'
-  const variant = e.dataTransfer?.getData('field-variant') || 'field'
+  const variant = e.dataTransfer?.getData('field-variant') || 'single'
 
   if (!fieldName || !fieldType) return
 

@@ -58,13 +58,13 @@ function handleDrop(e: DragEvent) {
   if (files?.length) tableStore.handleFileUpload(files[0])
 }
 
-type FieldVariant = 'field' | 'group'
+type FieldVariant = 'single' | 'group'
 
 function onFieldDragStart(
   e: DragEvent,
   tag: { column: string },
   type: 'numeric' | 'categorical',
-  variant: FieldVariant = 'field',
+  variant: FieldVariant = 'single',
 ) {
   if (!e.dataTransfer) return
 
@@ -266,7 +266,7 @@ watch(presetDropdownVisible, (visible) => {
               v-for="tag in numericTags"
               :key="`num-${tag.column}`"
               class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
-              :class="{ 'data-field-placeholder': draggingFieldKey === `field:${tag.column}` }"
+              :class="{ 'data-field-placeholder': draggingFieldKey === `single:${tag.column}` }"
               draggable="true"
               @dragstart="(e) => onFieldDragStart(e, tag, 'numeric')"
               @dragend="onFieldDragEnd"
@@ -291,9 +291,9 @@ watch(presetDropdownVisible, (visible) => {
               <!-- 普通字段 pill -->
               <span
                 class="data-field-pill inline-flex items-center rounded-full px-4 py-1.5 text-[13px] font-medium cursor-move"
-                :class="{ 'data-field-placeholder': draggingFieldKey === `field:${tag.column}` }"
+                :class="{ 'data-field-placeholder': draggingFieldKey === `single:${tag.column}` }"
                 draggable="true"
-                @dragstart="(e) => onFieldDragStart(e, tag, 'categorical', 'field')"
+                @dragstart="(e) => onFieldDragStart(e, tag, 'categorical', 'single')"
                 @dragend="onFieldDragEnd"
               >
                 <span class="data-field-prefix-abc mr-1">abc</span>

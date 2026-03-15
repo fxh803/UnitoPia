@@ -129,6 +129,14 @@ export const useMarkInstanceStore = defineStore('markInstance', () => {
     const child = parent.children.find(c => c.id === childId)
     if (!child) return
     Object.assign(child, payload)
+
+    // 设置 child 的 encoding 时，兄弟子实例的 encoding 同步为相同（以及同时传入的 colorStops / categoricalColors）
+    for (const c of parent.children) {
+      if (c.id === childId) continue
+      if (payload.encoding !== undefined) c.encoding = payload.encoding
+      if (payload.colorStops !== undefined) c.colorStops = payload.colorStops
+      if (payload.categoricalColors !== undefined) c.categoricalColors = payload.categoricalColors
+    }
   }
 
   return {
