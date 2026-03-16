@@ -11,16 +11,16 @@
       <div
         class="relative h-3/5 w-full bg-cover bg-center"
         style="background-image:
-          linear-gradient(to bottom, rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.85)),
+          linear-gradient(to bottom, rgba(251, 191, 36, 0.8), rgba(246, 103, 108, 0.9)),
           url('/piccl-hero-placeholder.jpg');"
       >
         <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
           <h1 class="text-4xl md:text-5xl font-bold tracking-wide text-white mb-4">
-            Unitopia：可视化图表创作平台
+            UnitoPia：图像化单元可视化框架
           </h1>
           <p class="max-w-3xl text-sm md:text-base text-slate-100 leading-relaxed">
-            Unitopia 提供一站式的可视化创作能力，你可以通过拖拽和配置快速搭建复杂的图表与仪表盘，
-            并将它们无缝集成到你的产品和数据分析工作流之中。
+            UnitoPia 面向单元可视化（unit visualization），以“逐个数据单元、一一对应”为核心，
+            支持用丰富的图像元素和灵活布局来表达数据故事，让每一个数据点都保持清晰身份与语义。
           </p>
         </div>
       </div>
@@ -28,13 +28,14 @@
       <!-- 下半部分：三列卡片（Unitopia 卖点） -->
       <div class="w-full h-2/5 flex items-center">
         <div class="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 pt-8">
-          <!-- 卡片一：数据驱动图表 -->
+          <!-- 卡片一 -->
           <article class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-[var(--border-color)] dark:border-gray-700 p-7 md:p-8 flex flex-col">
             <h2 class="text-base font-semibold mb-3 text-[var(--title-color)] dark:text-gray-50">
-              数据驱动的可视化图表
+              面向数据粒度的单元可视化
             </h2>
             <p class="text-sm text-[var(--text-muted)] dark:text-gray-300 mb-5">
-              通过统一的数据模型与可配置的图元系统，Unitopia 支持从简单折线图到复杂混合视图的多种图表形态。
+              采用一对一的数据编码方式，每个可视元素对应一个数据项，兼顾数据精细粒度与整体构成，
+              适合讲述组合结构、群体分布以及数据故事。
             </p>
             <button
               class="mt-auto inline-flex items-center justify-center w-full rounded-md bg-[var(--primary-color)] text-white text-sm font-semibold py-2.5 hover:bg-[var(--primary-hover-color)] transition-colors cursor-pointer"
@@ -44,13 +45,15 @@
             </button>
           </article>
 
-          <!-- 卡片二：可视化编辑器 -->
+          <!-- 卡片二 -->
           <article class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-[var(--border-color)] dark:border-gray-700 p-7 md:p-8 flex flex-col">
             <h2 class="text-base font-semibold mb-3 text-[var(--title-color)] dark:text-gray-50">
-              所见即所得的图表编辑器
+              可扩展的布局引擎与集成能力
+              
             </h2>
             <p class="text-sm text-[var(--text-muted)] dark:text-gray-300 mb-5">
-              使用拖拽式画布、属性面板和预设模板，无需手写大量代码即可完成图表搭建与微调。
+              基于可微渲染（differentiable rendering）的图像空间布局方法，自动求解复杂图像单元的排布，
+              预留 SDK / API 接口，通过python库接入现有可视分析与叙事可视化工作流。
             </p>
             <button
               class="mt-auto inline-flex items-center justify-center w-full rounded-md bg-[var(--primary-color)] text-white text-sm font-semibold py-2.5 hover:bg-[var(--primary-hover-color)] transition-colors cursor-pointer"
@@ -59,19 +62,20 @@
             </button>
           </article>
 
-          <!-- 卡片三：集成与扩展（点击跳转 System） -->
+          <!-- 卡片三 -->
           <article
             class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-[var(--border-color)] dark:border-gray-700 p-7 md:p-8 flex flex-col"
           >
             <h2 class="text-base font-semibold mb-3 text-[var(--title-color)] dark:text-gray-50">
-              面向开发者的灵活集成
+              图形编辑系统
             </h2>
             <p class="text-sm text-[var(--text-muted)] dark:text-gray-300 mb-5">
-              提供 TypeScript SDK 与 REST API，支持将 Unitopia 中配置好的图表一键发布到你的前端项目或可视化服务。
+              以“容器-填充”的物理隐喻建模，将单元可视化拆分为标记（mark）、容器（container）、
+              发射源（emitter）和力场（force）四个概念，并提供图形化编辑视图创作。
             </p>
             <button
               class="mt-auto inline-flex items-center justify-center w-full rounded-md bg-[var(--primary-color)] text-white text-sm font-semibold py-2.5 hover:bg-[var(--primary-hover-color)] transition-colors cursor-pointer"
-              @click.stop="$router.push('/system')"
+              @click.stop="goEditorFresh"
             >
               在线体验
             </button>
@@ -84,6 +88,12 @@
 
 <script setup lang="ts">
 import MainHeader from '~/components/MainHeader.vue'
+ 
+const goEditorFresh = () => {
+  if (typeof window !== 'undefined') {
+    window.location.href = '/editor'
+  }
+}
 </script>
 
 <style scoped>

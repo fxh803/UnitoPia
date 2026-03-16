@@ -38,7 +38,7 @@
 
     <button
       class="ml-6 inline-flex items-center rounded-full border border-[var(--primary-color)] px-4 py-1.5 text-sm font-semibold text-[var(--primary-color)] hover:bg-[var(--primary-color)] hover:text-white transition-colors cursor-pointer"
-      @click="goToSystem"
+      @click="goEditorFresh"
     >
       Try Online
     </button>
@@ -58,8 +58,10 @@ const goToGallery = () => {
   router.push('/gallery')
 }
 
-const goToSystem = () => {
-  router.push('/system')
+const goEditorFresh = () => {
+  if (typeof window !== 'undefined') {
+    window.location.href = '/editor'
+  }
 }
 </script>
 
