@@ -57,25 +57,27 @@ import { useMarkInstanceStore } from '~/stores/markInstance'
 import { useTableStore } from '~/stores/table'
 import { useMarkerStore } from '~/stores/marker'
 import { useContainerStore } from '~/stores/container'
+import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { sendUploadContainerToServer } from '~/composables/server'
-import { paralympicsHairMarkSnapshot } from '~/markSnapshot/paralympicsHair'
-
+import { useBackgroundStore } from '~/stores/background'
 const router = useRouter()
 const markInstanceStore = useMarkInstanceStore()
 const tableStore = useTableStore()
 const markerStore = useMarkerStore()
 const containerStore = useContainerStore()
+const collageSeriesStore = useCollageSeriesStore()
 
 const galleryItems = [
   {
     id: 1,
     title: 'hair',
     image: '/gallery/hair.png',
-    markSnapshot: paralympicsHairMarkSnapshot,
+    markSnapshotUrl: '/snapshots/hairMarks.json',
+    collageSeriesSnapshotUrl: '/snapshots/hairCollageSeries.json',
     dataUrl: '/csv/paralympics_2024_medal_table.csv',
     markLibUrl: '/marks/hair.svg',
     containerUrl: '/containers/hair.png',
-    backgroundUrl: '/background/background.png',
+    backgroundUrl: '/background/hair.png',
   },
 ]
 
@@ -132,12 +134,46 @@ const handleTryInEditor = async (item: (typeof galleryItems)[number]) => {
     }
   }
 
-  // 3. 直接向 markInstanceStore 写入示例快照（JSON 独立存放在 examples 中）
-  markInstanceStore.addMarkInstance(item.markSnapshot as any)
+  // 3. 从 public 读取 markInstances 快照（JSON），写入 markInstanceStore
+  if (item.markSnapshotUrl) {
+    try {
+      const marksRes = await fetch(item.markSnapshotUrl)
+      if (marksRes.ok) {
+        const marks = await marksRes.json()
+        const snapshots = Array.isArray(marks) ? marks : [marks]
+        snapshots.forEach((snap: any) => {
+          markInstanceStore.addMarkInstance(snap)
+        })
+      }
+    } catch {
+      // 忽略单个示例 marks 加载失败
+    }
+  }
+  
+  // 4. 从 public 读取 collageSeries 快照，合并到当前 overview，并设置背景
+  // 为了确保 /editor 中的画布已经准备好，这里延迟 2 秒再执行
+  if (item.collageSeriesSnapshotUrl) {
+    setTimeout(async () => {
+      try {
+        const overviewRes = await fetch(item.collageSeriesSnapshotUrl)
+        if (overviewRes.ok) {
+          const overviewSnapshot = await overviewRes.json()
+          collageSeriesStore.loadOverviewSnapshot(overviewSnapshot as any)
 
-  // 4. 记录需要自动应用的背景（在 CanvasArea 挂载后读取并上传）
-  if (typeof window !== 'undefined' && window.sessionStorage) {
-    window.sessionStorage.setItem('autoBackgroundUrl', item.backgroundUrl)
+          const backgroundStore = useBackgroundStore()
+          const targetOverview = collageSeriesStore.overviews[collageSeriesStore.currentOverviewIndex] ||
+            collageSeriesStore.overviews[0]
+          if (targetOverview && item.backgroundUrl) {
+            backgroundStore.setCurrentOverviewBackground(targetOverview.overviewId, item.backgroundUrl)
+          }
+
+          // 恢复第一个 slide 到画布
+          collageSeriesStore.handleCollageSeriesSelect(0)
+        }
+      } catch {
+        // 忽略单个示例 collageSeries 加载失败
+      }
+    }, 1000)
   }
 
   // 5. 跳转到系统编辑页

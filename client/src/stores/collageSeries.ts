@@ -70,6 +70,18 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         canvasRef.value = canvas
     }
 
+    // 从外部快照加载 overviews（用于示例或状态恢复）
+    function loadOverviewSnapshot(snapshot: Overview[] | Overview) {
+        console.log('loadOverviewSnapshot', snapshot)
+        stopListen.value = true
+        const list = Array.isArray(snapshot) ? snapshot : [snapshot]
+        // 简单深拷贝，避免外部响应式对象影响内部状态
+        overviews.value = JSON.parse(JSON.stringify(list))
+        currentOverviewIndex.value = 0
+        currentSlideIndex.value = 0
+        stopListen.value = false
+    }
+
     // 初始化一个空白幻灯片
     function initializeEmptySlide() {
         const canvasInstance = canvasRef.value?.()
@@ -884,6 +896,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         addNewOverview,
         selectOverview,
         handleDeleteOverview,
-        generateOverviewPreview
+        generateOverviewPreview,
+        loadOverviewSnapshot,
     }
 })

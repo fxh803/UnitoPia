@@ -6,6 +6,7 @@ import { useAnimationStore } from '~/stores/animation'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { usePaperExportStore } from '~/stores/paperExport'
 import { useCanvasStore } from '~/stores/canvas'
+import { useMarkInstanceStore } from '~/stores/markInstance'
 import type { ProgressItem } from '~/stores/animation'
 import { useTutorialStore } from '~/stores/tutorial'
 import { storeToRefs } from 'pinia'
@@ -16,6 +17,7 @@ const collageSeriesStore = useCollageSeriesStore()
 const paperExportStore = usePaperExportStore()
 const tutorialStore = useTutorialStore()
 const canvasStore = useCanvasStore()
+const markInstanceStore = useMarkInstanceStore()
 const { hasMarker, hasContainer } = storeToRefs(canvasStore)
 const { collaging, result_data, replaying, totalOverview, time_interval, progress_data, replayIdx } = storeToRefs(animationStore)
 // 用 computed 得到当前 progress，保证依赖 progress_data/replayIdx，进度条才能随数据更新
@@ -148,6 +150,40 @@ const handleRefresh = () => {
 const handleHelp = () => {
   tutorialStore.openTutorial()
 }
+
+// 临时导出：将 collage overviews 序列化到剪贴板并输出到控制台，方便复制到示例 TS
+const handleExportOverviewsJson = () => {
+  const data = JSON.stringify(collageSeriesStore.overviews, null, 2)
+  try {
+    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(data)
+    }
+  } catch {
+    // 忽略剪贴板错误，仅保留控制台输出
+  }
+  // eslint-disable-next-line no-console
+  console.log('collage overviews JSON:', data)
+  if (typeof window !== 'undefined') {
+    window.alert('collage overviews JSON 已输出到控制台，并尝试复制到剪贴板')
+  }
+}
+
+// 临时导出：导出 markInstanceStore 中的所有 mark 实例，方便复制为示例快照
+const handleExportMarkInstancesJson = () => {
+  const data = JSON.stringify(markInstanceStore.markInstances ?? [], null, 2)
+  try {
+    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(data)
+    }
+  } catch {
+    // 忽略剪贴板错误，仅保留控制台输出
+  }
+  // eslint-disable-next-line no-console
+  console.log('markInstances JSON:', data)
+  if (typeof window !== 'undefined') {
+    window.alert('markInstances JSON 已输出到控制台，并尝试复制到剪贴板')
+  }
+}
 </script>
 
 <template>
@@ -236,7 +272,25 @@ const handleHelp = () => {
           <span class="topbar-button-label">{{ collaging ?  'Running...' : result_data.length>0 ? 'reRun' : 'Run' }}</span>
         </button>
 
-        <!-- Help 按钮 - 最后一个 -->
+        <!-- 导出 overviews JSON（临时工具） -->
+        <button
+          class="flex items-center gap-1 px-3 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--text-muted)] text-xs transition-colors duration-200 hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
+          @click="handleExportOverviewsJson"
+        >
+          <span class="i-carbon:document-export text-sm"></span>
+          <span class="topbar-button-label text-xs">导出 overviews</span>
+        </button>
+
+        <!-- 导出 markInstances JSON（临时工具） -->
+        <button
+          class="flex items-center gap-1 px-3 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--text-muted)] text-xs transition-colors duration-200 hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
+          @click="handleExportMarkInstancesJson"
+        >
+          <span class="i-carbon:data-view text-sm"></span>
+          <span class="topbar-button-label text-xs">导出 marks</span>
+        </button>
+
+        <!-- Help 按钮 - 靠右 -->
         <button
           class="flex items-center gap-2 px-4 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--title-color)] transition-colors duration-200 font-medium hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
           @click="handleHelp"
