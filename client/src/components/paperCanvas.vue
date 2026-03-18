@@ -32,43 +32,27 @@ function updateBackground() {
   const bg = backgroundStore.getCurrentOverviewBackground(overviewId)
   if (bg) {
     const backgroundImage = new paper.Raster({ source: bg, dataType: 'background' })
-
-    // 从 Fabric 主画布中读取当前背景图的几何信息（位置、缩放），保证对齐
-    const fabricCanvasGetter = collageSeriesStore.canvasRef
-    const fabricCanvas = fabricCanvasGetter?.()
-    let bgLeft: number | null = null
-    let bgTop: number | null = null
-    let bgScaleX: number | null = null
-    let bgScaleY: number | null = null
-
-    if (fabricCanvas) {
-      const fabricBg = fabricCanvas
-        .getObjects()
-        .find((obj: any) => obj && obj.get && obj.get('dataType') === 'background') as any
-
-      if (fabricBg) {
-        bgLeft = typeof fabricBg.left === 'number' ? fabricBg.left : null
-        bgTop = typeof fabricBg.top === 'number' ? fabricBg.top : null
-        bgScaleX = typeof fabricBg.scaleX === 'number' ? fabricBg.scaleX : null
-        bgScaleY = typeof fabricBg.scaleY === 'number' ? fabricBg.scaleY : null
-      }
-    }
+    // 直接使用 backgroundStore 中记录的 transform（强制对齐，不再从 Fabric 现场探测/退回）
+    const tf = overviewId ? backgroundStore.getCurrentOverviewBackgroundTransform(overviewId) : null
 
     backgroundImage.onLoad = () => {
-      // 如果拿到了主画布上的背景几何信息，就直接复用，做到完全对齐
-      if (bgLeft !== null && bgTop !== null && bgScaleX !== null && bgScaleY !== null) {
-        backgroundImage.scaling = new paper.Point(bgScaleX, bgScaleY)
-        backgroundImage.position = new paper.Point(bgLeft, bgTop)
-      } else {
-        // 否则退回到根据当前 paper 画布尺寸自适应缩放、居中
-        const scaleX = canvasWidth.value / backgroundImage.width
-        const scaleY = canvasHeight.value / backgroundImage.height
-        const scale = Math.min(scaleX, scaleY)
+      if (tf) {
+        backgroundImage.scaling = new paper.Point(tf.scaleX, tf.scaleY)
 
-        backgroundImage.scaling = new paper.Point(scale, scale)
-        backgroundImage.position = new paper.Point(canvasWidth.value / 2, canvasHeight.value / 2)
+        // Paper Raster.position 是中心点；Fabric 的 left/top 是基于 origin 的锚点
+        const scaledW = backgroundImage.width * tf.scaleX
+        const scaledH = backgroundImage.height * tf.scaleY
+        const centerX =
+          tf.originX === 'center' ? tf.left :
+          tf.originX === 'right' ? tf.left - scaledW / 2 :
+          tf.left + scaledW / 2
+        const centerY =
+          tf.originY === 'center' ? tf.top :
+          tf.originY === 'bottom' ? tf.top - scaledH / 2 :
+          tf.top + scaledH / 2
+
+        backgroundImage.position = new paper.Point(centerX, centerY)
       }
-
       backgroundImage.sendToBack()
     }
   }

@@ -6,7 +6,7 @@ import { useCollageSeriesStore } from '~/stores/collageSeries'
 
 const backgroundStore = useBackgroundStore()
 const { canvasRef, creatingBackground } = storeToRefs(backgroundStore)
-const { getCurrentOverviewBackground, setCurrentOverviewBackground } = backgroundStore
+const { getCurrentOverviewBackground, setCurrentOverviewBackground, setCurrentOverviewBackgroundTransform } = backgroundStore
 
 const collageSeriesStore = useCollageSeriesStore()
 const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
@@ -102,6 +102,16 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
     // 重新渲染画布
     canvasInstance.renderAll()
     creatingBackground.value = false 
+
+    // 记录当前 overview 背景的几何信息，供新 slide 复用（避免 rerun/renderResult 重新居中）
+    setCurrentOverviewBackgroundTransform(currentOverview.overviewId, {
+      left: (fabricImg.left as number) ?? canvasInstance.width / 2,
+      top: (fabricImg.top as number) ?? canvasInstance.height / 2,
+      scaleX: (fabricImg.scaleX as number) ?? scale,
+      scaleY: (fabricImg.scaleY as number) ?? scale,
+      originX: (fabricImg.originX as any) ?? 'center',
+      originY: (fabricImg.originY as any) ?? 'center',
+    })
     
     // 为当前总览的所有slide添加背景对象
     await addBackgroundToAllSlides(fabricImg.toObject())

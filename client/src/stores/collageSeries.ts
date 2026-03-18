@@ -335,6 +335,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         // 检查当前总览是否有背景
         const backgroundStore = useBackgroundStore()
         const currentOverviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
+        const currentOverviewBgTransform = backgroundStore.getCurrentOverviewBackgroundTransform(currentOverview.overviewId)
 
         // 清空画布
         clearCanvas()
@@ -357,27 +358,39 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
                 // 设置图片属性
                 fabricImg.set({
-                    left: canvasInstance.width / 2,
-                    top: canvasInstance.height / 2,
-                    originX: 'center',
-                    originY: 'center',
                     selectable: false,
                     evented: false,
                     dataType: 'background'
                 })
 
-                // 计算合适的缩放比例，使图片完全适应画布
-                const canvasWidth = canvasInstance.width || 400
-                const canvasHeight = canvasInstance.height || 400
-
-                const scaleX = canvasWidth / fabricImg.width
-                const scaleY = canvasHeight / fabricImg.height
-                const scale = Math.min(scaleX, scaleY) // 使用Math.min确保图片完全适应画布，不会超出边界
-
-                fabricImg.set({
-                    scaleX: scale,
-                    scaleY: scale
-                })
+                // 强制复用当前 overview 记录的背景几何信息（位置/缩放/origin），避免 renderResult/rerun 重新居中
+                if (currentOverviewBgTransform) {
+                    fabricImg.set({
+                        left: currentOverviewBgTransform.left,
+                        top: currentOverviewBgTransform.top,
+                        originX: currentOverviewBgTransform.originX,
+                        originY: currentOverviewBgTransform.originY,
+                        scaleX: currentOverviewBgTransform.scaleX,
+                        scaleY: currentOverviewBgTransform.scaleY,
+                    } as any)
+                } else {
+                    // 若没有记录（兼容旧数据），才按画布 fit 一次
+                    fabricImg.set({
+                        left: canvasInstance.width / 2,
+                        top: canvasInstance.height / 2,
+                        originX: 'center',
+                        originY: 'center',
+                    } as any)
+                    const canvasWidth = canvasInstance.width || 400
+                    const canvasHeight = canvasInstance.height || 400
+                    const scaleX = canvasWidth / fabricImg.width
+                    const scaleY = canvasHeight / fabricImg.height
+                    const scale = Math.min(scaleX, scaleY)
+                    fabricImg.set({
+                        scaleX: scale,
+                        scaleY: scale
+                    })
+                }
 
                 slideData.objects.unshift(fabricImg.toObject())
 

@@ -89,13 +89,18 @@ const handleRun = () => {
   if (collaging.value) {
     return
   } else {
-    if (result_data.value.length > 0) {
-      animationStore.resetData()
-      animationStore.removeElements()
-      animationStore.removeAnimation()
-    }
     collageSeriesStore.setCollageSeriesPanelCollapsed(true)
-    sendDataToServer()
+    // 收起 MarkDetailPanel：清空详情面板选中项
+    markInstanceStore.clearSelectedMarkForDetail()
+    setTimeout(() => {
+      if (result_data.value.length > 0) {
+        animationStore.resetData()
+        animationStore.removeElements()
+        animationStore.removeAnimation()
+      }
+      
+      sendDataToServer()
+    }, 200)
   }
 }
 
