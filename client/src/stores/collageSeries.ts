@@ -21,8 +21,6 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         origOpacityArray?: number[],
             // 每个 slide 的个性化设置
             iterations?: number,
-            // render_size 现在存储为 [width, height]
-            render_size?: [number, number],
             rotation?: boolean,
             hole?: boolean,
             orientation?: 'free' | 'center',
@@ -108,7 +106,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                     forceTypeArray: [],
                     dataArray: [],
                     origOpacityArray: [],
-                    // 每个 slide 的个性化设置（render_size 默认留空，动画/SettingsPanel 按当前画布决定）
+                    // 每个 slide 的个性化设置
                     iterations: 120,
                     rotation: true,
                     hole: false,
@@ -428,7 +426,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             forceTypeArray,
             dataArray,
             origOpacityArray: [],
-            // 初始化个性化设置默认值（render_size 仍留空，按当前画布尺寸推导）
+            // 初始化个性化设置默认值
             iterations: 120,
             rotation: true,
             hole: false,
@@ -530,9 +528,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             forceTypeArray: [...originalSlide.forceTypeArray],
             dataArray: [...(originalSlide.dataArray || [])],
             origOpacityArray: [...(originalSlide.origOpacityArray || [])],
-            // 复制个性化设置（render_size 直接复制原值，若原来为空则继续为空）
+            // 复制个性化设置
             iterations: originalSlide.iterations ?? 120,
-            render_size: originalSlide.render_size as [number, number] | undefined,
             rotation: originalSlide.rotation ?? true,
             hole: originalSlide.hole ?? false,
             orientation: originalSlide.orientation ?? 'free'

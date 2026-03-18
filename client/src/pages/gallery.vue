@@ -74,6 +74,28 @@ const galleryItems = [
     markLibUrls: ['/marks/bottleDream/1.svg', '/marks/bottleDream/2.svg', '/marks/bottleDream/3.svg', '/marks/bottleDream/4.svg', '/marks/bottleDream/5.svg', '/marks/bottleDream/6.svg'],
     containerUrls: ['/containers/bottleDream.png'],
     backgroundUrl: '/background/bottleDream.png',
+  },
+  {
+    id: 3,
+    title: 'camera',
+    image: '/gallery/camera.png',
+    markSnapshotUrl: '/snapshots/cameraMarks.json',
+    collageSeriesSnapshotUrl: '/snapshots/cameraCanvas.json',
+    dataUrl: '/csv/camera.csv',
+    markLibUrls: ['/marks/camera/0.svg', '/marks/camera/1.svg', '/marks/camera/2.svg'],
+    containerUrls: ['/containers/camera.png'],
+    backgroundUrl: '/background/camera.png',
+  },
+  {
+    id: 4,
+    title: 'dandelion',
+    image: '/gallery/dandelion.png',
+    markSnapshotUrl: '/snapshots/dandelionMarks.json',
+    collageSeriesSnapshotUrl: '/snapshots/dandelionCanvas.json',
+    dataUrl: '/csv/dandelion.csv',
+    markLibUrls: ['/marks/dandelion.svg'],
+    containerUrls: ['/containers/dandelion.png'],
+    backgroundUrl: '/background/dandelion.png',
   }
 ]
 

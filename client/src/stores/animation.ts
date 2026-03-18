@@ -174,10 +174,6 @@ export const useAnimationStore = defineStore('animation', () => {
     console.log('result', result)
     if (result == null) return
     const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
-    // 获取当前幻灯片的 render_size
-    // const collageSeriesStore = useCollageSeriesStore()
-    // const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
-    // const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as [number, number] | undefined
     let renderSizeWidth = result.multi_res?.render_size_w ?? canvas_width.value
     let renderSizeHeight = result.multi_res?.render_size_h ?? canvas_height.value
 
@@ -201,10 +197,6 @@ export const useAnimationStore = defineStore('animation', () => {
     const result = result_data.value[idx]
     if (result == null) return
     const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
-    // 获取当前幻灯片的 render_size
-    // const collageSeriesStore = useCollageSeriesStore()
-    // const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
-    // const renderSizeSetting = overviews.value[currentOverviewIndex.value]?.collageSeries[now_collage]?.render_size as [number, number] | undefined
     let renderSizeWidth = result.multi_res?.render_size_w ?? canvas_width.value
     let renderSizeHeight = result.multi_res?.render_size_h ?? canvas_height.value
 

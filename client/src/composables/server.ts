@@ -29,8 +29,6 @@ interface ProcessedData {
   dataBinding: Array<{ data: Array<any>, markerId: string}>
   // 每个 slide 的个性化设置
   iterations?: number
-  // render_size 现在为 [width, height]
-  render_size?: [number, number]
   rotation?: boolean
   orientation?: 'free' | 'center'
   hole?: boolean
@@ -104,8 +102,6 @@ export async function collectAllSlidesData(): Promise<Array<{overviewId: string,
         // 注入当前 slide 的个性化设置
         const slideSettings = slide as any
         result.iterations = slideSettings.iterations ?? 120
-        // 如果未设置则使用原始画布大小
-        result.render_size = (slideSettings.render_size as [number, number] | undefined) ?? [originalWidth, originalHeight]
         result.rotation = slideSettings.rotation ?? true
         result.orientation = slideSettings.orientation ?? 'free'
         result.hole = slideSettings.hole ?? false

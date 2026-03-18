@@ -232,26 +232,44 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
   const sel = selectedMarkForDetail.value
   if (!sel) return
 
-  const key = channelLabel.toLowerCase()
+  const key = channelLabel.toLowerCase() as 'color' | 'size' | 'width' | 'height'
   const isColorChannel = channelLabel === 'Color'
   // Color 通道的 colorMode 由 DataSection 拖拽时设置的 field-type 决定
   const fieldType = e.dataTransfer?.getData('field-type') as 'numeric' | 'categorical' | ''
-  const nextEncoding: any = {
-    [key]: column,
-  }
-  if (isColorChannel && (fieldType === 'numeric' || fieldType === 'categorical')) {
-    nextEncoding.colorMode = fieldType
-  }
 
   const defaultStops: ColorStop[] = [
     { position: 0, color: '#A7C8FB', opacity: 1 },
     { position: 1, color: '#5592F9', opacity: 1 },
   ]
 
+  // 新规则：
+  // - color 可与 size/width/height 共存
+  // - size/width/height 三者互斥（切换其中一个时清空另外两个）
+  const computeNextEncoding = (prev: any) => {
+    const next: any = { ...(prev || {}) }
+
+    if (isColorChannel) {
+      next.color = column
+      if (fieldType === 'numeric' || fieldType === 'categorical') {
+        next.colorMode = fieldType
+      }
+      return next
+    }
+
+    // 处理 size/width/height：三者互斥，但不影响 color
+    delete next.size
+    delete next.width
+    delete next.height
+    next[key] = column
+    return next
+  }
+
   if (sel.type === 'childInstance') {
     // 子实例：单独管理 encoding
     const parent = markInstances.value.find(m => m.id === sel.parentMarkId)
     const child = parent?.children?.find(c => c.id === sel.childId) as any
+    const prevEncoding = child?.encoding ?? {}
+    const nextEncoding = computeNextEncoding(prevEncoding)
     const payload: any = {
       encoding: nextEncoding,
     }
@@ -263,6 +281,8 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
   } else {
     // 非 group 或父实例
     const mark = markInstances.value.find(m => m.id === sel.markId) as any
+    const prevEncoding = mark?.encoding ?? {}
+    const nextEncoding = computeNextEncoding(prevEncoding)
     const payload: any = {
       encoding: nextEncoding,
     }

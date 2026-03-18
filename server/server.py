@@ -164,8 +164,8 @@ def process_data():
         multi_res_list = [1]
         json_data["collage"][i]['iterations'] = int(collage_data["iterations"]/len(multi_res_list))
         json_data["collage"][i]["multi_res_list"] = multi_res_list
-        json_data["collage"][i]['render_size_w'] = collage_data["render_size"][0]
-        json_data["collage"][i]['render_size_h'] = collage_data["render_size"][1]
+        json_data["collage"][i]['render_size_w'] = canvas_width
+        json_data["collage"][i]['render_size_h'] = canvas_height
  
     with open(f'./workdir/{str(id)}_collage.json', 'w') as f:
         json.dump(json_data, f, indent=4)

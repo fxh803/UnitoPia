@@ -682,33 +682,48 @@ export const useCanvasStore = defineStore('canvas', () => {
     // 构造参与归一化的数据集合（使用该实例覆盖的实体）
     const indices = mark.entityIndices ?? []
 
-    // 当前约束：encoding 只会选一个 channel，这里取出 channel、对应字段名以及颜色模式
-    let channelKey: MarkEncodingChannel | null = null
-    let fieldForEncoding: string | undefined
+    // 新规则：
+    // - color 可与 size/width/height 共存
+    // - size/width/height 三者互斥（若出现异常多选，这里取优先级：size > width > height）
+    let scaleChannel: Exclude<MarkEncodingChannel, 'color'> | null = null
+    let scaleField: string | undefined
+    let colorField: string | undefined
     let colorMode: 'numeric' | 'categorical' | undefined
     if (mark.encoding) {
       const encoding: any = mark.encoding
-      if (encoding.colorMode) {
-        colorMode = encoding.colorMode
-      }
-      const entries = Object.entries(encoding).filter(([k]) => k !== 'colorMode')
-      if (entries.length > 0) {
-        channelKey = entries[0][0] as MarkEncodingChannel
-        fieldForEncoding = entries[0][1] as string
+      if (encoding.colorMode) colorMode = encoding.colorMode
+      if (typeof encoding.color === 'string' && encoding.color) colorField = encoding.color
+
+      if (typeof encoding.size === 'string' && encoding.size) {
+        scaleChannel = 'size'
+        scaleField = encoding.size
+      } else if (typeof encoding.width === 'string' && encoding.width) {
+        scaleChannel = 'width'
+        scaleField = encoding.width
+      } else if (typeof encoding.height === 'string' && encoding.height) {
+        scaleChannel = 'height'
+        scaleField = encoding.height
       }
     }
 
     const rows: any[] = []
-    const values: number[] = []
+    const scaleValues: number[] = []
+    const colorNumericValues: number[] = []
 
     indices.forEach(idx => {
       const row = tableStore.tableData[idx] as any
       rows.push(row)
-      if (fieldForEncoding && row && row[fieldForEncoding] != null) {
-        const v = Number(row[fieldForEncoding])
-        values.push(!isNaN(v) && v > 0 ? v : 1)
+      if (scaleField && row && row[scaleField] != null) {
+        const v = Number(row[scaleField])
+        scaleValues.push(!isNaN(v) && v > 0 ? v : 1)
       } else {
-        values.push(1)
+        scaleValues.push(1)
+      }
+      if (colorField && row && row[colorField] != null) {
+        const v = Number(row[colorField])
+        colorNumericValues.push(!isNaN(v) ? v : 0)
+      } else {
+        colorNumericValues.push(0)
       }
     })
 
@@ -716,18 +731,18 @@ export const useCanvasStore = defineStore('canvas', () => {
     const minDisplaySize = 20
     const maxDisplaySize = 70
     const defaultSize = 45
-    const minValue = values.length ? Math.min(...values) : 1
-    const maxValue = values.length ? Math.max(...values) : 1
+    const minValue = scaleValues.length ? Math.min(...scaleValues) : 1
+    const maxValue = scaleValues.length ? Math.max(...scaleValues) : 1
     const normalize = (value: number, min: number, max: number) => {
       if (max === min) return (minDisplaySize + maxDisplaySize) / 2
       return minDisplaySize + ((value - min) / (max - min)) * (maxDisplaySize - minDisplaySize)
     }
-    const normalized = values.map(v => normalize(v, minValue, maxValue))
+    const normalized = scaleValues.map(v => normalize(v, minValue, maxValue))
 
-    // 如果是颜色编码，预先为每个实体计算好颜色（仅依赖色带 colorStops）
+    // 如果存在颜色编码，预先为每个实体计算好颜色（仅依赖色带 / categoricalColors）
     let colors: string[] | null = null
     let opacities: number[] | null = null
-    if (channelKey === 'color' && fieldForEncoding) {
+    if (colorField) {
       colors = []
       opacities = []
       const useNumeric = colorMode === 'numeric'
@@ -742,7 +757,7 @@ export const useCanvasStore = defineStore('canvas', () => {
                 { position: 0, color: '#A7C8FB', opacity: 1 },
                 { position: 1, color: '#5592F9', opacity: 1 },
               ]
-        const numericValues = values.length ? values : [1]
+        const numericValues = colorNumericValues.length ? colorNumericValues : [0]
         const minVal = Math.min(...numericValues)
         const maxVal = Math.max(...numericValues)
         const span = maxVal - minVal || 1
@@ -757,7 +772,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         const categoricalColors = mark.categoricalColors
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i]
-          const value = row && fieldForEncoding in row ? row[fieldForEncoding] : undefined
+          const value = row && colorField in row ? row[colorField] : undefined
           const valueStr = value != null ? String(value) : ''
           const mapped = categoricalColors ? categoricalColors[valueStr] : undefined
           colors.push(mapped || '')
@@ -770,7 +785,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     // - 如果丢在 emitter 上，沿 emitter 采样
     // - 否则使用后端的布局服务（容器区域）
     let pos: Array<{ x: number; y: number }> = []
-    const markerCount = indices.length || values.length || 1
+    const markerCount = indices.length || scaleValues.length || 1
 
     if (dropOnEmitter) {
       pos = getEmitterSampledPoints(markerCount)
@@ -809,11 +824,11 @@ export const useCanvasStore = defineStore('canvas', () => {
       let scaleX = defaultSize / currentSize
       let scaleY = defaultSize / currentSize
 
-      if (channelKey === 'width') {
+      if (scaleChannel === 'width') {
         scaleX = normalizedValue / currentSize
-      } else if (channelKey === 'height') {
+      } else if (scaleChannel === 'height') {
         scaleY = normalizedValue / currentSize
-      } else if (channelKey === 'size') {
+      } else if (scaleChannel === 'size') {
         scaleX = normalizedValue / currentSize
         scaleY = normalizedValue / currentSize
       } else { 
@@ -922,47 +937,59 @@ export const useCanvasStore = defineStore('canvas', () => {
       const indices = child.entityIndices || []
       if (indices.length === 0) continue
 
-      // 编码：group 子实例只使用自己的 encoding
+      // 编码：group 子实例只使用自己的 encoding（同 single：color 可共存，size/width/height 三选一）
       const encoding: MarkEncoding = (child.encoding || {}) as MarkEncoding
-      let channelKey: MarkEncodingChannel | null = null
-      let fieldForEncoding: string | undefined
+      let scaleChannel: Exclude<MarkEncodingChannel, 'color'> | null = null
+      let scaleField: string | undefined
+      let colorField: string | undefined
       let colorMode: 'numeric' | 'categorical' | undefined
-      if (encoding.colorMode) {
-        colorMode = encoding.colorMode
-      }
-      const entries = Object.entries(encoding).filter(([k]) => k !== 'colorMode')
-      if (entries.length > 0) {
-        channelKey = entries[0][0] as MarkEncodingChannel
-        fieldForEncoding = entries[0][1] as string
+      if ((encoding as any).colorMode) colorMode = (encoding as any).colorMode
+      if (typeof (encoding as any).color === 'string' && (encoding as any).color) colorField = (encoding as any).color
+      if (typeof (encoding as any).size === 'string' && (encoding as any).size) {
+        scaleChannel = 'size'
+        scaleField = (encoding as any).size
+      } else if (typeof (encoding as any).width === 'string' && (encoding as any).width) {
+        scaleChannel = 'width'
+        scaleField = (encoding as any).width
+      } else if (typeof (encoding as any).height === 'string' && (encoding as any).height) {
+        scaleChannel = 'height'
+        scaleField = (encoding as any).height
       }
 
       const rows: (TableData | undefined)[] = []
-      const values: number[] = []
+      const scaleValues: number[] = []
+      const colorNumericValues: number[] = []
 
       indices.forEach(idx => {
         const row = tableStore.tableData[idx]
         rows.push(row)
-        if (fieldForEncoding && row && row[fieldForEncoding] != null) {
-          const v = Number(row[fieldForEncoding])
-          values.push(!isNaN(v) && v > 0 ? v : 1)
+        if (scaleField && row && (row as any)[scaleField] != null) {
+          const v = Number((row as any)[scaleField])
+          scaleValues.push(!isNaN(v) && v > 0 ? v : 1)
         } else {
-          values.push(1)
+          scaleValues.push(1)
+        }
+        if (colorField && row && (row as any)[colorField] != null) {
+          const v = Number((row as any)[colorField])
+          colorNumericValues.push(!isNaN(v) ? v : 0)
+        } else {
+          colorNumericValues.push(0)
         }
       })
 
       // 对该子实例内部做简单归一化（20~70）
-      const minValue = values.length ? Math.min(...values) : 1
-      const maxValue = values.length ? Math.max(...values) : 1
+      const minValue = scaleValues.length ? Math.min(...scaleValues) : 1
+      const maxValue = scaleValues.length ? Math.max(...scaleValues) : 1
       const normalize = (value: number, min: number, max: number) => {
         if (max === min) return (minDisplaySize + maxDisplaySize) / 2
         return minDisplaySize + ((value - min) / (max - min)) * (maxDisplaySize - minDisplaySize)
       }
-      const normalized = values.map(v => normalize(v, minValue, maxValue))
+      const normalized = scaleValues.map(v => normalize(v, minValue, maxValue))
 
       // 如果是颜色编码，预先为该子实例的每个实体计算好颜色
       let colors: string[] | null = null
       let opacities: number[] | null = null
-      if (channelKey === 'color' && fieldForEncoding) {
+      if (colorField) {
         colors = []
         opacities = []
         const useNumeric = colorMode === 'numeric'
@@ -977,7 +1004,7 @@ export const useCanvasStore = defineStore('canvas', () => {
                   { position: 0, color: '#A7C8FB', opacity: 1 },
                   { position: 1, color: '#5592F9', opacity: 1 },
                 ]
-          const numericValues = values.length ? values : [1]
+          const numericValues = colorNumericValues.length ? colorNumericValues : [0]
           const minVal = Math.min(...numericValues)
           const maxVal = Math.max(...numericValues)
           const span = maxVal - minVal || 1
@@ -994,11 +1021,11 @@ export const useCanvasStore = defineStore('canvas', () => {
             { position: 0, color: '#A7C8FB', opacity: 1 },
             { position: 1, color: '#5592F9', opacity: 1 },
           ]
-          const colorMap = getStringValueColorMapForRows(rows, fieldForEncoding, defaultStops)
+          const colorMap = getStringValueColorMapForRows(rows, colorField, defaultStops)
           const fallbackColor = defaultStops[0]?.color || '#ffffff'
           for (let i = 0; i < rows.length; i++) {
             const row = rows[i]
-            const value = row && fieldForEncoding in row ? row[fieldForEncoding] : undefined
+            const value = row && colorField in (row as any) ? (row as any)[colorField] : undefined
             const valueStr = value != null ? String(value) : ''
             const mapped =
               (categoricalColors && categoricalColors[valueStr]) ||
@@ -1045,11 +1072,11 @@ export const useCanvasStore = defineStore('canvas', () => {
         let scaleX = defaultSize / currentSize
         let scaleY = defaultSize / currentSize
 
-        if (channelKey === 'width') {
+        if (scaleChannel === 'width') {
           scaleX = normalizedValue / currentSize
-        } else if (channelKey === 'height') {
+        } else if (scaleChannel === 'height') {
           scaleY = normalizedValue / currentSize
-        } else if (channelKey === 'size') {
+        } else if (scaleChannel === 'size') {
           scaleX = normalizedValue / currentSize
           scaleY = normalizedValue / currentSize
         } else {
