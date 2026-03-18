@@ -170,7 +170,7 @@ watch(() => overviews.value.length, (newLength, oldLength) => {
       </div>
       <!-- 收起按钮 - 放在左上角 -->
       <button @click="toggleCollapse"
-        class="absolute top-3px left-2 z-20 bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] transition-all duration-200 p-1.5 rounded"
+        class="absolute top-3px left-2 z-20 bg-[var(--primary-light-color)] hover:bg-[var(--primary-light-color)] transition-all duration-200 p-1.5 rounded cursor-pointer"
         :title="isCollapsed ? 'Expand' : 'Collapse'">
         <div class="w-5 h-5 text-black transition-all duration-300"
           :class="isCollapsed ? 'i-carbon:open-panel-right' : 'i-carbon:open-panel-filled-right'"></div>

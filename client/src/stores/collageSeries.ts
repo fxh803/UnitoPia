@@ -231,27 +231,41 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
                 // 设置背景图片属性
                 fabricImg.set({
-                    left: (canvasInstance.width || 400) / 2,
-                    top: (canvasInstance.height || 400) / 2,
-                    originX: 'center',
-                    originY: 'center',
                     selectable: false,
                     evented: false,
                     dataType: 'background'
                 })
 
-                // 计算合适的缩放比例，使图片完全适应画布
-                const canvasWidth = canvasInstance.width || 400
-                const canvasHeight = canvasInstance.height || 400
+                // 背景必须按 overview 记录的 transform 对齐，不能重新居中 fit
+                const tf = backgroundStore.getCurrentOverviewBackgroundTransform(currentOverview.overviewId)
+                if (tf) {
+                    fabricImg.set({
+                        left: tf.left,
+                        top: tf.top,
+                        originX: tf.originX,
+                        originY: tf.originY,
+                        scaleX: tf.scaleX,
+                        scaleY: tf.scaleY,
+                    } as any)
+                } else {
+                    // 兼容旧数据：如果没有 transform，才 fallback 到居中 fit 一次
+                    fabricImg.set({
+                        left: (canvasInstance.width || 400) / 2,
+                        top: (canvasInstance.height || 400) / 2,
+                        originX: 'center',
+                        originY: 'center',
+                    } as any)
 
-                const scaleX = canvasWidth / fabricImg.width
-                const scaleY = canvasHeight / fabricImg.height
-                const scale = Math.min(scaleX, scaleY)
-
-                fabricImg.set({
-                    scaleX: scale,
-                    scaleY: scale
-                })
+                    const canvasWidth = canvasInstance.width || 400
+                    const canvasHeight = canvasInstance.height || 400
+                    const scaleX = canvasWidth / fabricImg.width
+                    const scaleY = canvasHeight / fabricImg.height
+                    const scale = Math.min(scaleX, scaleY)
+                    fabricImg.set({
+                        scaleX: scale,
+                        scaleY: scale
+                    })
+                }
 
                 // 将背景对象添加到合并对象的最前面（最底层）
                 const backgroundObj = {
