@@ -1305,16 +1305,11 @@ export const useCanvasStore = defineStore('canvas', () => {
     // 将所有 data 拍平成一维数组
     const flattenedData: Array<any> = []
 
-    // 遍历所有 overview
-    for (const overview of allData) {
-      // 遍历每个 overview 的所有 slides
-      for (const slide of overview.slides) {
-        // 遍历每个 slide 的所有 dataBinding
-        for (const binding of slide.dataBinding) {
-          // 将每个 dataBinding 中的 data 数组拍平合并
-          if (binding.data && Array.isArray(binding.data)) {
-            flattenedData.push(...binding.data)
-          }
+    // allData 已简化为“当前 overview 的 slide 列表”
+    for (const slide of allData) {
+      for (const binding of slide.dataBinding) {
+        if (binding.data && Array.isArray(binding.data)) {
+          flattenedData.push(...binding.data)
         }
       }
     }
@@ -1369,7 +1364,7 @@ export const useCanvasStore = defineStore('canvas', () => {
         console.log(loadedSVG)
         // 获取拍平的 data
         const flattenedData = getDataBinding()
-
+        console.log(flattenedData)
         // 遍历所有 SVG 对象，只给 marker 类型的对象设置 dataType 和 data
         let markerDataIndex = 0
         loadedSVG.objects.forEach((obj: any, index: number) => {

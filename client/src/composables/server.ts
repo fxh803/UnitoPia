@@ -40,99 +40,83 @@ export const ip = 'http://localhost:4444'
 
 
 
-// 收集所有总览数据的函数
-export async function collectAllSlidesData(): Promise<Array<{overviewId: string, slides: ProcessedData[]}>> {
-  console.log('开始收集')
+// 收集「当前总览」所有 slide 的数据
+export async function collectAllSlidesData(): Promise<ProcessedData[]> {
+  console.log('开始收集当前总览数据')
   const collageSeriesStore = useCollageSeriesStore()
-  const { currentOverviewIndex } = storeToRefs(collageSeriesStore)
   const containerStore = useContainerAnimationStore()
   //清空container记录
   containerStore.clearAllRecords()
-  const overviewsResult = []
   try {
-    // 遍历所有总览
-    for (let overviewIdx = 0; overviewIdx < collageSeriesStore.overviews.length; overviewIdx++) {
-      if (overviewIdx !== currentOverviewIndex.value) {//这个是只进行当前overview的代码段，注意
-        continue
+    const { currentOverviewIndex } = storeToRefs(collageSeriesStore)
+    const overviewIdx = currentOverviewIndex.value
+    const overview = collageSeriesStore.overviews[overviewIdx]
+    if (!overview) return []
+
+    const slidesResult: ProcessedData[] = []
+    const canvas = collageSeriesStore.canvasRef?.()
+    if (!canvas) return []
+
+    const originalWidth = canvas.width
+    const originalHeight = canvas.height
+
+    // 遍历当前总览的所有幻灯片
+    for (let slideIdx = 0; slideIdx < overview.collageSeries.length; slideIdx++) {
+      const slide = overview.collageSeries[slideIdx]
+      // 跳过 isResult 为 true 的 slide
+      if ((slide as any).isResult === true) continue
+
+      const result: ProcessedData = {
+        markers: [],
+        container: '',
+        emitter: [],
+        forces: [],
+        dataBinding: []
       }
-      const overview = collageSeriesStore.overviews[overviewIdx]
-      const slidesResult = []
 
-      // 遍历当前总览的所有幻灯片
-      for (let slideIdx = 0; slideIdx < overview.collageSeries.length; slideIdx++) {
-        const slide = overview.collageSeries[slideIdx]
-        // 跳过 isResult 为 true 的 slide
-        if ((slide as any).isResult === true) {
-          continue
-        }
+      const tempCanvas = new Canvas(undefined, {
+        width: originalWidth,
+        height: originalHeight
+      })
+      await tempCanvas.loadFromJSON(slide.json)
+      tempCanvas.backgroundColor = '#fffef8'
+      collageSeriesStore.restoreCustomProperties(
+        tempCanvas,
+        slide.dataTypeArray,
+        slide.markerIdArray,
+        slide.forceTypeArray,
+        slide.dataArray || [],
+        slide.origOpacityArray || []
+      )
+      result.markers = processMarker(tempCanvas)
+      result.forces = processForce(tempCanvas)
+      result.emitter = processEmitter(tempCanvas)
+      result.container = processContainer(tempCanvas)
+      result.dataBinding = processDataBinding(tempCanvas)
 
-        const result: ProcessedData = {
-          markers: [],
-          container: '',
-          emitter: [],
-          forces: [],
-          dataBinding: []
-        }
-        const canvas = collageSeriesStore.canvasRef?.()
-        if (!canvas) continue
-        //新建临时画布
-        // 画布大小与原fabric画布一致
-        const originalWidth = canvas.width
-        const originalHeight = canvas.height
-
-        const tempCanvas = new Canvas(undefined, {
-          width: originalWidth,
-          height: originalHeight
-        })
-        //加载幻灯片数据
-        await tempCanvas.loadFromJSON(slide.json)
-        tempCanvas.backgroundColor = '#fffef8'
-        collageSeriesStore.restoreCustomProperties(
-          tempCanvas,
-          slide.dataTypeArray,
-          slide.markerIdArray,
-          slide.forceTypeArray,
-          slide.dataArray || [],
-          slide.origOpacityArray || []
-        )
-        result.markers = processMarker(tempCanvas)
-        result.forces = processForce(tempCanvas)
-        result.emitter = processEmitter(tempCanvas)
-        result.container = processContainer(tempCanvas)
-        result.dataBinding = processDataBinding(tempCanvas)
-        // 注入当前 slide 的个性化设置
-        const slideSettings = slide as any
-        result.iterations = slideSettings.iterations ?? 120
-        result.rotation = slideSettings.rotation ?? true
-        result.orientation = slideSettings.orientation ?? 'free'
-        result.hole = slideSettings.hole ?? false
-        result.margin = slideSettings.margin ?? 0
-        result.emitter_type = slideSettings.emitter_type ?? ''
+      const slideSettings = slide as any
+      result.iterations = slideSettings.iterations ?? 120
+      result.rotation = slideSettings.rotation ?? true
+      result.orientation = slideSettings.orientation ?? 'free'
+      result.hole = slideSettings.hole ?? false
+      result.margin = slideSettings.margin ?? 0
+      result.emitter_type = slideSettings.emitter_type ?? ''
 
         // 将container信息记录到store中
-        if (result.container) {
-          containerStore.addContainerRecord(
-            overview.overviewId,
-            overviewIdx,
-            slide.slideId,
-            slideIdx,
-            result.container
-          )
-        }
-
-        slidesResult.push(result)
+      if (result.container) {
+        containerStore.addContainerRecord(
+          result.container
+        )
       }
 
-      overviewsResult.push({
-        overviewId: overview.overviewId,
-        slides: slidesResult
-      })
+      slidesResult.push(result)
     }
-    console.log('数据收集完成')
-    return overviewsResult
+
+    console.log('当前总览数据收集完成')
+    return slidesResult
 
   } catch (error) {
-    console.error('收集总览数据时出错:', error)
+    console.error('收集当前总览数据时出错:', error)
     throw error
   }
 }
@@ -444,14 +428,13 @@ function processDataBinding(tempCanvas: Canvas) {
 // 轮询处理状态的函数
 async function startProgressTimer() {
   const animationStore = useAnimationStore()
-  const { process_id, progress_data, result_data ,now_overview_idx, collage_result_type } = storeToRefs(animationStore)
+  const { process_id, progress_data, result_data, collage_result_type } = storeToRefs(animationStore)
   try {
     const response = await fetch(`${ip}/fetchProgressApi?id=` + process_id.value)
     if (response.ok) {
       // 解析 JSON 响应
       const result = await response.json()
       if (result.progress) {
-        result.progress["now_overview_idx"] = now_overview_idx.value
         result.progress["process_id"] = process_id.value
         result.progress["collage_result_type"] = collage_result_type.value
         progress_data.value.push(result.progress)
@@ -469,98 +452,96 @@ async function startProgressTimer() {
 export async function sendDataToServer() {
   const progressTimer = ref<ReturnType<typeof setInterval> | null>(null)
   const animationStore = useAnimationStore()
-  const { process_id, collage_result_type, canvas_width, canvas_height, collaging, totalOverview, now_overview_idx } = storeToRefs(animationStore)
+  const { process_id, collage_result_type, canvas_width, canvas_height, collaging } = storeToRefs(animationStore)
   const selectedModeStore = useSelectedModeStore()
   const fetchInterval = 500
   try {
     // 设置系统为拼贴处理状态
     collaging.value = true
     selectedModeStore.setSelectedMode(null)
-    const data = await collectAllSlidesData()
-    console.log(data)
+    const slides = await collectAllSlidesData()
+    console.log(slides)
     // 将 dataBinding 数据存储到 hoverInfoPanel store
     const hoverInfoPanelStore = useHoverInfoPanelStore()
     const collageSeriesStore = useCollageSeriesStore()
+    // allData 仅维护当前 overview 下每个 slide 的数据绑定
+    const currentIdx = collageSeriesStore.currentOverviewIndex
+    const currentOverview = collageSeriesStore.overviews[currentIdx] as any
+    hoverInfoPanelStore.allData = slides.map((slide: any, slideIdx: number) => ({
+      slideId: currentOverview?.collageSeries?.[slideIdx]?.slideId,
+      dataBinding: slide.dataBinding || [],
+    }))
 
-    hoverInfoPanelStore.allData = data.map((overview) => {
-      // 根据 overviewId 找到对应的 overview
-      const overviewObj = collageSeriesStore.overviews.find(ov => ov.overviewId === overview.overviewId)
-      return {
-        overviewId: overview.overviewId,
-        slides: overview.slides.map((slide, slideIdx) => ({
-          slideId: overviewObj?.collageSeries[slideIdx]?.slideId,
-          dataBinding: slide.dataBinding || []
-        }))
-      }
-    })
     const containerStore = useContainerAnimationStore()
     containerStore.createShiningPaths()
     animationStore.startContainerAnimation()
-    totalOverview.value = data.length
-    now_overview_idx.value = 0
-    for (const overview of data) {//对于每一个总览
-      //对于每一个slide检查marker的类型
-      for (const slide of overview.slides) {
-        slide.markers.forEach((marker: any) => {
-          if (marker.thumbnail.includes('data:image/png;base64,')) {
-            collage_result_type.value.push('png')
-            return
-          }
-        })
-        collage_result_type.value.push('svg')
-      }
 
-      const time = Math.floor(Date.now() / 1000)
-      process_id.value = time.toString()
-      const collageSeriesStore = useCollageSeriesStore()
-      const canvas = collageSeriesStore.canvasRef?.()
-      if (!canvas) break
-      const originalWidth = canvas.width
-      const originalHeight = canvas.height
-      canvas_width.value = originalWidth
-      canvas_height.value = originalHeight
-      const sendData = {
-        "data": overview.slides,
-        "id": time,
-        "canvasWidth": originalWidth,
-        "canvasHeight": originalHeight
-      }
-      progressTimer.value = setInterval(() => {
-        startProgressTimer()
-      }, fetchInterval)
+    // 只处理当前总览：slides 即为当前 overview 的所有 slides
+    if (!slides.length) {
+      collaging.value = false
+      return
+    }
 
-      try {
-        // 这里实现向后端发送数据的逻辑
-        const response = await fetch(`${ip}/processDataApi`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(sendData)
-        })
-
-        if (!response.ok) {
-          clearInterval(progressTimer.value)
-          collaging.value = false
-          const data = await response.json()
-          console.log(data.message)
-          ElMessage.error(data.message)
-          return
+    // 根据 slide markers 判定结果类型
+    for (const slide of slides) {
+      let isPng = false
+      slide.markers.forEach((marker: any) => {
+        if (!isPng && marker.thumbnail.includes('data:image/png;base64,')) {
+          isPng = true
         }
+      })
+      collage_result_type.value.push(isPng ? 'png' : 'svg')
+    }
 
-        clearInterval(progressTimer.value)
-        if (now_overview_idx.value < totalOverview.value - 1) {
-          animationStore.nextOverview()
-        }
-        console.log('处理数据成功:', response)
-      } catch (error) {
-        console.error(`处理 overview ${time} 时出错:`, error)
+    const time = Math.floor(Date.now() / 1000)
+    process_id.value = time.toString()
+    const collageSeries = useCollageSeriesStore()
+    const canvas = collageSeries.canvasRef?.()
+    if (!canvas) {
+      collaging.value = false
+      return
+    }
+    const originalWidth = canvas.width
+    const originalHeight = canvas.height
+    canvas_width.value = originalWidth
+    canvas_height.value = originalHeight
+    const sendData = {
+      data: slides,
+      id: time,
+      canvasWidth: originalWidth,
+      canvasHeight: originalHeight,
+    }
+
+    progressTimer.value = setInterval(() => {
+      startProgressTimer()
+    }, fetchInterval)
+
+    try {
+      const response = await fetch(`${ip}/processDataApi`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sendData),
+      })
+
+      if (!response.ok) {
         clearInterval(progressTimer.value)
         collaging.value = false
+        const data = await response.json()
+        ElMessage.error(data.message)
+        return
       }
+
+      console.log('处理数据成功')
+    } catch (error) {
+      console.error(`处理 overview ${time} 时出错:`, error)
+      clearInterval(progressTimer.value)
+      collaging.value = false
     }
+    clearInterval(progressTimer.value)
     collaging.value = false
-    // 所有overview都处理完成后，停止拼贴处理状态并触发重绘
+    // 当前 overview 处理完成后，触发结果重绘
     const canvasStore = useCanvasStore()
     await canvasStore.renderResult()
 
@@ -818,8 +799,8 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
 }
 
 export async function handleMarkerDropCanvas(pos: [number,number], num: number) {
-  const collageSeriesStore = useCollageSeriesStore()
-  const canvas = collageSeriesStore.canvasRef?.()
+    const collageSeries = useCollageSeriesStore()
+    const canvas = collageSeries.canvasRef?.()
   if (!canvas) return
   const container = processContainer(canvas) 
   const response = await fetch(`${ip}/markerDropApi`, {

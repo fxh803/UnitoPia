@@ -114,8 +114,10 @@ function clearData() {
 
 /** 预制数据：public/csv 下可直接加载的 CSV */
 const PRESET_DATA = [
-  { url: '/csv/nobel_prize.csv', name: 'Nobel_Prize' },
-  { url: '/csv/paralympics_2024_medal_table.csv', name: 'Paralympics_2024_Medal' },
+  { url: '/csv/bottleDream.csv', name: 'BottleDream' },
+  { url: '/csv/camera.csv', name: 'Camera' },
+  { url: '/csv/dandelion.csv', name: 'Dandelion' },
+  { url: '/csv/hair.csv', name: 'Hair' },
 ]
 
 function loadPreset(item: { url: string; name: string }) {

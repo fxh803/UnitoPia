@@ -15,7 +15,6 @@ export interface ProgressItem {
   steps?: number
   now_collage?: number
   total_collage?: number
-  now_overview_idx?: number
   collage_result_type?: string[]
 }
 
@@ -74,8 +73,7 @@ export const useAnimationStore = defineStore('animation', () => {
   const replayTimer = ref<ReturnType<typeof setInterval> | null>(null)
   const time_interval = ref(1000)
   const replaying = ref(false)
-  const totalOverview = ref(0)
-  const now_overview_idx = ref(0)
+  // 不再区分多个 overview，相关状态删除
   const isUpdatingAnimation = ref(false) // 锁标志，防止并发执行
 
   // 计算属性
@@ -118,8 +116,6 @@ export const useAnimationStore = defineStore('animation', () => {
     process_id.value = null
     replayTimer.value = null
     replaying.value = false
-    now_overview_idx.value = 0
-    totalOverview.value = 0
     time_interval.value = 1000
   }
 
@@ -144,7 +140,6 @@ export const useAnimationStore = defineStore('animation', () => {
     angleArray.value = []
     now_collage_idx.value = 0
     now_start_idx.value = 0
-    now_overview_idx.value = 0
     time_interval.value = 1000
   }
 
@@ -173,7 +168,7 @@ export const useAnimationStore = defineStore('animation', () => {
     const result = result_data.value[result_data.value.length - 1]
     console.log('result', result)
     if (result == null) return
-    const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
+    const dataBinding = getDataBinding(now_collage)
     let renderSizeWidth = result.multi_res?.render_size_w ?? canvas_width.value
     let renderSizeHeight = result.multi_res?.render_size_h ?? canvas_height.value
 
@@ -196,7 +191,7 @@ export const useAnimationStore = defineStore('animation', () => {
   function setReplayData(idx: number, now_collage: number, startIndex: number) {
     const result = result_data.value[idx]
     if (result == null) return
-    const dataBinding = getDataBinding(now_overview_idx.value, now_collage)
+    const dataBinding = getDataBinding(now_collage)
     let renderSizeWidth = result.multi_res?.render_size_w ?? canvas_width.value
     let renderSizeHeight = result.multi_res?.render_size_h ?? canvas_height.value
 
@@ -215,12 +210,11 @@ export const useAnimationStore = defineStore('animation', () => {
       heightArray.value[i] = result['size'][i - startIndex][1] * originSize * (canvas_height.value / renderSizeHeight);
     }
   }
-  // 根据 overview_idx 和 collage_idx 获取对应的 dataBinding，打平成一维数组
-  function getDataBinding(overview_idx: number, collage_idx: number): Array<any> | null {
+  // 根据 collage_idx 获取对应的 dataBinding，打平成一维数组（仅当前 overview）
+  function getDataBinding(collage_idx: number): Array<any> | null {
     const hoverInfoPanelStore = useHoverInfoPanelStore()
     const allData = hoverInfoPanelStore.allData
-    const overview = allData[overview_idx]
-    const slide = overview.slides[collage_idx]
+    const slide = allData[collage_idx]
 
     // 遍历所有 dataBinding，将每个 data 数组打平合并成一维数组
     const flattenedData: Array<any> = []
@@ -434,14 +428,8 @@ export const useAnimationStore = defineStore('animation', () => {
   // 提取replay逻辑为独立方法
   async function executeReplayStep() {
     const now_collage = progress_data.value[replayIdx.value].now_collage??0;
-    const now_overview = progress_data.value[replayIdx.value].now_overview_idx;
     process_id.value = progress_data.value[replayIdx.value].process_id??null;
     collage_result_type.value = progress_data.value[replayIdx.value].collage_result_type??[];
-
-    if (now_overview != now_overview_idx.value && now_overview_idx.value != totalOverview.value - 1) {
-      nextOverview()
-      return
-    }
 
     if (now_collage && now_collage != now_collage_idx.value) {//进入下一个collage
       console.log('4')
@@ -568,20 +556,6 @@ export const useAnimationStore = defineStore('animation', () => {
     }, time_interval.value);
   }
 
-  function nextOverview() {
-    now_collage_idx.value = 0
-    now_start_idx.value = 0
-    removeAnimation()
-    removeElements()
-    txtArray.value = []
-    posArray.value = []
-    widthArray.value = []
-    heightArray.value = []
-    angleArray.value = []
-    collage_result_type.value = []
-    now_overview_idx.value += 1
-  }
-
   function updateReplayTimer() {
     // 如果正在replay，清除当前timer并重新设定
     if (replaying.value && replayTimer.value) {
@@ -615,8 +589,6 @@ export const useAnimationStore = defineStore('animation', () => {
     replayTimer,
     time_interval,
     replaying,
-    totalOverview,
-    now_overview_idx,
     // 计算属性
     progress,
     // 方法
@@ -632,7 +604,6 @@ export const useAnimationStore = defineStore('animation', () => {
     markerAnimation,
     executeReplayStep,
     replay,
-    nextOverview,
     updateReplayTimer,
     startContainerAnimation
   }

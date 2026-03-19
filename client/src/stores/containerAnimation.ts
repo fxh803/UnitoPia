@@ -1,16 +1,10 @@
-import { defineStore } from 'pinia'
+import { defineStore, storeToRefs } from 'pinia'
 import { ref } from 'vue'
-import { useAnimationStore } from '~/stores/animation'
-import { useCollageSeriesStore } from '~/stores/collageSeries'
-import { storeToRefs } from 'pinia'
 import paper from 'paper'
+import { useAnimationStore } from '~/stores/animation'
 
-// 定义 container 播放 / 高亮 相关的数据结构
+// 定义 container 播放 / 高亮 相关的数据结构（仅针对当前 overview）
 interface ContainerRecord {
-  overviewId: string
-  overviewIdx: number
-  slideId: string
-  slideIndex: number
   container: string // base64 字符串
 }
 
@@ -18,21 +12,12 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
   // 存储所有 container 记录
   const containerRecords = ref<ContainerRecord[]>([])
   const shining_paths = ref<any[]>([])
-  const collageSeriesStore = useCollageSeriesStore()
 
   // 添加 container 记录
   function addContainerRecord(
-    overviewId: string,
-    overviewIdx: number,
-    slideId: string,
-    slideIndex: number,
     container: string,
   ) {
     const record: ContainerRecord = {
-      overviewId,
-      overviewIdx,
-      slideId,
-      slideIndex,
       container,
     }
     containerRecords.value.push(record)
@@ -40,7 +25,7 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
 
   function containerAnimation(event: any) {
     const animationStore = useAnimationStore()
-    const { collaging, now_overview_idx, now_collage_idx } = storeToRefs(animationStore)
+    const { collaging, now_collage_idx } = storeToRefs(animationStore)
     const changeRate = 0.3
     const maxOpacity = 0.8
     const minOpacity = 0.1
@@ -48,8 +33,9 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
     if (!collaging.value)
       return
 
-    for (const path of shining_paths.value) {
-      if (path.overviewIdx === now_overview_idx.value && path.slideIndex === now_collage_idx.value) {
+    for (let idx = 0; idx < shining_paths.value.length; idx++) {
+      const path = shining_paths.value[idx]
+      if (idx === now_collage_idx.value) {
         path.opacity += path.changeRate * event.delta
         if (path.opacity >= minOpacity && !path.initialized) {
           path.initialized = true
@@ -77,17 +63,12 @@ export const useContainerAnimationStore = defineStore('containerAnimation', () =
   }
 
   function createShiningPaths() {
-    const { currentOverviewIndex } = storeToRefs(collageSeriesStore)
     for (let i = 0; i < containerRecords.value.length; i++) {
-      if (containerRecords.value[i].overviewIdx !== currentOverviewIndex.value)
-        continue
-
       const item = containerRecords.value[i]
       const raster = new paper.Raster({
         source: item.container,
         position: paper.view.center,
-        slideIndex: item.slideIndex,
-        overviewIdx: 0, // 目前只做一个 overview，所以 overviewIdx 为 0
+        // 不再区分 overview，使用数组索引与 now_collage_idx 对齐
         opacity: 0,
         dataType: 'container',
         initialized: false,

@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import paper from 'paper'
 import { useBackgroundStore } from '~/stores/background'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
-import { useAnimationStore } from '~/stores/animation'
 import { usePaperExportStore } from '~/stores/paperExport'
 
-const animationStore = useAnimationStore()
 const paperExportStore = usePaperExportStore()
 
 const paperCanvasRef = ref<HTMLCanvasElement | null>(null)
@@ -80,13 +78,6 @@ onMounted(() => {
     }
   })
 })
-
-watch(
-  () => animationStore.now_overview_idx,
-  () => {
-    updateBackground()
-  },
-)
 
 onUnmounted(() => {
   paperExportStore.setPaperCanvasEl(null)

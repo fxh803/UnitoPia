@@ -19,7 +19,7 @@ const tutorialStore = useTutorialStore()
 const canvasStore = useCanvasStore()
 const markInstanceStore = useMarkInstanceStore()
 const { hasMarker, hasContainer } = storeToRefs(canvasStore)
-const { collaging, result_data, replaying, totalOverview, time_interval, progress_data, replayIdx } = storeToRefs(animationStore)
+const { collaging, result_data, replaying, time_interval, progress_data, replayIdx } = storeToRefs(animationStore)
 // 用 computed 得到当前 progress，保证依赖 progress_data/replayIdx，进度条才能随数据更新
 const progress = computed(() => {
   if (replaying.value) {
@@ -49,26 +49,12 @@ watch(progress, (newProgress) => {
     const type = (newProgress.type ?? 0) as number
     const totalsteps = (newProgress.totalSteps ?? 0) as number
     const steps = (newProgress.steps ?? 0) as number
-    const now_collage = (newProgress.now_collage ?? 0) as number
     const total_collage = (newProgress.total_collage ?? 0) as number
-    const now_overview = (newProgress.now_overview_idx ?? 0) as number
-    if (totalsteps > 0 && total_collage > 0 && totalOverview.value > 0) {
+    if (totalsteps > 0 && total_collage > 0) {
       const currentTypeProgress = steps / totalsteps
-
-      // 计算当前overview内的进度
-      const currentOverviewProgress = (now_collage + currentTypeProgress / 2 + (1 / 2) * type) / total_collage
-
-      // 计算前面overview的累计进度
-      const previousOverviewProgress = now_overview / totalOverview.value
-
-      // 计算当前overview占总进度的比例
-      const currentOverviewWeight = 1 / totalOverview.value
-
-      // 总进度 = 前面overview的进度 + 当前overview的进度
-      percentage.value = (previousOverviewProgress + currentOverviewProgress * currentOverviewWeight) * 100
-
-      // 确保百分比在0-100之间
-      percentage.value = Math.min(Math.max(percentage.value, 0), 100)
+      // 单一 overview：直接用当前 overview 内进度
+      const currentProgress = (newProgress.now_collage ?? 0) + (type * 0.5 + currentTypeProgress * 0.5)
+      percentage.value = Math.min(Math.max((currentProgress / total_collage) * 100, 0), 100)
     }
   } else {
     percentage.value = 0

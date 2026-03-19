@@ -5,13 +5,10 @@ import type { Canvas } from 'fabric'
 export const useHoverInfoPanelStore = defineStore('hoverInfoPanel', () => {
   const showPanel = ref(false)
   const markerData = ref<any>(null)
-  // 存储所有 overview 中每个 slide 的 dataBinding 数据
+  // 仅存储当前 overview 下每个 slide 的 dataBinding 数据
   const allData = ref<Array<{
-    overviewId: string
-    slides: Array<{
-      slideId?: string
-      dataBinding: Array<{ data: Array<any>, markerId: string }>
-    }>
+    slideId?: string
+    dataBinding: Array<{ data: Array<any>, markerId: string }>
   }>>([])
 
   // 处理 marker 悬浮
