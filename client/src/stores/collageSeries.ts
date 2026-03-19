@@ -486,8 +486,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         stopListen.value = false
     }
 
-    // 选择幻灯片
-    function handleCollageSeriesSelect(idx: number) {
+    // 选择幻灯片（可 await：确保 load/恢复属性完成）
+    async function handleCollageSeriesSelect(idx: number): Promise<void> {
         const canvasInstance = canvasRef.value?.()
         if (!canvasInstance || overviews.value.length === 0) return
 
@@ -506,17 +506,19 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         // 清空当前画布
         clearCanvas()
         if (jsonObj.objects.length > 0) {
-            canvasInstance.loadFromJSON(json, () => {
-                setTimeout(() => {
-                    // 确保背景色为白色
-                    canvasInstance.backgroundColor = '#fffef8'
-                    canvasInstance.renderAll()
-                    // 恢复自定义属性
-                    restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, dataArray, origOpacityArray)
-                    // updateCurrentSlide()
-
-                    stopListen.value = false
-                }, 50)
+            await new Promise<void>((resolve) => {
+                canvasInstance.loadFromJSON(json, () => {
+                    setTimeout(() => {
+                        // 确保背景色为白色
+                        canvasInstance.backgroundColor = '#fffef8'
+                        canvasInstance.renderAll()
+                        // 恢复自定义属性
+                        restoreCustomProperties(canvasInstance, dataTypeArray, markerIdArray, forceTypeArray, dataArray, origOpacityArray)
+                        // updateCurrentSlide()
+                        stopListen.value = false
+                        resolve()
+                    }, 50)
+                })
             })
         } else {
             // 确保空白画布也有白色背景

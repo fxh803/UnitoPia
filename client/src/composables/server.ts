@@ -1,6 +1,7 @@
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { Canvas } from 'fabric'
 import * as fabric from 'fabric'
+import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { useAnimationStore } from '~/stores/animation'
 import { useSelectedModeStore } from '~/stores/selectedMode'
@@ -465,7 +466,7 @@ async function startProgressTimer() {
   }
 }
 
-export async function sendDataToServer(): Promise<boolean> {
+export async function sendDataToServer() {
   const progressTimer = ref<ReturnType<typeof setInterval> | null>(null)
   const animationStore = useAnimationStore()
   const { process_id, collage_result_type, canvas_width, canvas_height, collaging, totalOverview, now_overview_idx } = storeToRefs(animationStore)
@@ -540,20 +541,22 @@ export async function sendDataToServer(): Promise<boolean> {
 
         if (!response.ok) {
           clearInterval(progressTimer.value)
-          // 出错时停止拼贴处理状态
           collaging.value = false
-          return false
+          const data = await response.json()
+          console.log(data.message)
+          ElMessage.error(data.message)
+          return
         }
 
         clearInterval(progressTimer.value)
         if (now_overview_idx.value < totalOverview.value - 1) {
           animationStore.nextOverview()
         }
+        console.log('处理数据成功:', response)
       } catch (error) {
         console.error(`处理 overview ${time} 时出错:`, error)
         clearInterval(progressTimer.value)
         collaging.value = false
-        return false
       }
     }
     collaging.value = false
@@ -561,7 +564,6 @@ export async function sendDataToServer(): Promise<boolean> {
     const canvasStore = useCanvasStore()
     await canvasStore.renderResult()
 
-    return true
   } catch (error) {
     console.error('发送数据时出错:', error)
     // 出错时也要停止拼贴处理状态
@@ -569,7 +571,6 @@ export async function sendDataToServer(): Promise<boolean> {
     if (progressTimer.value) {
       clearInterval(progressTimer.value)
     }
-    return false
   }
 }
 

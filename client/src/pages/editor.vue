@@ -146,46 +146,43 @@ async function loadExampleToStores(item: ExampleItem) {
         }
 
         // 恢复第一个 slide 到画布，并让 Run 按钮变绿
-        collageSeriesStore.handleCollageSeriesSelect(0)
+        await collageSeriesStore.handleCollageSeriesSelect(0)
         canvasStore.hasMarker = true
         canvasStore.hasContainer = true
 
-        // 示例背景：在主画布背景对象加载完成后，记录几何信息（left/top/scale/origin）
-        // 供后续 addNewSlide/renderResult 复用，避免背景重新居中/漂移
+        // 示例背景：严格在 handleCollageSeriesSelect 完成后再记录背景几何信息
         if (targetOverview && item.backgroundUrl) {
-          setTimeout(() => {
-            try {
-              const fabricCanvas = collageSeriesStore.canvasRef?.()
-              const bgObj =
-                fabricCanvas
-                  ?.getObjects?.()
-                  ?.find((obj: any) => obj && obj.get && obj.get('dataType') === 'background') ||
-                (fabricCanvas as any)?.backgroundImage ||
-                null
+          try {
+            const fabricCanvas = collageSeriesStore.canvasRef?.()
+            const bgObj =
+              fabricCanvas
+                ?.getObjects?.()
+                ?.find((obj: any) => obj && obj.get && obj.get('dataType') === 'background') ||
+              (fabricCanvas as any)?.backgroundImage ||
+              null
 
-              if (bgObj) {
-                const left = typeof bgObj.left === 'number' ? bgObj.left : null
-                const top = typeof bgObj.top === 'number' ? bgObj.top : null
-                const scaleX = typeof bgObj.scaleX === 'number' ? bgObj.scaleX : null
-                const scaleY = typeof bgObj.scaleY === 'number' ? bgObj.scaleY : null
-                const originX = (bgObj.originX as any) ?? 'center'
-                const originY = (bgObj.originY as any) ?? 'center'
+            if (bgObj) {
+              const left = typeof bgObj.left === 'number' ? bgObj.left : null
+              const top = typeof bgObj.top === 'number' ? bgObj.top : null
+              const scaleX = typeof bgObj.scaleX === 'number' ? bgObj.scaleX : null
+              const scaleY = typeof bgObj.scaleY === 'number' ? bgObj.scaleY : null
+              const originX = (bgObj.originX as any) ?? 'center'
+              const originY = (bgObj.originY as any) ?? 'center'
 
-                if (left != null && top != null && scaleX != null && scaleY != null) {
-                  backgroundStore.setCurrentOverviewBackgroundTransform(targetOverview.overviewId, {
-                    left,
-                    top,
-                    scaleX,
-                    scaleY,
-                    originX,
-                    originY,
-                  } as any)
-                }
+              if (left != null && top != null && scaleX != null && scaleY != null) {
+                backgroundStore.setCurrentOverviewBackgroundTransform(targetOverview.overviewId, {
+                  left,
+                  top,
+                  scaleX,
+                  scaleY,
+                  originX,
+                  originY,
+                } as any)
               }
-            } catch {
-              // 忽略 transform 同步失败（不影响示例加载）
             }
-          }, 120)
+          } catch {
+            // 忽略 transform 同步失败（不影响示例加载）
+          }
         }
       }
     } catch {
