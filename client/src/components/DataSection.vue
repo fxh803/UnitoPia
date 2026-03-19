@@ -114,10 +114,8 @@ function clearData() {
 
 /** 预制数据：public/csv 下可直接加载的 CSV */
 const PRESET_DATA = [
-  { url: '/csv/bottleDream.csv', name: 'BottleDream' },
-  { url: '/csv/camera.csv', name: 'Camera' },
-  { url: '/csv/dandelion.csv', name: 'Dandelion' },
-  { url: '/csv/hair.csv', name: 'Hair' },
+  { url: '/csv/nobel_prize.csv', name: 'nobel_prize' },
+  { url: '/csv/olympic_games.csv', name: 'olympic_games' }, 
 ]
 
 function loadPreset(item: { url: string; name: string }) {
@@ -177,7 +175,7 @@ watch(presetDropdownVisible, (visible) => {
           </button>
           <div
             v-show="presetDropdownVisible"
-            class="absolute left-0 top-full mt-1 py-1 min-w-[160px] rounded-lg border border-[var(--border-color)] bg-[var(--primary-light-color)] shadow-lg z-50"
+            class="absolute left-0 top-full mt-1 py-1 max-h-[120px] overflow-y-auto min-w-[120px] rounded-lg border border-[var(--border-color)] bg-[var(--primary-light-color)] shadow-lg z-50"
           >
             <button
               v-for="item in PRESET_DATA"
