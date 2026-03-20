@@ -458,12 +458,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section class="bg-[var(--primary-light-color)] flex h-full min-h-0 min-w-0 w-full">
+  <section class="bg-[#fffef8] flex h-full min-h-0 min-w-0 w-full">
     <!-- 主画布区域 -->
     <div
       ref="canvasAreaRef"
       data-tutorial="canvas-editor"
-      class="border-r border-[var(--border-color)] bg-[var(--primary-light-color)] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
+      class="border-r border-[var(--border-color)] bg-[#fffef8] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden"
       @dragover="(e) => handleDragOver(e, canvasEl)"
       @dragleave="(e) => clearContainerHighlight(e, canvasAreaRef)"
       @drop="(e) => { handleLibraryContainerDrop(e); if (canvasEl) handleDrop(e, canvasEl) }">
@@ -517,13 +517,6 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.canvas-with-grid {
-  background-color: var(--primary-light-color);
-  background-image: url('/transparency_grid.svg');
-  background-size: 500px 500px;
-  background-repeat: repeat;
-  background-position: 0 0;
-}
 
 /* Segment 加载动画 */
 .segment-loading-grid {
