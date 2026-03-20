@@ -136,16 +136,18 @@ def grid_based_sampling(contour, num_points, canvas_width, canvas_height, shrink
         shrink_distance: 轮廓收缩距离（像素）
     
     Returns:
-        生成的点列表
+        (points, grid_size)
+        points: 生成的点列表
+        grid_size: 最终网格单元大小（像素）
     """
     if contour is None or num_points <= 0:
-        return []
+        return [], 0
     
     # 1. 获取轮廓边界框和面积
     x, y, w, h = cv2.boundingRect(contour)
     contour_area = cv2.contourArea(contour)
     if contour_area <= 0:
-        return []
+        return [], 0
     
     # 2. 收缩轮廓
     # 创建二值图像
@@ -223,7 +225,7 @@ def grid_based_sampling(contour, num_points, canvas_width, canvas_height, shrink
         # 保留最近的num_points个点 
         points = points[:num_points]
     
-    return points
+    return points, grid_size
 
 
 def rect_to_path(rect_element):

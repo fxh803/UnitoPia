@@ -69,7 +69,8 @@ const formattedData = computed(() => {
   max-width: 400px;
   max-height: 300px;
   overflow: hidden;
-  pointer-events: none;
+  /* 允许在面板内滚动/交互，否则 overflow-y 的滚动容器无法接收滚轮事件 */
+  pointer-events: auto;
 }
 
 .panel-header {
@@ -88,6 +89,7 @@ const formattedData = computed(() => {
   padding: 8px 12px;
   max-height: 250px;
   overflow-y: auto;
+  touch-action: pan-y;
 }
 
 .data-row {

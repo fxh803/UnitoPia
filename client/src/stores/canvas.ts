@@ -668,6 +668,47 @@ export const useCanvasStore = defineStore('canvas', () => {
     return colorMap
   }
 
+  // 根据后端布局返回的 grid_size（以及 scaleValues 的 min/max）计算：
+  // - normalized：用于 width/height/size 编码缩放
+  // - defaultSize：用于 size/width/height 均未命中时的兜底缩放
+  function getNormalizedAndDefaultSize(
+    scaleValues: number[],
+    backendGridSize: number | null,
+    baseMinDisplaySize = 30,
+    baseMaxDisplaySize = 70,
+    baseDefaultSize = 50,
+    minClamp = 5,
+    maxClamp = 100,
+    maxDisplayClamp = 140,
+  ): { normalized: number[]; defaultSize: number; minDisplaySize: number; maxDisplaySize: number } {
+    let minDisplaySize = baseMinDisplaySize
+    let maxDisplaySize = baseMaxDisplaySize
+    let defaultSize = baseDefaultSize
+
+    if (backendGridSize != null) {
+      const ratio = backendGridSize / baseDefaultSize
+
+      minDisplaySize = Math.max(minClamp, Math.min(maxClamp, baseMinDisplaySize * ratio))
+      maxDisplaySize = Math.max(
+        minDisplaySize + 1,
+        Math.min(maxDisplayClamp, baseMaxDisplaySize * ratio)
+      )
+      defaultSize = Math.max(minDisplaySize, Math.min(maxDisplaySize, backendGridSize))
+    }
+
+    const minValue = scaleValues.length ? Math.min(...scaleValues) : 1
+    const maxValue = scaleValues.length ? Math.max(...scaleValues) : 1
+    const normalized = scaleValues.map((value) => {
+      if (maxValue === minValue) return (minDisplaySize + maxDisplaySize) / 2
+      return (
+        minDisplaySize +
+        ((value - minValue) / (maxValue - minValue)) * (maxDisplaySize - minDisplaySize)
+      )
+    })
+
+    return { normalized, defaultSize, minDisplaySize, maxDisplaySize }
+  }
+
   // 基于单个 mark 实例的 drop 处理（非 group）
   async function handleSingleInstanceDrop(
     mark: MarkInstance,
@@ -727,17 +768,25 @@ export const useCanvasStore = defineStore('canvas', () => {
       }
     })
 
-    // 基于 dataScale 的规则做简单归一化（20~70）
-    const minDisplaySize = 20
-    const maxDisplaySize = 70
-    const defaultSize = 45
-    const minValue = scaleValues.length ? Math.min(...scaleValues) : 1
-    const maxValue = scaleValues.length ? Math.max(...scaleValues) : 1
-    const normalize = (value: number, min: number, max: number) => {
-      if (max === min) return (minDisplaySize + maxDisplaySize) / 2
-      return minDisplaySize + ((value - min) / (max - min)) * (maxDisplaySize - minDisplaySize)
+    // 计算用于放置的点位，并在非 emitter 情况下拿到后端返回 grid_size
+    let pos: Array<{ x: number; y: number }> = []
+    const markerCount = indices.length || scaleValues.length || 1
+    let backendGridSize: number | null = null
+
+    if (dropOnEmitter) {
+      pos = getEmitterSampledPoints(markerCount)
+    } else {
+      const result = await handleMarkerDropCanvas([dropX, dropY], markerCount)
+      pos = (result.init_pos as Array<{ x: number; y: number }>) || []
+
+      const gridSize = Number((result as any).grid_size)
+      if (!Number.isNaN(gridSize) && gridSize > 0) {
+        backendGridSize = gridSize
+      }
     }
-    const normalized = scaleValues.map(v => normalize(v, minValue, maxValue))
+
+    // 复用单独函数：根据 grid_size 统一计算 normalized + defaultSize
+    const { normalized, defaultSize } = getNormalizedAndDefaultSize(scaleValues, backendGridSize)
 
     // 如果存在颜色编码，预先为每个实体计算好颜色（仅依赖色带 / categoricalColors）
     let colors: string[] | null = null
@@ -781,18 +830,6 @@ export const useCanvasStore = defineStore('canvas', () => {
       }
     }
 
-    // 计算用于放置的点位：
-    // - 如果丢在 emitter 上，沿 emitter 采样
-    // - 否则使用后端的布局服务（容器区域）
-    let pos: Array<{ x: number; y: number }> = []
-    const markerCount = indices.length || scaleValues.length || 1
-
-    if (dropOnEmitter) {
-      pos = getEmitterSampledPoints(markerCount)
-    } else {
-      const result = await handleMarkerDropCanvas([dropX, dropY], markerCount)
-      pos = (result.init_pos as Array<{ x: number; y: number }>) || []
-    }
 
     for (let i = 0; i < pos.length; i++) {
       const object = await fabric.util.enlivenObjects(mark.markerJsonData) as fabric.FabricObject[]
@@ -906,11 +943,18 @@ export const useCanvasStore = defineStore('canvas', () => {
 
     // 3. 根据总数量计算位置：如果在 emitter 上就沿 emitter 采样，否则调用后端布局
     let pos: Array<{ x: number; y: number }> = []
+    // 与 handleSingleInstanceDrop 同理：仅当走后端布局时才会拿到 grid_size
+    let backendGridSize: number | null = null
     if (dropOnEmitter) {
       pos = getEmitterSampledPoints(totalEntities)
     } else {
       const result = await handleMarkerDropCanvas([dropX, dropY], totalEntities)
       pos = (result.init_pos as Array<{ x: number; y: number }>) || []
+
+      const gridSize = Number((result as any).grid_size)
+      if (!Number.isNaN(gridSize) && gridSize > 0) {
+        backendGridSize = gridSize
+      }
     }
 
     if (!pos || pos.length === 0) {
@@ -927,9 +971,6 @@ export const useCanvasStore = defineStore('canvas', () => {
     }
 
     // 4. 依次遍历每个合格子实例，把它覆盖的实体映射到全局 pos 上
-    const minDisplaySize = 20
-    const maxDisplaySize = 70
-    const defaultSize = 45
 
     let globalIndex = 0
 
@@ -977,14 +1018,8 @@ export const useCanvasStore = defineStore('canvas', () => {
         }
       })
 
-      // 对该子实例内部做简单归一化（20~70）
-      const minValue = scaleValues.length ? Math.min(...scaleValues) : 1
-      const maxValue = scaleValues.length ? Math.max(...scaleValues) : 1
-      const normalize = (value: number, min: number, max: number) => {
-        if (max === min) return (minDisplaySize + maxDisplaySize) / 2
-        return minDisplaySize + ((value - min) / (max - min)) * (maxDisplaySize - minDisplaySize)
-      }
-      const normalized = scaleValues.map(v => normalize(v, minValue, maxValue))
+      // 复用单独函数：根据 grid_size 计算 normalized + defaultSize
+      const { normalized, defaultSize } = getNormalizedAndDefaultSize(scaleValues, backendGridSize)
 
       // 如果是颜色编码，预先为该子实例的每个实体计算好颜色
       let colors: string[] | null = null

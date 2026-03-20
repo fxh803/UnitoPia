@@ -107,6 +107,27 @@ const galleryItems = [
     markLibUrls: ['/marks/workLife/1.svg', '/marks/workLife/2.svg'],
     containerUrls: ['/containers/workLife.png'],
     backgroundUrl: '/background/workLife.svg',
+  },
+  {
+    id: 6,
+    title: 'tweet',
+    image: '/gallery/tweet.png',
+    markSnapshotUrl: '/snapshots/tweetMarks.json',
+    collageSeriesSnapshotUrl: '/snapshots/tweetCanvas.json',
+    dataUrl: '/csv/tweet.csv',
+    markLibUrls: ['/marks/tweet.svg'],
+    containerUrls: ['/containers/tweet.png'],
+    backgroundUrl: '/background/tweet.svg',
+  },{
+    id: 7,
+    title: 'pigBank',
+    image: '/gallery/pigBank.png',
+    markSnapshotUrl: '/snapshots/pigBankMarks.json',
+    collageSeriesSnapshotUrl: '/snapshots/pigBankCanvas.json',
+    dataUrl: '/csv/pigBank.csv',
+    markLibUrls: ['/marks/pigBank/1.svg', '/marks/pigBank/2.svg', '/marks/pigBank/3.svg', '/marks/pigBank/4.svg', '/marks/pigBank/5.svg'],
+    containerUrls: ['/containers/pigBank.png'],
+    backgroundUrl: '/background/pigBank.png',
   }
 ]
 
