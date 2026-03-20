@@ -21,6 +21,7 @@ declare module 'vue' {
     ElRadioGroup: typeof import('element-plus')['ElRadioGroup']
     ElSlider: typeof import('element-plus')['ElSlider']
     ElSwitch: typeof import('element-plus')['ElSwitch']
+    ElTooltip: typeof import('element-plus')['ElTooltip']
     EmitterToolbar: typeof import('./src/components/EmitterToolbar.vue')['default']
     FirstToolbar: typeof import('./src/components/FirstToolbar.vue')['default']
     ForceToolbar: typeof import('./src/components/ForceToolbar.vue')['default']

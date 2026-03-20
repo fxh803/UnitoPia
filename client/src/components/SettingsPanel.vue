@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed, nextTick, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 
@@ -37,6 +37,18 @@ const currentSlide = computed(() => {
   const sl = ov?.collageSeries?.[props.slideIdx]
   return (sl as any) || null
 })
+
+// 第一张 collage 不允许被“打孔/开洞”
+const isFirstCollage = computed(() => props.slideIdx === 0)
+
+// 同步数据层：避免之前已开洞的数据在 UI 禁用后仍参与计算
+watch(
+  currentSlide,
+  (slide) => {
+    if (slide && isFirstCollage.value) (slide as any).hole = false
+  },
+  { immediate: true }
+)
 
 // 直接通过 store 的 overviews 修改对应 slide 字段，避免中间 computed 包装
 
@@ -152,6 +164,7 @@ const handleClose = () => emit('close')
           <el-switch
             :model-value="currentSlide?.hole ?? false"
             size="small"
+            :disabled="isFirstCollage"
             @update:model-value="(v: string | number | boolean) => { if (currentSlide) (currentSlide as any).hole = Boolean(v) }"
           />
         </div>
