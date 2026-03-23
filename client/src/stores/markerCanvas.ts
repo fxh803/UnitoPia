@@ -21,6 +21,8 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
 
   // 是否暂时抑制路径闭合确认（例如从 JSON 批量恢复画布时）
   const suppressClosePath = ref(false)
+  // 是否正在从 Libraries 拖拽 marker 到当前 marker 画布
+  const isLibraryMarkerDropInProgress = ref(false)
 
   // 设置 canvas 引用
   function setCanvas(canvas: () => Canvas | null) {
@@ -29,6 +31,10 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
 
   function setSuppressClosePath(value: boolean) {
     suppressClosePath.value = value
+  }
+
+  function setLibraryMarkerDropInProgress(value: boolean) {
+    isLibraryMarkerDropInProgress.value = value
   }
 
   // 添加画布事件监听器
@@ -171,7 +177,11 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
 
     canvasInstance.on({
       'object:added': (e) => {
-        if (e.target && markerCanvasModeStore.mode === 'erase') {
+        if (
+          e.target &&
+          markerCanvasModeStore.mode === 'erase' &&
+          !isLibraryMarkerDropInProgress.value
+        ) {
           // 擦除在对象真正加入画布后设置为抠除合成
           e.target.set('globalCompositeOperation', 'destination-out')
           e.target.set('opacity', 1)
@@ -352,7 +362,7 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
       path.set('fill', strokeColor)
       canvasInstance.requestRenderAll()
       // 触发一次 object:modified 事件，让自动保存逻辑生效
-      canvasInstance.fire('object:modified', { target: path })
+      canvasInstance.fire('object:modified', { target: path as any })
     }
 
     // 关闭确认对话框
@@ -371,7 +381,9 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
     removeMarkerCanvasEventListeners,
     askToClosePath,
     handleClosePathConfirm,
-    setSuppressClosePath
+    setSuppressClosePath,
+    isLibraryMarkerDropInProgress,
+    setLibraryMarkerDropInProgress
   }
 })
 

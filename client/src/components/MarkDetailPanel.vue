@@ -389,7 +389,7 @@ function handleEncodingDrop(e: DragEvent, channelLabel: string) {
       </div>
 
       <!-- 画布区域 -->
-      <div class="flex-1 min-h-0 rounded-2xl bg-white border border-[#f3e9e3] overflow-hidden">
+      <div class="bg-[#fffef8] flex-1 min-h-0 rounded-2xl bg-white border border-[#f3e9e3] overflow-hidden">
         <MarkerCanvasArea :show-toolbar="false" class="h-full w-full" />
       </div>
     </div>

@@ -24,7 +24,13 @@ const markerShapeDrawingStore = useMarkerShapeDrawingStore()
 // Marker Canvas store
 const markerCanvasStore = useMarkerCanvasStore()
 const { closePathConfirm } = storeToRefs(markerCanvasStore)
-const { handleClosePathConfirm, addMarkerCanvasEventListeners, removeMarkerCanvasEventListeners, setSuppressClosePath } =
+const {
+  handleClosePathConfirm,
+  addMarkerCanvasEventListeners,
+  removeMarkerCanvasEventListeners,
+  setSuppressClosePath,
+  setLibraryMarkerDropInProgress,
+} =
   markerCanvasStore
 
 // Mark 实例 store：用于根据当前选中实例加载 / 恢复画布
@@ -216,6 +222,7 @@ function handleLibraryMarkerDrop(e: DragEvent) {
 
   // 这里是从 Library 拖拽过来的图形，不需要触发路径闭合确认
   setSuppressClosePath(true)
+  setLibraryMarkerDropInProgress(true)
 
   // 以鼠标释放位置作为放置中心
   let dropX: number | null = null
@@ -264,6 +271,7 @@ function handleLibraryMarkerDrop(e: DragEvent) {
         console.error('从库中加载 SVG 标记失败:', error)
       } finally {
         setSuppressClosePath(false)
+        setLibraryMarkerDropInProgress(false)
       }
     })()
   } else {
@@ -302,6 +310,7 @@ function handleLibraryMarkerDrop(e: DragEvent) {
       })
       .finally(() => {
         setSuppressClosePath(false)
+        setLibraryMarkerDropInProgress(false)
       })
   }
 }
@@ -327,7 +336,7 @@ onBeforeUnmount(() => {
   <!-- 画布区域 -->
   <div
     ref="canvasContainerRef"
-    class="flex justify-center items-center bg-gray-100 min-h-0 w-full h-full relative overflow-hidden"
+    class="bg-[#fffef8] flex justify-center items-center min-h-0 w-full h-full relative overflow-hidden"
     @dragover.prevent
     @drop.stop.prevent="handleLibraryMarkerDrop"
   >
