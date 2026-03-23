@@ -171,6 +171,12 @@ export const useMarkerCanvasStore = defineStore('markerCanvas', () => {
 
     canvasInstance.on({
       'object:added': (e) => {
+        if (e.target && markerCanvasModeStore.mode === 'erase') {
+          // 擦除在对象真正加入画布后设置为抠除合成
+          e.target.set('globalCompositeOperation', 'destination-out')
+          e.target.set('opacity', 1)
+        }
+
         // 确保新添加的对象不可选（除非当前模式是 move）
         // 如果当前模式是 move，会根据对象类型在 markerCanvasModeStore.setMode 中设置
         if (markerCanvasModeStore.mode !== 'move') {
