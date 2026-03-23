@@ -126,15 +126,14 @@ def find_region_containing_point(image, pos):
  
 
 
-def grid_based_sampling(contour, num_points, canvas_width, canvas_height, container_alpha=None, shrink_distance=10):
+def grid_based_sampling(contour, num_points, canvas_width, canvas_height, container_alpha):
     """
     基于网格的采样，通过收缩轮廓避免点在边缘初始化
     
     Args:
         contour: OpenCV轮廓
         num_points: 需要生成的点数
-        container_alpha: 可选的 alpha 矩阵(H,W)，用于过滤仅保留不透明区域(alpha>0)的点
-        shrink_distance: 轮廓收缩距离（像素）
+        container_alpha: 可选的 alpha 矩阵(H,W)，用于过滤仅保留不透明区域(alpha>0)的点 
     
     Returns:
         (points, grid_size)
@@ -239,7 +238,7 @@ def grid_based_sampling(contour, num_points, canvas_width, canvas_height, contai
         # 保留最近的num_points个点 
         points = points[:num_points]
     
-    return points, grid_size
+    return points
 
 
 def rect_to_path(rect_element):

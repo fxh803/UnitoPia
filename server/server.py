@@ -248,8 +248,16 @@ def marker_drop_api():
     container_rgba = container.convert('RGBA')
     container_alpha = np.array(container_rgba)[:, :, 3]  # 0=透明区域，>0=不透明区域
 
-    uniform_points, grid_size = grid_based_sampling(
-        contour, num_markers, width, height, container_alpha=container_alpha
+    # 不限制在 contour：直接使用 container 全图的不透明像素面积来计算初始 grid_size
+    alpha_area = int(np.count_nonzero(container_alpha > 0))
+    grid_size = int(np.sqrt(alpha_area / 100)) if alpha_area > 0 else 1
+
+    uniform_points = grid_based_sampling(
+        contour,
+        num_markers,
+        width,
+        height,
+        container_alpha
     )
 
     # 将点坐标转换为字典格式

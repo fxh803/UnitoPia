@@ -738,12 +738,12 @@ export const useCanvasStore = defineStore('canvas', () => {
     scaleValues: number[],
     scaleRangeFromFullTable: { min: number; max: number } | null | undefined,
     backendGridSize: number | null,
-    baseMinDisplaySize = 30,
-    baseMaxDisplaySize = 70,
+    baseMinDisplaySize = 20,
+    baseMaxDisplaySize = 80,
     baseDefaultSize = 50,
     minClamp = 5,
     maxClamp = 100,
-    maxDisplayClamp = 140,
+    maxDisplayClamp = 160,
   ): { normalized: number[]; defaultSize: number; minDisplaySize: number; maxDisplaySize: number } {
     let minDisplaySize = baseMinDisplaySize
     let maxDisplaySize = baseMaxDisplaySize
