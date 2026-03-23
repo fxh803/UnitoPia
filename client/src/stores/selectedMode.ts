@@ -20,6 +20,9 @@ export const useSelectedModeStore = defineStore('selectedMode', () => {
         const objects = canvasInstance.getObjects()
         
         objects.forEach(obj => {
+            // 擦除路径依赖不透明笔触 + destination-out，勿改 opacity
+            if (obj.get('isErasePath')) return
+
             // 根据对象类型设置透明度
             const objType = obj.get('dataType')
             

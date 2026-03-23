@@ -7,6 +7,7 @@ import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { useObjectActionsStore } from '~/stores/objectActions'
 import { useTableStore } from '~/stores/table'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
+import { useBackgroundStore } from '~/stores/background'
 import { Group } from 'fabric'
 import paper from 'paper'
 import { handleMarkerDropCanvas } from '~/composables/server'
@@ -33,7 +34,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   // 拖拽放置 Mark 时，不要再走 setDrawedObjectDataType，
   // 否则会把 mark 内部对象误归类到当前绘制模式的数据类型里。
   const isMarkDropInProgress = ref(false)
-  
+
   function setSegmentLoading(loading: boolean) {
     isSegmentLoading.value = loading
   }
@@ -55,6 +56,7 @@ export const useCanvasStore = defineStore('canvas', () => {
   const collageSeriesStore = useCollageSeriesStore()
   const objectActionsStore = useObjectActionsStore()
   const hoverInfoPanelStore = useHoverInfoPanelStore()
+  const backgroundStore = useBackgroundStore()
 
   // 防抖更新当前 slide
   let updateSlideTimer: ReturnType<typeof setTimeout> | null = null
@@ -205,7 +207,9 @@ export const useCanvasStore = defineStore('canvas', () => {
         collageSeriesStore.updateCurrentSlide()
       },
       'object:added': (e) => {
-        if (!isMarkDropInProgress.value) {
+        const skipDrawedDataType =
+          isMarkDropInProgress.value || backgroundStore.creatingBackground
+        if (!skipDrawedDataType) {
           setDrawedObjectDataType(e)
         }
         debouncedUpdateCurrentSlide()
@@ -691,11 +695,48 @@ export const useCanvasStore = defineStore('canvas', () => {
     return colorMap
   }
 
-  // 根据后端布局返回的 grid_size（以及 scaleValues 的 min/max）计算：
+  /** 与 drop 时单行 scale 规则一致 */
+  function tableCellAsScale(row: any, field: string): number {
+    if (!row || row[field] == null) return 1
+    const v = Number(row[field])
+    return !isNaN(v) && v > 0 ? v : 1
+  }
+
+  /** 与 drop 时单行数值 color 规则一致 */
+  function tableCellAsColorNumeric(row: any, field: string): number {
+    if (!row || row[field] == null) return 0
+    const v = Number(row[field])
+    return !isNaN(v) ? v : 0
+  }
+
+  /**
+   * 扫描整表得到某列的 min/max。对每一行会调用 cellValue(该行数据, field)。
+   * 传入的 tableCellAsScale / tableCellAsColorNumeric 在此处被回调，不是「无参」调用。
+   */
+  function getNumericFieldBoundsFromFullTable(
+    tableData: readonly any[] | undefined,
+    field: string | undefined,
+    cellValue: (row: any, field: string) => number,
+  ): { min: number; max: number } | null {
+    if (!field || !tableData?.length) return null
+    let min = Infinity
+    let max = -Infinity
+    for (let i = 0; i < tableData.length; i++) {
+      const val = cellValue(tableData[i] as any, field)
+      min = Math.min(min, val)
+      max = Math.max(max, val)
+    }
+    if (!Number.isFinite(min) || !Number.isFinite(max)) return null
+    return { min, max }
+  }
+
+  // 根据后端布局返回的 grid_size（以及 scale 的 min/max）计算：
   // - normalized：用于 width/height/size 编码缩放
+  // - scaleRangeFromFullTable：若提供，则按整表该字段范围归一化；否则仍用当前 scaleValues 子集范围
   // - defaultSize：用于 size/width/height 均未命中时的兜底缩放
   function getNormalizedAndDefaultSize(
     scaleValues: number[],
+    scaleRangeFromFullTable: { min: number; max: number } | null | undefined,
     backendGridSize: number | null,
     baseMinDisplaySize = 30,
     baseMaxDisplaySize = 70,
@@ -719,8 +760,18 @@ export const useCanvasStore = defineStore('canvas', () => {
       defaultSize = Math.max(minDisplaySize, Math.min(maxDisplaySize, backendGridSize))
     }
 
-    const minValue = scaleValues.length ? Math.min(...scaleValues) : 1
-    const maxValue = scaleValues.length ? Math.max(...scaleValues) : 1
+    const minValue =
+      scaleRangeFromFullTable != null
+        ? scaleRangeFromFullTable.min
+        : scaleValues.length
+          ? Math.min(...scaleValues)
+          : 1
+    const maxValue =
+      scaleRangeFromFullTable != null
+        ? scaleRangeFromFullTable.max
+        : scaleValues.length
+          ? Math.max(...scaleValues)
+          : 1
     const normalized = scaleValues.map((value) => {
       if (maxValue === minValue) return (minDisplaySize + maxDisplaySize) / 2
       return (
@@ -770,6 +821,17 @@ export const useCanvasStore = defineStore('canvas', () => {
       }
     }
 
+    const scaleRangeFromFullTable = getNumericFieldBoundsFromFullTable(
+      tableStore.tableData,
+      scaleField,
+      tableCellAsScale,
+    )
+    const colorNumericRangeFromFullTable = getNumericFieldBoundsFromFullTable(
+      tableStore.tableData,
+      colorField,
+      tableCellAsColorNumeric,
+    )
+
     const rows: any[] = []
     const scaleValues: number[] = []
     const colorNumericValues: number[] = []
@@ -777,18 +839,8 @@ export const useCanvasStore = defineStore('canvas', () => {
     indices.forEach(idx => {
       const row = tableStore.tableData[idx] as any
       rows.push(row)
-      if (scaleField && row && row[scaleField] != null) {
-        const v = Number(row[scaleField])
-        scaleValues.push(!isNaN(v) && v > 0 ? v : 1)
-      } else {
-        scaleValues.push(1)
-      }
-      if (colorField && row && row[colorField] != null) {
-        const v = Number(row[colorField])
-        colorNumericValues.push(!isNaN(v) ? v : 0)
-      } else {
-        colorNumericValues.push(0)
-      }
+      scaleValues.push(scaleField ? tableCellAsScale(row, scaleField) : 1)
+      colorNumericValues.push(colorField ? tableCellAsColorNumeric(row, colorField) : 0)
     })
 
     // 计算用于放置的点位，并在非 emitter 情况下拿到后端返回 grid_size
@@ -808,8 +860,12 @@ export const useCanvasStore = defineStore('canvas', () => {
       }
     }
 
-    // 复用单独函数：根据 grid_size 统一计算 normalized + defaultSize
-    const { normalized, defaultSize } = getNormalizedAndDefaultSize(scaleValues, backendGridSize)
+    // 复用单独函数：根据 grid_size 统一计算 normalized + defaultSize（scale 按整表范围映射）
+    const { normalized, defaultSize } = getNormalizedAndDefaultSize(
+      scaleValues,
+      scaleRangeFromFullTable,
+      backendGridSize,
+    )
 
     // 如果存在颜色编码，预先为每个实体计算好颜色（仅依赖色带 / categoricalColors）
     let colors: string[] | null = null
@@ -830,8 +886,14 @@ export const useCanvasStore = defineStore('canvas', () => {
                 { position: 1, color: '#5592F9', opacity: 1 },
               ]
         const numericValues = colorNumericValues.length ? colorNumericValues : [0]
-        const minVal = Math.min(...numericValues)
-        const maxVal = Math.max(...numericValues)
+        const minVal =
+          colorNumericRangeFromFullTable != null
+            ? colorNumericRangeFromFullTable.min
+            : Math.min(...numericValues)
+        const maxVal =
+          colorNumericRangeFromFullTable != null
+            ? colorNumericRangeFromFullTable.max
+            : Math.max(...numericValues)
         const span = maxVal - minVal || 1
         for (let i = 0; i < rows.length; i++) {
           const raw = numericValues[i] ?? minVal
@@ -891,7 +953,7 @@ export const useCanvasStore = defineStore('canvas', () => {
       } else if (scaleChannel === 'size') {
         scaleX = normalizedValue / currentSize
         scaleY = normalizedValue / currentSize
-      } else { 
+      } else {
         scaleX = defaultSize / currentSize
         scaleY = defaultSize / currentSize
       }
@@ -1020,6 +1082,17 @@ export const useCanvasStore = defineStore('canvas', () => {
         scaleField = (encoding as any).height
       }
 
+      const scaleRangeFromFullTable = getNumericFieldBoundsFromFullTable(
+        tableStore.tableData,
+        scaleField,
+        tableCellAsScale,
+      )
+      const colorNumericRangeFromFullTable = getNumericFieldBoundsFromFullTable(
+        tableStore.tableData,
+        colorField,
+        tableCellAsColorNumeric,
+      )
+
       const rows: (TableData | undefined)[] = []
       const scaleValues: number[] = []
       const colorNumericValues: number[] = []
@@ -1027,22 +1100,16 @@ export const useCanvasStore = defineStore('canvas', () => {
       indices.forEach(idx => {
         const row = tableStore.tableData[idx]
         rows.push(row)
-        if (scaleField && row && (row as any)[scaleField] != null) {
-          const v = Number((row as any)[scaleField])
-          scaleValues.push(!isNaN(v) && v > 0 ? v : 1)
-        } else {
-          scaleValues.push(1)
-        }
-        if (colorField && row && (row as any)[colorField] != null) {
-          const v = Number((row as any)[colorField])
-          colorNumericValues.push(!isNaN(v) ? v : 0)
-        } else {
-          colorNumericValues.push(0)
-        }
+        scaleValues.push(scaleField ? tableCellAsScale(row as any, scaleField) : 1)
+        colorNumericValues.push(colorField ? tableCellAsColorNumeric(row as any, colorField) : 0)
       })
 
-      // 复用单独函数：根据 grid_size 计算 normalized + defaultSize
-      const { normalized, defaultSize } = getNormalizedAndDefaultSize(scaleValues, backendGridSize)
+      // 复用单独函数：根据 grid_size 计算 normalized + defaultSize（scale 按整表范围映射）
+      const { normalized, defaultSize } = getNormalizedAndDefaultSize(
+        scaleValues,
+        scaleRangeFromFullTable,
+        backendGridSize,
+      )
 
       // 如果是颜色编码，预先为该子实例的每个实体计算好颜色
       let colors: string[] | null = null
@@ -1063,8 +1130,14 @@ export const useCanvasStore = defineStore('canvas', () => {
                   { position: 1, color: '#5592F9', opacity: 1 },
                 ]
           const numericValues = colorNumericValues.length ? colorNumericValues : [0]
-          const minVal = Math.min(...numericValues)
-          const maxVal = Math.max(...numericValues)
+          const minVal =
+            colorNumericRangeFromFullTable != null
+              ? colorNumericRangeFromFullTable.min
+              : Math.min(...numericValues)
+          const maxVal =
+            colorNumericRangeFromFullTable != null
+              ? colorNumericRangeFromFullTable.max
+              : Math.max(...numericValues)
           const span = maxVal - minVal || 1
           for (let i = 0; i < rows.length; i++) {
             const raw = numericValues[i] ?? minVal
@@ -1298,12 +1371,12 @@ export const useCanvasStore = defineStore('canvas', () => {
     const canvasModeStore = useCanvasModeStore()
     // 在其他模式下，不询问是否闭合路径
     if (canvasModeStore.mode !== 'draw' && canvasModeStore.mode !== 'rect' && canvasModeStore.mode !== 'ellipse') return
-    
-    
+
+
     // 对于 draw 模式，检查起点和终点距离
     if (canvasModeStore.mode === 'draw' && path.type === 'path' && path.path) {
         const { start, end } = getPathStartAndEndPoints(path)
-        
+
         if (start && end) {
           // 计算起点和终点的距离
           const distance = calculateDistance(start, end)
@@ -1313,7 +1386,7 @@ export const useCanvasStore = defineStore('canvas', () => {
           }
         }
       }
-    
+
         // 获取对象在画布上的位置
     const zoom = canvasInstance.getZoom()
     const vpt = canvasInstance.viewportTransform
@@ -1379,7 +1452,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     return flattenedData
   }
 
-  async function renderResult() { 
+  async function renderResult() {
     const collageSeriesStore = useCollageSeriesStore()
     const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
     const currentOverview = overviews.value[currentOverviewIndex.value]
@@ -1387,10 +1460,10 @@ export const useCanvasStore = defineStore('canvas', () => {
       const lastSlide = currentOverview.collageSeries[currentOverview.collageSeries.length - 1]
       // 如果最后一个 slide 是结果，删除它
       if ((lastSlide as any).isResult === true) {
-        currentOverview.collageSeries.pop()  
+        currentOverview.collageSeries.pop()
       }
     }
-      
+
     collageSeriesStore.addNewSlide(true)
     // 获取canvas实例
     const canvasInstance = canvasRef.value?.()
