@@ -56,7 +56,7 @@ const galleryItems = [
   {
     id: 1,
     title: 'hair',
-    image: '/gallery/hair.png',
+    image: '/galleries/hair.png',
     markSnapshotUrl: '/snapshots/hairMarks.json',
     collageSeriesSnapshotUrl: '/snapshots/hairCanvas.json',
     dataUrl: '/csv/hair.csv',
@@ -67,7 +67,7 @@ const galleryItems = [
   {
     id: 2,
     title:'bottleDream',
-    image: '/gallery/bottleDream.png',
+    image: '/galleries/bottleDream.png',
     markSnapshotUrl: '/snapshots/bottleDreamMarks.json',
     collageSeriesSnapshotUrl: '/snapshots/bottleDreamCanvas.json',
     dataUrl: '/csv/bottleDream.csv',
@@ -78,7 +78,7 @@ const galleryItems = [
   {
     id: 3,
     title: 'camera',
-    image: '/gallery/camera.png',
+    image: '/galleries/camera.png',
     markSnapshotUrl: '/snapshots/cameraMarks.json',
     collageSeriesSnapshotUrl: '/snapshots/cameraCanvas.json',
     dataUrl: '/csv/camera.csv',
@@ -89,7 +89,7 @@ const galleryItems = [
   {
     id: 4,
     title: 'dandelion',
-    image: '/gallery/dandelion.png',
+    image: '/galleries/dandelion.png',
     markSnapshotUrl: '/snapshots/dandelionMarks.json',
     collageSeriesSnapshotUrl: '/snapshots/dandelionCanvas.json',
     dataUrl: '/csv/dandelion.csv',
@@ -100,7 +100,7 @@ const galleryItems = [
   {
     id: 5,
     title:'workLife',
-    image: '/gallery/workLife.png',
+    image: '/galleries/workLife.png',
     markSnapshotUrl: '/snapshots/workLifeMarks.json',
     collageSeriesSnapshotUrl: '/snapshots/workLifeCanvas.json',
     dataUrl: '/csv/workLife.csv',
@@ -111,7 +111,7 @@ const galleryItems = [
   {
     id: 6,
     title: 'tweet',
-    image: '/gallery/tweet.png',
+    image: '/galleries/tweet.png',
     markSnapshotUrl: '/snapshots/tweetMarks.json',
     collageSeriesSnapshotUrl: '/snapshots/tweetCanvas.json',
     dataUrl: '/csv/tweet.csv',
@@ -121,7 +121,7 @@ const galleryItems = [
   },{
     id: 7,
     title: 'pigBank',
-    image: '/gallery/pigBank.png',
+    image: '/galleries/pigBank.png',
     markSnapshotUrl: '/snapshots/pigBankMarks.json',
     collageSeriesSnapshotUrl: '/snapshots/pigBankCanvas.json',
     dataUrl: '/csv/pigBank.csv',
