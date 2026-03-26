@@ -8,6 +8,8 @@ const {
     showDeleteBtn, 
     showClosePathBtn, 
     showGroupBtn, 
+    showScaleUpBtn,
+    showScaleDownBtn,
     actionBtnPosition,
     isPathClosed,
     isGroupMode
@@ -15,7 +17,9 @@ const {
 const {
     deleteActiveObject,
     togglePathClosed,
-    toggleGroup
+    toggleGroup,
+    scaleUpMarker,
+    scaleDownMarker
 } = objectActionsStore
 
 // 删除对象并关闭圆盘
@@ -73,11 +77,13 @@ const calculateButtonPosition = (angle: number) => {
 const deleteBtnPos = computed(() => calculateButtonPosition(30)) 
 const closePathBtnPos = computed(() => calculateButtonPosition(90))  
 const groupBtnPos = computed(() => calculateButtonPosition(-30)) 
+const scaleUpBtnPos = computed(() => calculateButtonPosition(150))
+const scaleDownBtnPos = computed(() => calculateButtonPosition(210))
 </script>
 
 <template>
     <!-- 更多按钮 -->
-    <button v-if="showDeleteBtn || showClosePathBtn || showGroupBtn"
+    <button v-if="showDeleteBtn || showClosePathBtn || showGroupBtn || showScaleUpBtn || showScaleDownBtn"
         ref="moreBtnRef" class="more-btn" :style="actionBtnPosition" @click="toggleWheel">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
             <path
@@ -138,6 +144,20 @@ const groupBtnPos = computed(() => calculateButtonPosition(-30))
                 <button v-if="showGroupBtn" class="wheel-btn group-wheel-btn" :style="groupBtnPos" @click="toggleGroup">
                     <div v-if="!isGroupMode" class="i-carbon:group-objects"></div>
                     <div v-else class="i-carbon:ungroup-objects"></div>
+                </button>
+
+                <!-- 放大 marker -->
+                <button v-if="showScaleUpBtn" class="wheel-btn scale-up-wheel-btn" :style="scaleUpBtnPos" @click="scaleUpMarker">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M8 1a.5.5 0 0 1 .5.5V7.5H14.5a.5.5 0 0 1 0 1H8.5V14.5a.5.5 0 0 1-1 0V8.5H1.5a.5.5 0 0 1 0-1H7.5V1.5A.5.5 0 0 1 8 1z"/>
+                    </svg>
+                </button>
+
+                <!-- 缩小 marker -->
+                <button v-if="showScaleDownBtn" class="wheel-btn scale-down-wheel-btn" :style="scaleDownBtnPos" @click="scaleDownMarker">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M1.5 7.5h13a.5.5 0 0 1 0 1h-13a.5.5 0 0 1 0-1z"/>
+                    </svg>
                 </button>
             </div>
         </div>
@@ -316,6 +336,23 @@ const groupBtnPos = computed(() => calculateButtonPosition(-30))
 
 .group-wheel-btn:hover {
     background-color: #059669;
+}
+
+/* 放大/缩小按钮 */
+.scale-up-wheel-btn {
+    background-color: #8b5cf6;
+}
+
+.scale-up-wheel-btn:hover {
+    background-color: #7c3aed;
+}
+
+.scale-down-wheel-btn {
+    background-color: #f59e0b;
+}
+
+.scale-down-wheel-btn:hover {
+    background-color: #d97706;
 }
 
 /* 转盘出现动画 */

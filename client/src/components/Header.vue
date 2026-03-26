@@ -7,6 +7,8 @@ import { useCollageSeriesStore } from '~/stores/collageSeries'
 import { usePaperExportStore } from '~/stores/paperExport'
 import { useCanvasStore } from '~/stores/canvas'
 import { useMarkInstanceStore } from '~/stores/markInstance'
+import { useObjectActionsStore } from '~/stores/objectActions'
+import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 import type { ProgressItem } from '~/stores/animation'
 import { useTutorialStore } from '~/stores/tutorial'
 import { storeToRefs } from 'pinia'
@@ -18,6 +20,8 @@ const paperExportStore = usePaperExportStore()
 const tutorialStore = useTutorialStore()
 const canvasStore = useCanvasStore()
 const markInstanceStore = useMarkInstanceStore()
+const objectActionsStore = useObjectActionsStore()
+const hoverInfoPanelStore = useHoverInfoPanelStore()
 const { hasMarker, hasContainer } = storeToRefs(canvasStore)
 const { collaging, result_data, replaying, time_interval, progress_data, replayIdx } = storeToRefs(animationStore)
 // 用 computed 得到当前 progress，保证依赖 progress_data/replayIdx，进度条才能随数据更新
@@ -75,6 +79,9 @@ const handleRun = () => {
   if (collaging.value) {
     return
   } else {
+    // 运行时先主动收起对象操作按钮，避免悬浮转盘残留遮挡
+    objectActionsStore.hideBtns()
+    hoverInfoPanelStore.handleSelectionCleared()
     collageSeriesStore.setCollageSeriesPanelCollapsed(true)
     // 收起 MarkDetailPanel：清空详情面板选中项
     markInstanceStore.clearSelectedMarkForDetail()

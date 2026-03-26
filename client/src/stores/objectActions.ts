@@ -16,6 +16,8 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
     const actionBtnPosition = ref({ top: '0px', left: '0px' })
     const showClosePathBtn = ref(false)
     const showGroupBtn = ref(false)
+    const showScaleUpBtn = ref(false)
+    const showScaleDownBtn = ref(false)
     const currentPathObj = ref<any>(null) //如果是需要响应式，则需要使用currentPathObj.value，如果只是画布操作，直接canvas.activeObject()
     // 设置 canvas 引用
     function setCanvas(canvas: () => Canvas | null) {
@@ -44,10 +46,14 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         showDeleteBtn.value = true
         showClosePathBtn.value = true
         showGroupBtn.value = true
+        showScaleUpBtn.value = false
+        showScaleDownBtn.value = false
         if (!currentPathObj.value) {
             showDeleteBtn.value = false
             showClosePathBtn.value = false
             showGroupBtn.value = false
+            showScaleUpBtn.value = false
+            showScaleDownBtn.value = false
         }
         if (isGroupMode.value || isMultipleSelection.value) {
             showClosePathBtn.value = false
@@ -67,14 +73,20 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
             }
         }
         const activeObject = canvasInstance?.getActiveObject()
-        if(activeObject && activeObject.get('dataType') === 'marker') {
+        // marker 单体：dataType=marker
+        // marker 多选：fabric ActiveSelection（type=activeselection），此时 dataType 通常挂在子对象上
+        if(activeObject && (activeObject.get('dataType') === 'marker' || (activeObject as any).type === 'activeselection')) {
             showClosePathBtn.value = false
             showGroupBtn.value = false
+            showScaleUpBtn.value = true
+            showScaleDownBtn.value = true
         }
         if(collaging.value) {
             showDeleteBtn.value = false
             showClosePathBtn.value = false
             showGroupBtn.value = false
+            showScaleUpBtn.value = false
+            showScaleDownBtn.value = false
         }
     }
     function updateActionBtnPosition() {
@@ -174,16 +186,65 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         }
     }
 
+    function scaleActiveObject(scaleFactor: number) {
+        const canvasInstance = canvasRef.value?.()
+        const activeObject = canvasInstance?.getActiveObject()
+        if (!canvasInstance || !activeObject) return
+
+        // 多选：对选区内每个对象围绕选区中心缩放（保证取消选择后大小也真正变更）
+        if ((activeObject as any).type === 'activeselection') {
+            const selection = activeObject as unknown as ActiveSelection
+            const objects = (selection as any).getObjects?.() as any[] | undefined
+            if (!objects?.length) return
+
+            // 轮询选中的对象逐个缩放（不改变位置），并且只缩放 marker
+            objects.forEach((obj) => {
+                if (obj?.get?.('dataType') !== 'marker') return
+                const nextScaleX = Math.min(Math.max((obj as any).scaleX * scaleFactor, 0.05), 20)
+                const nextScaleY = Math.min(Math.max((obj as any).scaleY * scaleFactor, 0.05), 20)
+                obj.set('scaleX', nextScaleX)
+                obj.set('scaleY', nextScaleY)
+                obj.setCoords?.()
+            })
+
+            canvasInstance.requestRenderAll()
+            // 只触发一次，避免 selection 内每个对象都触发导致卡顿
+            canvasInstance.fire('object:modified', { target: activeObject as any })
+            return
+        }
+
+        // 单体：直接改 scale
+        const nextScaleX = Math.min(Math.max((activeObject as any).scaleX * scaleFactor, 0.05), 20)
+        const nextScaleY = Math.min(Math.max((activeObject as any).scaleY * scaleFactor, 0.05), 20)
+        ;(activeObject as any).set('scaleX', nextScaleX)
+        ;(activeObject as any).set('scaleY', nextScaleY)
+        ;(activeObject as any).setCoords?.()
+        canvasInstance.requestRenderAll()
+        canvasInstance.fire('object:modified', { target: activeObject as any })
+    }
+
+    function scaleUpMarker() {
+        scaleActiveObject(1.1)
+    }
+
+    function scaleDownMarker() {
+        scaleActiveObject(1 / 1.1)
+    }
+
     function hideBtns() {
         showDeleteBtn.value = false
         showClosePathBtn.value = false
         showGroupBtn.value = false
+        showScaleUpBtn.value = false
+        showScaleDownBtn.value = false
     }
 
     return {
         showDeleteBtn,
         showClosePathBtn,
         showGroupBtn,
+        showScaleUpBtn,
+        showScaleDownBtn,
         actionBtnPosition,
         isGroupMode,
         isMultipleSelection,
@@ -193,6 +254,8 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         deleteActiveObject,
         togglePathClosed,
         toggleGroup,
+        scaleUpMarker,
+        scaleDownMarker,
         hideBtns,
         setCanvas,
         setCurrentPathObj
