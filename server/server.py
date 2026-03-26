@@ -255,7 +255,7 @@ def marker_drop_api():
 
     # 不限制在 contour：直接使用 container 全图的不透明像素面积来计算初始 grid_size
     alpha_area = int(np.count_nonzero(container_alpha > 0))
-    grid_size = int(np.sqrt(alpha_area / 100)) if alpha_area > 0 else 1
+    grid_size = int(np.sqrt(alpha_area / 200)) if alpha_area > 0 else 1
 
     uniform_points = grid_based_sampling(
         contour,
