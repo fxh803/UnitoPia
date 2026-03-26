@@ -76,6 +76,44 @@ export const useAnimationStore = defineStore('animation', () => {
   // 不再区分多个 overview，相关状态删除
   const isUpdatingAnimation = ref(false) // 锁标志，防止并发执行
 
+  /** Paper.js view 每触发一次 frame 事件 +1；与 marker/container 插值共用同一计数，避免重复累加。结束时在控制台输出累计帧数与平均 FPS */
+  const animationFrameCount = ref(0)
+  let frameRecorder: ((event: paper.Event) => void) | null = null
+  /** 本段统计内第一帧时刻（performance.now），用于计算平均 FPS */
+  let frameRecorderStartPerf: number | null = null
+
+  function ensureFrameRecorder() {
+    if (frameRecorder) return
+    frameRecorder = () => {
+      if (frameRecorderStartPerf === null) {
+        frameRecorderStartPerf = performance.now()
+      }
+      animationFrameCount.value++
+    }
+    paper.view.on('frame', frameRecorder)
+  }
+
+  function teardownFrameRecorder() {
+    if (frameRecorder) {
+      paper.view.off('frame', frameRecorder)
+      frameRecorder = null
+    }
+    const total = animationFrameCount.value
+    const start = frameRecorderStartPerf
+    frameRecorderStartPerf = null
+    if (total > 0 && start !== null) {
+      const elapsedMs = performance.now() - start
+      const avgFps = elapsedMs >= 1 ? (total * 1000) / elapsedMs : null
+      const fpsPart = avgFps != null ? `，平均 FPS: ${avgFps.toFixed(1)}` : ''
+      console.log(
+        `[animation] Paper.js view 累计帧数: ${total}，统计时长: ${elapsedMs.toFixed(0)} ms${fpsPart}`,
+      )
+    } else if (total > 0) {
+      console.log(`[animation] Paper.js view 累计帧数: ${total}`)
+    }
+    animationFrameCount.value = 0
+  }
+
   // 计算属性
   const progress = computed(() => {
     if (replaying.value) {
@@ -152,6 +190,7 @@ export const useAnimationStore = defineStore('animation', () => {
       paper.view.off('frame', containerAni.value);
       containerAni.value = null
     }
+    teardownFrameRecorder()
     // 清理 container 的 shining paths
     const containerAnimationStore = useContainerAnimationStore()
     containerAnimationStore.clearShiningPaths()
@@ -166,7 +205,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function setData(now_collage: number, startIndex: number) {//对最新的数据进行整理
     const result = result_data.value[result_data.value.length - 1]
-    console.log('result', result)
+    // console.log('result', result)
     if (result == null) return
     const dataBinding = getDataBinding(now_collage)
     let renderSizeWidth = result.multi_res?.render_size_w ?? canvas_width.value
@@ -247,7 +286,7 @@ export const useAnimationStore = defineStore('animation', () => {
       const now_collage = progress.value.now_collage??0;
       const type = progress.value.type??0;
       if (now_collage != now_collage_idx.value && type === 1) {// 如果进行的collage变了，要绘制新的elements
-        console.log('1')
+        // console.log('1')
       if (process_id.value) {
         const txtData = await getRenderTxtData(process_id.value, now_collage)
         txtArray.value.push(...txtData)
@@ -296,7 +335,7 @@ export const useAnimationStore = defineStore('animation', () => {
     }
     else if (elements.value.length === 0) {//一开始
       setData(now_collage, 0)
-      console.log('2')
+      // console.log('2')
       if (process_id.value != null) {
         const txtData = await getRenderTxtData(process_id.value, now_collage)
         txtArray.value.push(...txtData)
@@ -338,7 +377,8 @@ export const useAnimationStore = defineStore('animation', () => {
       }
     }
     else if (elements.value.length > 0) {
-      console.log('3')
+      // console.log('3')
+      ensureFrameRecorder()
       setData(now_collage, now_start_idx.value)
       for (let i = now_start_idx.value; i < elements.value.length; i++) {//这里先set好数据
         if (elements.value[i].imgLoaded) {
@@ -432,7 +472,7 @@ export const useAnimationStore = defineStore('animation', () => {
     collage_result_type.value = progress_data.value[replayIdx.value].collage_result_type??[];
 
     if (now_collage && now_collage != now_collage_idx.value) {//进入下一个collage
-      console.log('4')
+      // console.log('4')
       now_start_idx.value = elements.value.length
       setReplayData(replayIdx.value, now_collage, now_start_idx.value)
       for (let i = now_start_idx.value; i < posArray.value.length; i++) {
@@ -473,7 +513,7 @@ export const useAnimationStore = defineStore('animation', () => {
       now_collage_idx.value = now_collage
     }
     else if (elements.value.length === 0) {
-      console.log('5')
+      // console.log('5')
       setReplayData(replayIdx.value, now_collage, 0)
       for (let i = 0; i < posArray.value.length; i++) {
         const base64Source = txtArray.value[i]
@@ -512,7 +552,7 @@ export const useAnimationStore = defineStore('animation', () => {
       }
     }
     else if (elements.value.length > 0) {
-      console.log('6')
+      // console.log('6')
       setReplayData(replayIdx.value, now_collage, now_start_idx.value)
       for (let i = now_start_idx.value; i < elements.value.length; i++) {//这里先set好数据
         if (elements.value[i].imgLoaded) {
@@ -589,6 +629,7 @@ export const useAnimationStore = defineStore('animation', () => {
     replayTimer,
     time_interval,
     replaying,
+    animationFrameCount,
     // 计算属性
     progress,
     // 方法

@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import json
 import os
+import time
 from openpyxl import load_workbook
 from datetime import datetime
 import math
@@ -29,6 +30,7 @@ def process_data():
             "message": "working now, please wait"
         }), 503
     try:
+        t0 = time.perf_counter()
         is_working = True
         # 获取请求数据
         request_data = request.get_json() 
@@ -179,6 +181,9 @@ def process_data():
     
         
         unitopia.start_collage(f'./workdir/{str(id)}_collage.json',id = str(id),callback=collage_callback)
+        elapsed_sec = time.perf_counter() - t0
+        with open(f'./workdir/{str(id)}_time.txt', 'w', encoding='utf-8') as tf:
+            tf.write(f'{elapsed_sec:.9f}\n')
         
         is_working = False
         return jsonify({

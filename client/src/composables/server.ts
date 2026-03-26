@@ -34,7 +34,7 @@ interface ProcessedData {
   margin?: number
   emitter_type?: string
 }
-export const ip = 'http://localhost:4444'
+export const ip = 'http://175.178.152.10:4396'
 
 
 
@@ -91,7 +91,7 @@ export async function collectAllSlidesData(): Promise<ProcessedData[]> {
       result.dataBinding = processDataBinding(tempCanvas)
 
       const slideSettings = slide as any
-      result.iterations = slideSettings.iterations ?? 120
+      result.iterations = slideSettings.iterations ?? 200
       result.rotation = slideSettings.rotation ?? true
       result.orientation = slideSettings.orientation ?? 'free'
       result.hole = slideSettings.hole ?? false
@@ -490,8 +490,8 @@ export async function sendDataToServer() {
     clearInterval(progressTimer.value)
     collaging.value = false
     // 当前 overview 处理完成后，触发结果重绘
-    const canvasStore = useCanvasStore()
-    await canvasStore.renderResult()
+    // const canvasStore = useCanvasStore()
+    // await canvasStore.renderResult()
 
   } catch (error) {
     console.error('发送数据时出错:', error)

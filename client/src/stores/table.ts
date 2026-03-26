@@ -36,7 +36,8 @@ export const useTableStore = defineStore('table', () => {
     return result
   }
 
-  const maxRows = 300 // 限制最大行数
+  // 此前为减轻前端表格渲染压力，曾限制最多加载 300 行；现取消该上限，CSV 内全部数据行均会解析进 tableData。
+  // const maxRows = 300
 
   /** 从 CSV 文本解析出 data 和 columns */
   const parseCSVText = (text: string): { data: TableData[]; headers: string[] } => {
@@ -44,7 +45,7 @@ export const useTableStore = defineStore('table', () => {
     if (lines.length === 0) return { data: [], headers: [] }
     const headers = parseCSVLine(lines[0])
     const data: TableData[] = []
-    const rowsToProcess = Math.min(lines.length - 1, maxRows)
+    const rowsToProcess = lines.length - 1
     for (let i = 1; i <= rowsToProcess; i++) {
       const values = parseCSVLine(lines[i])
       const row: TableData = {}
@@ -103,9 +104,8 @@ export const useTableStore = defineStore('table', () => {
       tableColumns.value = headers
       fileName.value = file.name
 
-      const totalRows = text.split('\n').filter(l => l.trim()).length - 1
       const loadedRows = data.length
-      ElMessage.success(`Successfully uploaded ${file.name}, loaded ${loadedRows} rows${totalRows > maxRows ? ` (${totalRows} total rows, showing first ${maxRows} rows)` : ''}`)
+      ElMessage.success(`Successfully uploaded ${file.name}, loaded ${loadedRows} rows`)
     } catch (error) {
       ElMessage.error('File parsing failed')
       console.error('CSV parsing error:', error)

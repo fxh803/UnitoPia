@@ -137,14 +137,14 @@ const handleClose = () => emit('close')
         <div class="slider-demo-block">
           <div class="flex items-center justify-between mb-2">
             <span class="demonstration text-gray-700 font-medium">iterations</span>
-            <span class="text-gray-500">{{ currentSlide?.iterations ?? 120 }}</span>
+            <span class="text-gray-500">{{ currentSlide?.iterations ?? 200 }}</span>
           </div>
           <el-slider
-            :model-value="currentSlide?.iterations ?? 120"
+            :model-value="currentSlide?.iterations ?? 200"
             :min="60"
             :max="500"
             :step="1"
-            @update:model-value="(v: number | number[]) => { if (currentSlide) currentSlide.iterations = Array.isArray(v) ? v[0] ?? 120 : v }"
+            @update:model-value="(v: number | number[]) => { if (currentSlide) currentSlide.iterations = Array.isArray(v) ? v[0] ?? 200 : v }"
           />
         </div>
 

@@ -916,6 +916,7 @@ export const useCanvasStore = defineStore('canvas', () => {
     }
 
 
+    const addedGroups: any[] = []
     for (let i = 0; i < pos.length; i++) {
       const object = await fabric.util.enlivenObjects(mark.markerJsonData) as fabric.FabricObject[]
       const group = new Group(object)
@@ -987,10 +988,14 @@ export const useCanvasStore = defineStore('canvas', () => {
 
       // 添加到主画布（此时所有属性都已设置好）
       canvasInstance.add(group)
-      // 强制更新对象
-      group.setCoords()
-      canvasInstance.renderAll()
+      addedGroups.push(group)
     }
+
+    // 批量更新坐标并仅刷新一次，避免循环内多次重绘
+    for (const g of addedGroups) {
+      g.setCoords()
+    }
+    ;(canvasInstance.requestRenderAll?.bind(canvasInstance) || canvasInstance.renderAll?.bind(canvasInstance) || (() => {}))()
   }
 
   // 基于 group mark 实例的 drop 处理
@@ -1490,22 +1495,22 @@ export const useCanvasStore = defineStore('canvas', () => {
             markerIndices.push(index)
           }
         })
-        console.log(markerIndices)
+        // console.log(markerIndices)
         // 将当前 paper.js 画布导出为 SVG
         const paperSvgString = paper.project.exportSVG({ asString: true }) as string
 
         // 使用 Fabric.js 加载 SVG
         const loadedSVG = await fabric.loadSVGFromString(paperSvgString)
-        console.log(loadedSVG)
+        // console.log(loadedSVG)
         // 获取拍平的 data
         const flattenedData = getDataBinding()
-        console.log(flattenedData)
+        // console.log(flattenedData)
         // 遍历所有 SVG 对象，只给 marker 类型的对象设置 dataType 和 data
         let markerDataIndex = 0
         loadedSVG.objects.forEach((obj: any, index: number) => {
           // 检查当前索引是否对应 marker 对象
           if (markerIndices.includes(index)) {
-            console.log(index)
+            // console.log(index)
             const data = flattenedData[markerDataIndex] || null
 
             // 先设置基本属性
