@@ -94,6 +94,9 @@ export const useAnimationStore = defineStore('animation', () => {
   }
 
   function teardownFrameRecorder() {
+    // 未启用 recorder 且无统计数据时，直接返回（幂等且避免无意义重置）
+    if (!frameRecorder && animationFrameCount.value === 0 && frameRecorderStartPerf === null) return
+
     if (frameRecorder) {
       paper.view.off('frame', frameRecorder)
       frameRecorder = null
