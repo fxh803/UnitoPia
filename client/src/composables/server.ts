@@ -36,8 +36,8 @@ interface ProcessedData {
   margin?: number
   emitter_type?: string
 }
-// export const ip = 'http://175.178.152.10:4396'
-export const ip = 'http://localhost:4444'
+export const ip = 'https://unitopia.scii.online'
+// export const ip = 'http://localhost:4444'
 
 
 // 收集「当前总览」所有 slide 的数据

@@ -83,11 +83,15 @@
 
 <script setup lang="ts">
 import MainHeader from '~/otherComponents/MainHeader.vue'
- 
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const EDITOR_FRESH_KEY = 'unitopia-editor-fresh-once'
+
 const goEditorFresh = () => {
-  if (typeof window !== 'undefined') {
-    window.location.href = '/editor'
-  }
+  if (typeof window !== 'undefined')
+    window.sessionStorage.setItem(EDITOR_FRESH_KEY, '1')
+  router.push('/editor')
 }
 </script>
 

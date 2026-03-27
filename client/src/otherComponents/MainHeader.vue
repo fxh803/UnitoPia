@@ -46,20 +46,27 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const EDITOR_FRESH_KEY = 'unitopia-editor-fresh-once'
+
 const goHome = () => {
-  if (typeof window !== 'undefined') window.location.href = '/'
+  router.push('/')
 }
 
 const goToGallery = () => {
-  if (typeof window !== 'undefined') window.location.href = '/gallery'
+  router.push('/gallery')
 }
 
 const goToDataset = () => {
-  if (typeof window !== 'undefined') window.location.href = '/dataset'
+  router.push('/dataset')
 }
 
 const goEditorFresh = () => {
-  if (typeof window !== 'undefined') window.location.href = '/editor'
+  if (typeof window !== 'undefined')
+    window.sessionStorage.setItem(EDITOR_FRESH_KEY, '1')
+  router.push('/editor')
 }
 </script>
 

@@ -55,6 +55,7 @@ watch(
 
 const contentWrapRef = ref<HTMLElement | null>(null)
 const leftColumnWidth = ref(400)
+const EDITOR_FRESH_KEY = 'unitopia-editor-fresh-once'
 
 function updateLeftWidth() {
   if (!contentWrapRef.value) return
@@ -225,6 +226,13 @@ onMounted(async () => {
   window.addEventListener('resize', updateLeftWidth)
 
   if (typeof window !== 'undefined') {
+    const shouldFresh = window.sessionStorage.getItem(EDITOR_FRESH_KEY) === '1'
+    if (shouldFresh) {
+      window.sessionStorage.removeItem(EDITOR_FRESH_KEY)
+      window.location.reload()
+      return
+    }
+
     const raw = window.localStorage.getItem('unitopia-example')
     if (raw) {
       window.localStorage.removeItem('unitopia-example')

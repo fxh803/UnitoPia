@@ -52,6 +52,10 @@
 
 <script setup lang="ts">
 import MainHeader from '~/otherComponents/MainHeader.vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const EDITOR_FRESH_KEY = 'unitopia-editor-fresh-once'
 const galleryItems = [
   {
     id: 1,
@@ -135,9 +139,9 @@ const handleTryInEditor = (item: (typeof galleryItems)[number]) => {
   if (typeof window !== 'undefined') {
     // 将当前示例信息暂存到 localStorage，刷新后在 /editor 中恢复
     window.localStorage.setItem('unitopia-example', JSON.stringify(item))
-    // 使用整页刷新进入编辑器，顺便重置所有 Pinia 状态
-    window.location.href = '/editor'
+    window.sessionStorage.setItem(EDITOR_FRESH_KEY, '1')
   }
+  router.push('/editor')
 }
 </script>
 
