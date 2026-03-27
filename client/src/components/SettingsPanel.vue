@@ -192,7 +192,7 @@ const handleClose = () => emit('close')
             size="default"
             @update:model-value="(v: string | number | boolean | undefined) => { if (currentSlide && typeof v === 'string') (currentSlide as any).emitter_type = v }"
           >
-            <el-radio value="">空</el-radio>
+            <el-radio value="">default</el-radio>
             <el-radio value="1D">1D</el-radio>
             <el-radio value="2D">2D</el-radio>
           </el-radio-group>

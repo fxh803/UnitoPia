@@ -20,6 +20,8 @@ interface ProcessedData {
     colors: string[] | null // 颜色数组，如果映射是color则收集，否则为null
   }> // base64 字符串数组
   container: string // 整个画布的 base64（隐藏除 container 元素以外的对象）
+  // emitter 控制点（从 emitter 的 path 中解析；旧版后端依赖）
+  emitter: Array<{ x: number; y: number }> | null
   forces: Array<{
     type: 'pointForce' | 'fieldForce'
     coordinates?: { x: number; y: number } // pointForce 的坐标
@@ -34,8 +36,8 @@ interface ProcessedData {
   margin?: number
   emitter_type?: string
 }
-export const ip = 'http://175.178.152.10:4396'
-
+// export const ip = 'http://175.178.152.10:4396'
+export const ip = 'http://localhost:4444'
 
 
 // 收集「当前总览」所有 slide 的数据
@@ -67,6 +69,7 @@ export async function collectAllSlidesData(): Promise<ProcessedData[]> {
       const result: ProcessedData = {
         markers: [],
         container: '',
+        emitter: null,
         forces: [],
         dataBinding: []
       }
@@ -87,6 +90,7 @@ export async function collectAllSlidesData(): Promise<ProcessedData[]> {
       )
       result.markers = processMarker(tempCanvas)
       result.forces = processForce(tempCanvas)
+      result.emitter = processEmitter(tempCanvas)
       result.container = processContainer(tempCanvas)
       result.dataBinding = processDataBinding(tempCanvas)
 
@@ -286,6 +290,54 @@ function processContainer(tempCanvas: Canvas) {
     }
   }
   return containerBase64
+}
+
+// 处理 emitter 对象（只能有一个）：从 group/path 中提取控制点，去重且保序
+function processEmitter(tempCanvas: Canvas) {
+  const canvasObjects = tempCanvas.getObjects()
+  const controlPoints: Array<{ x: number; y: number }> = []
+
+  for (const obj of canvasObjects) {
+    if (obj.get('dataType') !== 'emitter') continue
+
+    const addedPoints = new Set<string>() // 去重
+    const groupObjects: any[] =
+      typeof (obj as any).getObjects === 'function' ? (obj as any).getObjects() : []
+
+    groupObjects.forEach((groupObj: any) => {
+      if (groupObj?.type !== 'path' || !groupObj.path) return
+      const path = groupObj.path
+      if (!Array.isArray(path)) return
+
+      // 先收集所有点，保持顺序
+      const allPoints: Array<{ x: number; y: number }> = []
+      path.forEach((segment: any) => {
+        if (!Array.isArray(segment) || segment.length < 1) return
+        const cmd = segment[0]
+        if (cmd === 'M') {
+          allPoints.push({ x: segment[1], y: segment[2] })
+        } else if (cmd === 'C') {
+          // 三次贝塞尔：两个控制点 + 终点
+          allPoints.push({ x: segment[1], y: segment[2] })
+          allPoints.push({ x: segment[3], y: segment[4] })
+          allPoints.push({ x: segment[5], y: segment[6] })
+        }
+      })
+
+      // 去重但保持顺序
+      allPoints.forEach((p) => {
+        const key = `${p.x},${p.y}`
+        if (addedPoints.has(key)) return
+        controlPoints.push(p)
+        addedPoints.add(key)
+      })
+    })
+
+    // 只处理第一个 emitter
+    break
+  }
+
+  return controlPoints
 }
 
 // 处理 force 对象

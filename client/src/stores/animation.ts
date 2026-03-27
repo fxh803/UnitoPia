@@ -208,7 +208,7 @@ export const useAnimationStore = defineStore('animation', () => {
 
   function setData(now_collage: number, startIndex: number) {//对最新的数据进行整理
     const result = result_data.value[result_data.value.length - 1]
-    // console.log('result', result)
+    console.log('result', result)
     if (result == null) return
     const dataBinding = getDataBinding(now_collage)
     let renderSizeWidth = result.multi_res?.render_size_w ?? canvas_width.value
