@@ -107,22 +107,26 @@ const handleClose = () => emit('close')
       aria-modal="true"
       @click.stop
     >
-      <div class="w-96 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-        <div class="flex items-center justify-between px-4 py-1 bg-[var(--primary-light-color)]">
-          <h3 class="text-sm font-medium text-gray-800">Settings</h3>
+      <div
+        class="settings-panel w-96 bg-white border border-[var(--border-color)] rounded-lg shadow-lg overflow-hidden"
+      >
+        <div
+          class="flex items-center justify-between px-4 py-2 border-b border-[var(--border-color)] bg-[var(--primary-muted-color)]"
+        >
+          <h3 class="text-sm font-semibold text-gray-800">Settings</h3>
           <button
-            class="text-gray-600 hover:text-gray-800 hover:bg-gray-100 active:bg-gray-200 rounded-md p-1 transition-colors cursor-pointer inline-flex items-center justify-center h-8 w-8"
+            class="text-[var(--text-muted)] hover:text-[var(--primary-color)] hover:bg-[var(--primary-light-color)] active:bg-[var(--border-color)]/40 rounded-md p-1 transition-colors cursor-pointer inline-flex items-center justify-center h-8 w-8"
             aria-label="Close"
             @click="handleClose"
           >
             <div class="i-carbon:close text-lg"></div>
           </button>
         </div>
-        <div class="p-4 text-sm text-gray-700">
+        <div class="p-4 text-sm text-[var(--title-color)] bg-[var(--primary-light-color)]">
           <div class="space-y-5">
         <!-- orientation: Element Plus Radio Group -->
         <div class="flex items-center justify-between">
-          <label class="text-gray-700 font-medium select-none">orientation</label>
+          <label class="text-[var(--title-color)] font-medium select-none">orientation</label>
           <el-radio-group
             :model-value="currentSlide?.orientation ?? 'free'"
             size="default"
@@ -136,8 +140,8 @@ const handleClose = () => emit('close')
         <!-- iterations: Element Plus Slider -->
         <div class="slider-demo-block">
           <div class="flex items-center justify-between mb-2">
-            <span class="demonstration text-gray-700 font-medium">iterations</span>
-            <span class="text-gray-500">{{ currentSlide?.iterations ?? 200 }}</span>
+            <span class="demonstration text-[var(--title-color)] font-medium">iterations</span>
+            <span class="text-[var(--primary-color)] font-medium tabular-nums">{{ currentSlide?.iterations ?? 200 }}</span>
           </div>
           <el-slider
             :model-value="currentSlide?.iterations ?? 200"
@@ -150,7 +154,7 @@ const handleClose = () => emit('close')
 
         <!-- rotation: Element Plus Switch -->
         <div class="flex items-center justify-between">
-          <label class="text-gray-700 font-medium select-none">rotation</label>
+          <label class="text-[var(--title-color)] font-medium select-none">rotation</label>
           <el-switch
             :model-value="currentSlide?.rotation ?? true"
             size="small"
@@ -160,7 +164,7 @@ const handleClose = () => emit('close')
 
         <!-- hole: Element Plus Switch -->
         <div class="flex items-center justify-between">
-          <label class="text-gray-700 font-medium select-none">hole</label>
+          <label class="text-[var(--title-color)] font-medium select-none">hole</label>
           <el-switch
             :model-value="currentSlide?.hole ?? false"
             size="small"
@@ -172,8 +176,8 @@ const handleClose = () => emit('close')
         <!-- margin: Element Plus Slider -->
         <div class="slider-demo-block">
           <div class="flex items-center justify-between mb-2">
-            <span class="demonstration text-gray-700 font-medium">margin</span>
-            <span class="text-gray-500">{{ currentSlide?.margin ?? 0 }}</span>
+            <span class="demonstration text-[var(--title-color)] font-medium">margin</span>
+            <span class="text-[var(--primary-color)] font-medium tabular-nums">{{ currentSlide?.margin ?? 0 }}</span>
           </div>
           <el-slider
             :model-value="currentSlide?.margin ?? 0"
@@ -186,7 +190,7 @@ const handleClose = () => emit('close')
 
         <!-- emitter_type: Element Plus Radio Group -->
         <div class="flex items-center justify-between">
-          <label class="text-gray-700 font-medium select-none">emitter_type</label>
+          <label class="text-[var(--title-color)] font-medium select-none">emitter_type</label>
           <el-radio-group
             :model-value="currentSlide?.emitter_type ?? ''"
             size="default"
@@ -205,6 +209,10 @@ const handleClose = () => emit('close')
 </template>
 
 <style scoped>
+/* 与全局主题色（main.css --primary-color）一致，作用于本面板内 Element Plus 控件 */
+.settings-panel {
+  --el-color-primary: var(--primary-color);
+}
 </style>
 
 
