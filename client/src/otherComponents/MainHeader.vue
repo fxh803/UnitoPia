@@ -1,6 +1,6 @@
 <template>
   <header
-    class="w-full h-16 flex items-center justify-between px-10 py-4 shadow-sm bg-white/95 backdrop-blur dark:bg-gray-900/95"
+    class="sticky top-0 z-50 w-full h-16 flex items-center justify-between px-10 py-4 shadow-sm bg-white/95 backdrop-blur dark:bg-gray-900/95"
   >
     <div class="flex items-center space-x-2">
       <span class="text-2xl font-bold tracking-wide text-[var(--title-color)]">UnitoPia</span>
@@ -19,19 +19,31 @@
       >
         Gallery
       </button>
-      <button class="hover:text-[var(--primary-color)] transition-colors cursor-pointer">
+      <button
+        class="hover:text-[var(--primary-color)] transition-colors cursor-pointer"
+        @click="goToGetStarted"
+      >
         Get Started
       </button>
       <button class="hover:text-[var(--primary-color)] transition-colors cursor-pointer" @click="goToDataset">
         Datasets
       </button>
-      <button class="hover:text-[var(--primary-color)] transition-colors cursor-pointer">
+      <button
+        class="hover:text-[var(--primary-color)] transition-colors cursor-pointer"
+        @click="goToUserStudy"
+      >
         User Study
       </button>
-      <button class="hover:text-[var(--primary-color)] transition-colors cursor-pointer">
+      <button
+        class="hover:text-[var(--primary-color)] transition-colors cursor-pointer"
+        @click="goToPaper"
+      >
         Paper
       </button>
-      <button class="hover:text-[var(--primary-color)] transition-colors cursor-pointer">
+      <button
+        class="hover:text-[var(--primary-color)] transition-colors cursor-pointer"
+        @click="goToSourceCode"
+      >
         Source Code
       </button>
     </nav>
@@ -61,6 +73,22 @@ const goToGallery = () => {
 
 const goToDataset = () => {
   router.push('/dataset')
+}
+
+const goToUserStudy = () => {
+  router.push('/userstudy')
+}
+
+const goToGetStarted = () => {
+  router.push('/getStarted')
+}
+
+const goToPaper = () => {
+  router.push('/paper')
+}
+
+const goToSourceCode = () => {
+  router.push('/sourceCode')
 }
 
 const goEditorFresh = () => {

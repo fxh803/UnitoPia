@@ -23,6 +23,10 @@ declare module 'vue-router/auto-routes' {
     '/dataset': RouteRecordInfo<'/dataset', '/dataset', Record<never, never>, Record<never, never>>,
     '/editor': RouteRecordInfo<'/editor', '/editor', Record<never, never>, Record<never, never>>,
     '/gallery': RouteRecordInfo<'/gallery', '/gallery', Record<never, never>, Record<never, never>>,
+    '/getStarted': RouteRecordInfo<'/getStarted', '/getStarted', Record<never, never>, Record<never, never>>,
     '/hi/[name]': RouteRecordInfo<'/hi/[name]', '/hi/:name', { name: ParamValue<true> }, { name: ParamValue<false> }>,
+    '/paper': RouteRecordInfo<'/paper', '/paper', Record<never, never>, Record<never, never>>,
+    '/sourceCode': RouteRecordInfo<'/sourceCode', '/sourceCode', Record<never, never>, Record<never, never>>,
+    '/userstudy': RouteRecordInfo<'/userstudy', '/userstudy', Record<never, never>, Record<never, never>>,
   }
 }
