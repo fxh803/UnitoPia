@@ -7,12 +7,10 @@
 
     <!-- Hero 区域：Unitopia 上下布局 -->
     <section class="relative w-full flex-1 flex flex-col">
-      <!-- 上半部分：Unitopia 背景（请将宣传图放到 src/assets 下并更新路径） -->
+      <!-- 上半部分：Unitopia 背景 -->
       <div
-        class="relative h-3/5 w-full bg-cover bg-center"
-        style="background-image:
-          linear-gradient(to bottom, rgba(251, 191, 36, 0.8), rgba(246, 103, 108, 0.9)),
-          url('/piccl-hero-placeholder.jpg');"
+        class="relative h-3/5 w-full"
+        style="background: linear-gradient(to bottom, rgba(251, 191, 36, 0.8), rgba(246, 103, 108, 0.9));"
       >
         <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
           <h1 class="text-4xl md:text-5xl font-bold tracking-wide text-white mb-4">
