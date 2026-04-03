@@ -13,6 +13,9 @@ import type { ProgressItem } from '~/stores/animation'
 import { useTutorialStore } from '~/stores/tutorial'
 import { storeToRefs } from 'pinia'
 import { ref, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 const animationStore = useAnimationStore()
 const collageSeriesStore = useCollageSeriesStore()
@@ -149,42 +152,43 @@ const handleHelp = () => {
   tutorialStore.openTutorial()
 }
 
-// 仅在本地开发环境（localhost）下显示某些临时工具按钮
-const isLocalhost = typeof window !== 'undefined'
-  && ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
+// 非本机时：URL 带 ?passwd= 与下方常量一致即可显示开发工具（仅防误点，不作安全依赖）
+const DEV_HEADER_PASSWD = 'unitopia-dev-7k2m9pqx'
 
-// 临时导出：将 collage overviews 序列化到剪贴板并输出到控制台，方便复制到示例 TS
-const handleExportOverviewsJson = () => {
-  const data = JSON.stringify(collageSeriesStore.overviews, null, 2)
-  try {
-    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(data)
-    }
-  } catch {
-    // 忽略剪贴板错误，仅保留控制台输出
-  }
-  // eslint-disable-next-line no-console
-  console.log('collage overviews JSON:', data)
-  if (typeof window !== 'undefined') {
-    window.alert('collage overviews JSON 已输出到控制台，并尝试复制到剪贴板')
-  }
+const showDevHeaderTools = computed(() => {
+  if (typeof window === 'undefined') return false
+  if (['localhost', '127.0.0.1', '::1'].includes(window.location.hostname))
+    return true
+  const q = route.query.passwd
+  const given = Array.isArray(q) ? q[0] : q
+  return typeof given === 'string' && given === DEV_HEADER_PASSWD
+})
+
+// 临时导出：下载 JSON 到本地（与 handleExport PNG 方式一致）
+const downloadJsonFile = (filename: string, data: unknown) => {
+  if (typeof window === 'undefined') return
+  const json = JSON.stringify(data, null, 2)
+  const blob = new Blob([json], { type: 'application/json;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
 }
 
-// 临时导出：导出 markInstanceStore 中的所有 mark 实例，方便复制为示例快照
-const handleExportMarkInstancesJson = () => {
-  const data = JSON.stringify(markInstanceStore.markInstances ?? [], null, 2)
-  try {
-    if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(data)
-    }
-  } catch {
-    // 忽略剪贴板错误，仅保留控制台输出
-  }
-  // eslint-disable-next-line no-console
-  console.log('markInstances JSON:', data)
-  if (typeof window !== 'undefined') {
-    window.alert('markInstances JSON 已输出到控制台，并尝试复制到剪贴板')
-  }
+const DEV_EXPORT_DOWNLOAD_GAP_MS = 150
+
+// 一键导出：overviews、mark 实例
+const handleExportDevJsonSnapshots = () => {
+  const ts = Math.floor(Date.now()/1000)
+  const payloads: Array<{ filename: string; data: unknown }> = [
+    { filename: `collage-overviews-${ts}.json`, data: collageSeriesStore.overviews },
+    { filename: `mark-instances-${ts}.json`, data: markInstanceStore.markInstances ?? [] },
+  ]
+  payloads.forEach((p, i) => {
+    setTimeout(() => downloadJsonFile(p.filename, p.data), i * DEV_EXPORT_DOWNLOAD_GAP_MS)
+  })
 }
 </script>
 
@@ -274,24 +278,14 @@ const handleExportMarkInstancesJson = () => {
           <span class="topbar-button-label">{{ collaging ?  'Running...' : result_data.length>0 ? 'reRun' : 'Run' }}</span>
         </button>
 
-        <!-- 导出 overviews JSON（临时工具，仅 localhost 显示） -->
+        <!-- 一键导出 JSON：overviews、mark 实例 -->
         <button
-          v-if="isLocalhost"
+          v-if="showDevHeaderTools"
           class="flex items-center gap-1 px-3 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--text-muted)] text-xs transition-colors duration-200 hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
-          @click="handleExportOverviewsJson"
+          @click="handleExportDevJsonSnapshots"
         >
           <span class="i-carbon:document-export text-sm"></span>
-          <span class="topbar-button-label text-xs">导出 overviews</span>
-        </button>
-
-        <!-- 导出 markInstances JSON（临时工具，仅 localhost 显示） -->
-        <button
-          v-if="isLocalhost"
-          class="flex items-center gap-1 px-3 py-1 rounded-md bg-[var(--primary-light-color)] text-[var(--text-muted)] text-xs transition-colors duration-200 hover:bg-[var(--primary-light-color)] border border-[var(--border-color)] cursor-pointer"
-          @click="handleExportMarkInstancesJson"
-        >
-          <span class="i-carbon:data-view text-sm"></span>
-          <span class="topbar-button-label text-xs">导出 marks</span>
+          <span class="topbar-button-label text-xs">export snapshots</span>
         </button>
 
         <!-- Help 按钮 - 靠右 -->
