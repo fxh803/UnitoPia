@@ -36,13 +36,24 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         const obj = currentPathObj.value
         return !!(obj && obj.type === 'activeselection')
     })
+
+    /** 当前选中是否允许 marker 缩放：单体 marker，或多选且子项全部为 marker */
+    const showMarkerScale = computed(() => {
+        const obj = currentPathObj.value
+        if (!obj) return false
+        if ((obj as any).type === 'activeselection') {
+            const objs = (obj as ActiveSelection).getObjects?.() ?? []
+            return objs.length > 0 && objs.every((o: any) => o?.get?.('dataType') === 'marker')
+        }
+        return obj.get('dataType') === 'marker'
+    })
+
     function setCurrentPathObj() {
         const canvasInstance = canvasRef.value?.()
         const obj = canvasInstance?.getActiveObject()
         currentPathObj.value = obj
     }
     function updateActionBtnVisble() {
-        const canvasInstance = canvasRef.value?.()
         showDeleteBtn.value = true
         showClosePathBtn.value = true
         showGroupBtn.value = true
@@ -72,10 +83,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
                 showDeleteBtn.value = false
             }
         }
-        const activeObject = canvasInstance?.getActiveObject()
-        // marker 单体：dataType=marker
-        // marker 多选：fabric ActiveSelection（type=activeselection），此时 dataType 通常挂在子对象上
-        if(activeObject && (activeObject.get('dataType') === 'marker' || (activeObject as any).type === 'activeselection')) {
+        if (currentPathObj.value && showMarkerScale.value) {
             showClosePathBtn.value = false
             showGroupBtn.value = false
             showScaleUpBtn.value = true
@@ -249,6 +257,7 @@ export const useObjectActionsStore = defineStore('objectActions', () => {
         isGroupMode,
         isMultipleSelection,
         isPathClosed,
+        showMarkerScale,
         updateActionBtnVisble,
         updateActionBtnPosition,
         deleteActiveObject,
