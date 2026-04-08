@@ -338,6 +338,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         try {
             // 加载合并后的数据到临时画布
             await tempCanvas.loadFromJSON(mergedJsonData)
+            // 与主画布一致：JSON 里若带旧 backgroundColor，导出上层时仍应为透明底
+            tempCanvas.backgroundColor = 'rgba(0,0,0,0)'
             tempCanvas.renderAll()
 
             // 先导出上层（无背景）图，再与背景进行分层合成，避免 destination-out 把背景也抠除
@@ -680,6 +682,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
                 try {
                     await tempCanvas.loadFromJSON(slideData)
+                    // 与主画布一致：slide JSON 可能含旧版不透明背景，避免缩略图合成盖住静态背景
+                    tempCanvas.backgroundColor = 'rgba(0,0,0,0)'
                     tempCanvas.renderAll()
 
                     const upperLayerPreview = tempCanvas.toDataURL({
