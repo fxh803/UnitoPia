@@ -464,7 +464,7 @@ onBeforeUnmount(() => {
     <div
       ref="canvasAreaRef"
       data-tutorial="canvas-editor"
-      class="border-r border-[var(--border-color)] bg-[#fffef8] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden"
+      class="border-r border-[var(--border-color)] bg-[#fffef8] flex flex-1 flex-row min-h-0 min-w-0 items-center justify-center relative overflow-hidden canvas-with-grid"
       @dragover="(e) => handleDragOver(e, canvasEl)"
       @dragleave="(e) => clearContainerHighlight(e, canvasAreaRef)"
       @drop="(e) => { handleLibraryContainerDrop(e); if (canvasEl) handleDrop(e, canvasEl) }">
