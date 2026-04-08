@@ -8,6 +8,7 @@ import { useCanvasStore } from '~/stores/canvas'
 import { useContainerAnimationStore } from '~/stores/containerAnimation'
 import { useHoverInfoPanelStore } from '~/stores/hoverInfoPanel'
 import { useMarkInstanceStore } from '~/stores/markInstance'
+import { useBackgroundStore } from '~/stores/background'
 // 定义数据类型接口
 interface ProcessedData {
   markers: Array<{
@@ -577,43 +578,63 @@ export async function sendUploadContainerToServer(stringBase64: string) {
   return ''
 }
 
-// 处理背景对象，转换为base64（在临时canvas上操作，不影响原canvas）
-function processBackground(tempCanvas: Canvas) {
-  const canvasObjects = tempCanvas.getObjects()
-  const backgroundObjs = canvasObjects.filter(obj => obj.get('dataType') === 'background')
+// 处理背景层并导出为 base64（仅新版静态背景层）
+async function processBackground(tempCanvas: Canvas): Promise<{ backgroundBase64: string; backgroundBbox: { left: number; top: number; width: number; height: number } | null }> {
+  // 背景独立于 Fabric 对象，存储在 backgroundStore
+  const collageSeriesStore = useCollageSeriesStore()
+  const backgroundStore = useBackgroundStore()
+  const currentOverview = collageSeriesStore.overviews[collageSeriesStore.currentOverviewIndex]
+  if (!currentOverview) {
+    return { backgroundBase64: '', backgroundBbox: null }
+  }
+  const overviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
+  if (!overviewBackground) {
+    return { backgroundBase64: '', backgroundBbox: null }
+  }
+  const tf = backgroundStore.getCurrentOverviewBackgroundTransform(currentOverview.overviewId)
 
-  if (backgroundObjs.length === 0) {
-    return ''
+  const composeCanvas = document.createElement('canvas')
+  const width = tempCanvas.width || 400
+  const height = tempCanvas.height || 400
+  composeCanvas.width = width
+  composeCanvas.height = height
+  const ctx = composeCanvas.getContext('2d')
+  if (!ctx) {
+    return { backgroundBase64: '', backgroundBbox: null }
   }
 
-  // 保存原始背景色
-  const originalBackgroundColor = tempCanvas.backgroundColor
-
-  // 隐藏所有非 background 对象
-  for (const obj of canvasObjects) {
-    if (obj.get('dataType') !== 'background') {
-      obj.set('visible', false)
-    }
-  }
-
-  // 将背景设置为透明
-  tempCanvas.backgroundColor = 'transparent'
-
-  // 将画布转成base64
-  const backgroundBase64 = tempCanvas.toDataURL({
-    format: 'png',
-    multiplier: 1
+  const bgImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () => reject(new Error('背景图片加载失败'))
+    img.src = overviewBackground
   })
 
-  // 恢复原始背景色和对象可见性
-  tempCanvas.backgroundColor = originalBackgroundColor
-  for (const obj of canvasObjects) {
-    if (obj.get('dataType') !== 'background') {
-      obj.set('visible', true)
-    }
-  }
+  const originX = tf?.originX ?? 'center'
+  const originY = tf?.originY ?? 'center'
+  const scaleX = tf?.scaleX ?? 1
+  const scaleY = tf?.scaleY ?? 1
+  const drawW = bgImg.width * scaleX
+  const drawH = bgImg.height * scaleY
+  let left = tf?.left ?? width / 2
+  let top = tf?.top ?? height / 2
+  if (originX === 'center') left -= drawW / 2
+  else if (originX === 'right') left -= drawW
+  if (originY === 'center') top -= drawH / 2
+  else if (originY === 'bottom') top -= drawH
 
-  return backgroundBase64
+  ctx.clearRect(0, 0, width, height)
+  ctx.drawImage(bgImg, left, top, drawW, drawH)
+
+  return {
+    backgroundBase64: composeCanvas.toDataURL('image/png', 1),
+    backgroundBbox: {
+      left,
+      top,
+      width: drawW,
+      height: drawH,
+    },
+  }
 }
 
 // 发送背景到segmentAll接口
@@ -658,16 +679,12 @@ export async function sendBackgroundToSegmentAll(canvas: Canvas | null): Promise
     }
 
     // 在临时canvas上处理背景，转换为base64
-    const backgroundBase64 = processBackground(tempCanvas)
+    const { backgroundBase64, backgroundBbox } = await processBackground(tempCanvas)
 
     if (!backgroundBase64) {
       console.error('未找到背景对象或处理失败')
       return null
     }
-
-    // 获取背景对象的bbox
-    const backgroundObj = canvas.getObjects().find(obj => obj.get('dataType') === 'background')
-    const backgroundBbox = backgroundObj ? backgroundObj.getBoundingRect() : null
     // 获取containerColor
     const canvasStore = useCanvasStore()
     const { containerColor } = storeToRefs(canvasStore)
@@ -748,7 +765,7 @@ export async function sendPointToSegmentPoint(canvas: Canvas | null, point: { x:
     }
 
     // 在临时canvas上处理背景，转换为base64
-    const backgroundBase64 = processBackground(tempCanvas)
+    const { backgroundBase64 } = await processBackground(tempCanvas)
 
     if (!backgroundBase64) {
       console.error('未找到背景对象或处理失败')

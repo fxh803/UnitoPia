@@ -68,6 +68,7 @@ const { addForcePointListener, removeForcePointListener, startBlinkAnimation, st
 const bezierDrawingStore = useBezierDrawingStore()
 
 const canvasEl = ref<HTMLCanvasElement | null>(null)
+const bgCanvasEl = ref<HTMLCanvasElement | null>(null)
 const canvasAreaRef = ref<HTMLDivElement | null>(null)
 // 画布宽高分开控制，不再强制 1:1
 const canvasWidth = ref(400)
@@ -84,6 +85,18 @@ const hasBackground = computed(() => {
   const currentOverview = overviews.value[currentOverviewIndex.value]
   if (!currentOverview) return false
   return backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId) !== null
+})
+const currentOverviewBackground = computed(() => {
+  if (overviews.value.length === 0) return null
+  const currentOverview = overviews.value[currentOverviewIndex.value]
+  if (!currentOverview) return null
+  return backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
+})
+const currentOverviewBackgroundTransform = computed(() => {
+  if (overviews.value.length === 0) return null
+  const currentOverview = overviews.value[currentOverviewIndex.value]
+  if (!currentOverview) return null
+  return backgroundStore.getCurrentOverviewBackgroundTransform(currentOverview.overviewId)
 })
 
 
@@ -102,6 +115,48 @@ function resizeCanvasForDPR() {
   canvas.setHeight(height)
   // canvas.setZoom(dpr)
   canvas.renderAll()
+}
+
+function renderBackgroundLayer() {
+  if (!bgCanvasEl.value) return
+  const bgCanvas = bgCanvasEl.value
+  const dpr = getDpr()
+  const width = canvas?.getWidth() || canvasWidth.value
+  const height = canvas?.getHeight() || canvasHeight.value
+  bgCanvas.width = width * dpr
+  bgCanvas.height = height * dpr
+  bgCanvas.style.width = `${width}px`
+  bgCanvas.style.height = `${height}px`
+  const ctx = bgCanvas.getContext('2d')
+  if (!ctx) return
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height)
+  ctx.scale(dpr, dpr)
+
+  if (overviews.value.length === 0) return
+  const currentOverview = overviews.value[currentOverviewIndex.value]
+  if (!currentOverview) return
+  const bg = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
+  if (!bg) return
+  const tf = backgroundStore.getCurrentOverviewBackgroundTransform(currentOverview.overviewId)
+  const image = new Image()
+  image.onload = () => {
+    const originX = tf?.originX ?? 'center'
+    const originY = tf?.originY ?? 'center'
+    const scaleX = tf?.scaleX ?? 1
+    const scaleY = tf?.scaleY ?? 1
+    const drawW = image.width * scaleX
+    const drawH = image.height * scaleY
+    let left = (tf?.left ?? width / 2)
+    let top = (tf?.top ?? height / 2)
+    if (originX === 'center') left -= drawW / 2
+    else if (originX === 'right') left -= drawW
+    if (originY === 'center') top -= drawH / 2
+    else if (originY === 'bottom') top -= drawH
+    ctx.clearRect(0, 0, width, height)
+    ctx.drawImage(image, left, top, drawW, drawH)
+  }
+  image.src = bg
 }
 
 function handleLibraryContainerDrop(e: DragEvent) {
@@ -173,6 +228,7 @@ function updateCanvasSize() {
     canvasHeight.value = Math.max(height, 200)
     if (canvas) {
       resizeCanvasForDPR()
+      renderBackgroundLayer()
     }
   }
 }
@@ -191,6 +247,16 @@ watch(stopListen, (newVal) => {
     removeCanvasEventListeners()
   }
 })
+
+watch(currentOverviewIndex, () => {
+  renderBackgroundLayer()
+})
+watch(currentOverviewBackground, () => {
+  renderBackgroundLayer()
+})
+watch(currentOverviewBackgroundTransform, () => {
+  renderBackgroundLayer()
+}, { deep: true })
 
 // 获取每个工具栏的第一个按钮模式
 const getFirstButtonMode = (mode: 'container' | 'emitter' | 'force' | null): 'draw' | 'bezier' | 'force' | null => {
@@ -400,7 +466,8 @@ onMounted(async () => {
 
   if (canvasEl.value) {
     canvas = new Canvas(canvasEl.value, {
-      backgroundColor: '#fffef8',
+      // 顶层 Fabric 保持透明，底层静态 canvas 负责背景
+      backgroundColor: 'rgba(0,0,0,0)',
       isDrawingMode: false,
       selection: false,
       width: canvasWidth.value,
@@ -421,7 +488,6 @@ onMounted(async () => {
     selectedModeStore.setCanvas(() => canvas)
     bezierDrawingStore.setCanvas(() => canvas)
     forceDrawingStore.setCanvas(() => canvas)
-    backgroundStore.setCanvas(() => canvas)
     canvasStore.setCanvas(() => canvas)
     // dataScaleStore.setCanvas(() => canvas)
 
@@ -490,8 +556,9 @@ onBeforeUnmount(() => {
       
       <!-- canvas-wrapper：包裹 Fabric 画布和 overlay，铺满可用空间 -->
       <div ref="canvasWrapperRef" class="canvas-wrapper w-full h-full" style="position: relative;">
+        <canvas ref="bgCanvasEl" class="absolute inset-0 block w-full h-full pointer-events-none" />
         <!-- 画布本体 -->
-        <canvas ref="canvasEl" class="fabric-canvas block w-full h-full" />
+        <canvas ref="canvasEl" class="fabric-canvas absolute inset-0 block w-full h-full" />
         <paperCanvas v-if="collaging || result_data.length > 0" :key="paperCanvasKey" />
         <!-- 对象操作按钮 -->
         <ObjectActionButtons />

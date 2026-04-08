@@ -328,37 +328,20 @@ export const useCanvasStore = defineStore('canvas', () => {
     const objects = canvasInstance.getObjects()
 
     // 按 dataType 分组对象
-    const backgroundObjects: fabric.FabricObject[] = []
     const containerObjects: fabric.FabricObject[] = []
-    const otherObjects: fabric.FabricObject[] = []
 
     objects.forEach(obj => {
       const dataType = obj.get('dataType')
-      if (dataType === 'background') {
-        backgroundObjects.push(obj)
-      } else if (dataType === 'container') {
+      if (dataType === 'container') {
         containerObjects.push(obj)
-      } else {
-        otherObjects.push(obj)
       }
     })
-    // 将 background 对象移动到最底层
-    backgroundObjects.forEach(obj => {
-      canvasInstance.sendObjectToBack(obj)
-    })
 
-    // 将 container 对象移动到 background 之上，其他对象之下
+    // 将 container 对象移动到底层，其他对象保持在其之上
     // 从最后一个开始遍历，保持相对顺序
     for (let i = containerObjects.length - 1; i >= 0; i--) {
       const obj = containerObjects[i]
-      // 先移动到最底层
       canvasInstance.sendObjectToBack(obj)
-      // 然后根据 background 对象的数量，将 container 对象向前移动相应次数
-      if (backgroundObjects.length > 0) {
-        for (let j = 0; j < backgroundObjects.length; j++) {
-          canvasInstance.bringObjectForward(obj)
-        }
-      }
     }
 
     // 其他对象保持相对层级在顶层

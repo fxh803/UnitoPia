@@ -99,11 +99,13 @@ function adaptOverviewSnapshotToCurrentCanvas(snapshot: any) {
         if (validSourceSize && (sourceWidth !== targetWidth || sourceHeight !== targetHeight)) {
           const sx = targetWidth / sourceWidth
           const sy = targetHeight / sourceHeight
-          const uniformScale = Math.max(sx, sy)
+          const uniformScale = Math.min(sx, sy)
+          const offsetX = (targetWidth - sourceWidth * uniformScale) / 2
+          const offsetY = (targetHeight - sourceHeight * uniformScale) / 2
           objects.forEach((obj: any) => {
             if (!obj || typeof obj !== 'object') return
-            if (typeof obj.left === 'number') obj.left *= uniformScale
-            if (typeof obj.top === 'number') obj.top *= uniformScale
+            if (typeof obj.left === 'number') obj.left = obj.left * uniformScale + offsetX
+            if (typeof obj.top === 'number') obj.top = obj.top * uniformScale + offsetY
             if (typeof obj.scaleX === 'number') obj.scaleX *= uniformScale
             if (typeof obj.scaleY === 'number') obj.scaleY *= uniformScale
           })
@@ -120,6 +122,115 @@ function adaptOverviewSnapshotToCurrentCanvas(snapshot: any) {
   })
 
   return snapshot
+}
+
+// 临时迁移工具：清理旧 snapshot 中仍以 Fabric 对象形式存储的 background
+function cleanupLegacyBackgroundFromSnapshot(snapshot: any) {
+  const overviews = Array.isArray(snapshot) ? snapshot : [snapshot]
+  overviews.forEach((overview: any) => {
+    const slides = Array.isArray(overview?.collageSeries) ? overview.collageSeries : []
+    slides.forEach((slide: any) => {
+      if (!slide) return
+      try {
+        const jsonObj = typeof slide.json === 'string' ? JSON.parse(slide.json) : slide.json
+        const objects = Array.isArray(jsonObj?.objects) ? jsonObj.objects : []
+        const dataTypeArray = Array.isArray(slide.dataTypeArray) ? slide.dataTypeArray : []
+        if (objects.length === 0) return
+
+        const keepIndices: number[] = []
+        objects.forEach((obj: any, index: number) => {
+          const byArray = dataTypeArray[index] === 'background'
+          const byObject = obj?.dataType === 'background'
+          if (!byArray && !byObject) keepIndices.push(index)
+        })
+
+        // 没有旧 background 对象，不做任何改动
+        if (keepIndices.length === objects.length) return
+
+        jsonObj.objects = keepIndices.map(i => objects[i])
+        slide.dataTypeArray = keepIndices.map(i => slide.dataTypeArray?.[i])
+        slide.markerIdArray = keepIndices.map(i => slide.markerIdArray?.[i])
+        slide.forceTypeArray = keepIndices.map(i => slide.forceTypeArray?.[i])
+        slide.dataArray = keepIndices.map(i => slide.dataArray?.[i])
+        if (Array.isArray(slide.isErasePathArray))
+          slide.isErasePathArray = keepIndices.map(i => slide.isErasePathArray?.[i])
+        if (Array.isArray(slide.origOpacityArray))
+          slide.origOpacityArray = keepIndices.map(i => slide.origOpacityArray?.[i])
+
+        slide.json = JSON.stringify(jsonObj)
+      } catch (error) {
+        console.error('cleanupLegacyBackgroundFromSnapshot error', error)
+      }
+    })
+  })
+
+  return snapshot
+}
+
+// 临时迁移工具：将清理后的 snapshot 下载到本地，便于后续替换为新文件
+function downloadCleanedSnapshotToLocal(itemTitle: string) {
+  const safeTitle = (itemTitle || 'example').replace(/[^\w\-]+/g, '_')
+  const filename = `${safeTitle}-cleaned-collageSeriesSnapshot.json`
+  const payload = JSON.parse(JSON.stringify(collageSeriesStore.overviews))
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+async function getFitBackgroundTransform(
+  imageUrl: string,
+  canvasWidth: number,
+  canvasHeight: number,
+  sourceCanvasWidth?: number,
+  sourceCanvasHeight?: number,
+) {
+  const img = new Image()
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve()
+    img.onerror = () => reject(new Error('背景图片加载失败'))
+    img.src = imageUrl
+  })
+
+  const hasValidSourceCanvas =
+    Number.isFinite(sourceCanvasWidth) &&
+    Number.isFinite(sourceCanvasHeight) &&
+    (sourceCanvasWidth as number) > 0 &&
+    (sourceCanvasHeight as number) > 0
+
+  if (hasValidSourceCanvas) {
+    const sourceW = sourceCanvasWidth as number
+    const sourceH = sourceCanvasHeight as number
+    const sourceFitScale = Math.min(sourceW / img.width, sourceH / img.height)
+    const uniformScale = Math.min(canvasWidth / sourceW, canvasHeight / sourceH)
+    const offsetX = (canvasWidth - sourceW * uniformScale) / 2
+    const offsetY = (canvasHeight - sourceH * uniformScale) / 2
+
+    return {
+      left: sourceW / 2 * uniformScale + offsetX,
+      top: sourceH / 2 * uniformScale + offsetY,
+      scaleX: sourceFitScale * uniformScale,
+      scaleY: sourceFitScale * uniformScale,
+      originX: 'center' as const,
+      originY: 'center' as const,
+    }
+  }
+
+  const scaleX = canvasWidth / img.width
+  const scaleY = canvasHeight / img.height
+  const scale = Math.min(scaleX, scaleY)
+
+  return {
+    left: canvasWidth / 2,
+    top: canvasHeight / 2,
+    scaleX: scale,
+    scaleY: scale,
+    originX: 'center' as const,
+    originY: 'center' as const,
+  }
 }
 
 async function loadExampleToStores(item: ExampleItem) {
@@ -215,54 +326,39 @@ async function loadExampleToStores(item: ExampleItem) {
       const overviewRes = await fetch(item.collageSeriesSnapshotUrl)
       if (overviewRes.ok) {
         const overviewSnapshot = await overviewRes.json()
+        // const cleanedOverviewSnapshot = cleanupLegacyBackgroundFromSnapshot(overviewSnapshot)
         const adaptedOverviewSnapshot = adaptOverviewSnapshotToCurrentCanvas(overviewSnapshot)
         collageSeriesStore.loadOverviewSnapshot(adaptedOverviewSnapshot as any)
+        // downloadCleanedSnapshotToLocal(item.title)
 
         const targetOverview = collageSeriesStore.overviews[collageSeriesStore.currentOverviewIndex] ||
           collageSeriesStore.overviews[0]
+        const sourceOverview = Array.isArray(overviewSnapshot)
+          ? overviewSnapshot[0]
+          : overviewSnapshot
         if (targetOverview && item.backgroundUrl) {
           backgroundStore.setCurrentOverviewBackground(targetOverview.overviewId, item.backgroundUrl)
+          try {
+            const fabricCanvas = collageSeriesStore.canvasRef?.()
+            const canvasWidth = fabricCanvas?.width || targetOverview.width || 400
+            const canvasHeight = fabricCanvas?.height || targetOverview.height || 400
+            const tf = await getFitBackgroundTransform(
+              item.backgroundUrl,
+              canvasWidth,
+              canvasHeight,
+              Number(sourceOverview?.width),
+              Number(sourceOverview?.height),
+            )
+            backgroundStore.setCurrentOverviewBackgroundTransform(targetOverview.overviewId, tf)
+          } catch {
+            // 忽略示例背景 transform 同步失败（不影响示例加载）
+          }
         }
 
         // 恢复第一个 slide 到画布，并让 Run 按钮变绿
         await collageSeriesStore.handleCollageSeriesSelect(0)
         canvasStore.hasMarker = true
         canvasStore.hasContainer = true
-
-        // 示例背景：严格在 handleCollageSeriesSelect 完成后再记录背景几何信息
-        if (targetOverview && item.backgroundUrl) {
-          try {
-            const fabricCanvas = collageSeriesStore.canvasRef?.()
-            const bgObj =
-              fabricCanvas
-                ?.getObjects?.()
-                ?.find((obj: any) => obj && obj.get && obj.get('dataType') === 'background') ||
-              (fabricCanvas as any)?.backgroundImage ||
-              null
-
-            if (bgObj) {
-              const left = typeof bgObj.left === 'number' ? bgObj.left : null
-              const top = typeof bgObj.top === 'number' ? bgObj.top : null
-              const scaleX = typeof bgObj.scaleX === 'number' ? bgObj.scaleX : null
-              const scaleY = typeof bgObj.scaleY === 'number' ? bgObj.scaleY : null
-              const originX = (bgObj.originX as any) ?? 'center'
-              const originY = (bgObj.originY as any) ?? 'center'
-
-              if (left != null && top != null && scaleX != null && scaleY != null) {
-                backgroundStore.setCurrentOverviewBackgroundTransform(targetOverview.overviewId, {
-                  left,
-                  top,
-                  scaleX,
-                  scaleY,
-                  originX,
-                  originY,
-                } as any)
-              }
-            }
-          } catch {
-            // 忽略 transform 同步失败（不影响示例加载）
-          }
-        }
 
         // 在最后一步启动 emitter 虚线与 force 闪烁动画：
         // 这两个动画依赖 canvas 对象已通过 loadFromJSON 恢复完成。

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { Canvas } from 'fabric'
 import { useBackgroundStore } from '~/stores/background'
-import { FabricImage } from 'fabric'
+import type { BackgroundTransform } from '~/stores/background'
 
 export const useCollageSeriesStore = defineStore('collageSeries', () => {
     // 总览对象类型
@@ -77,6 +77,80 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         return {
             width: canvasInstance?.width || 400,
             height: canvasInstance?.height || 400,
+        }
+    }
+
+    async function composeUpperWithBackground(
+        upperLayerPreview: string,
+        overviewBackground: string,
+        tf: BackgroundTransform | null,
+        baseWidth: number,
+        baseHeight: number,
+        multiplier: number,
+    ): Promise<string> {
+        const composeCanvas = document.createElement('canvas')
+        composeCanvas.width = baseWidth * multiplier
+        composeCanvas.height = baseHeight * multiplier
+        const ctx = composeCanvas.getContext('2d')
+        if (!ctx) return upperLayerPreview
+
+        const loadImage = (src: string) => new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image()
+            img.onload = () => resolve(img)
+            img.onerror = () => reject(new Error(`加载图片失败: ${src.slice(0, 64)}`))
+            img.src = src
+        })
+
+        const [bgImg, upperImg] = await Promise.all([
+            loadImage(overviewBackground),
+            loadImage(upperLayerPreview),
+        ])
+
+        ctx.clearRect(0, 0, composeCanvas.width, composeCanvas.height)
+        ctx.setTransform(multiplier, 0, 0, multiplier, 0, 0)
+
+        const originX = tf?.originX ?? 'center'
+        const originY = tf?.originY ?? 'center'
+        const scaleX = tf?.scaleX ?? 1
+        const scaleY = tf?.scaleY ?? 1
+        const drawW = bgImg.width * scaleX
+        const drawH = bgImg.height * scaleY
+        let left = (tf?.left ?? baseWidth / 2)
+        let top = (tf?.top ?? baseHeight / 2)
+        if (originX === 'center') left -= drawW / 2
+        else if (originX === 'right') left -= drawW
+        if (originY === 'center') top -= drawH / 2
+        else if (originY === 'bottom') top -= drawH
+
+        // 先画背景，再画上层（含透明区域）
+        ctx.drawImage(bgImg, left, top, drawW, drawH)
+        ctx.drawImage(upperImg, 0, 0, baseWidth, baseHeight)
+        return composeCanvas.toDataURL('image/png')
+    }
+
+    async function generateSlidePreview(
+        upperLayerPreview: string,
+        overviewId: string,
+        baseWidth: number,
+        baseHeight: number,
+        multiplier: number = 2,
+    ): Promise<string> {
+        const backgroundStore = useBackgroundStore()
+        const overviewBackground = backgroundStore.getCurrentOverviewBackground(overviewId)
+        const tf = backgroundStore.getCurrentOverviewBackgroundTransform(overviewId)
+        if (!overviewBackground) return upperLayerPreview
+
+        try {
+            return await composeUpperWithBackground(
+                upperLayerPreview,
+                overviewBackground,
+                tf,
+                baseWidth,
+                baseHeight,
+                multiplier,
+            )
+        } catch {
+            return upperLayerPreview
         }
     }
 
@@ -156,7 +230,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         })
 
         const json = JSON.stringify(canvasInstance.toJSON())
-        const preview = canvasInstance.toDataURL({
+        const upperLayerPreview = canvasInstance.toDataURL({
             format: 'png',
             multiplier: 2
         })
@@ -184,16 +258,23 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         // console.log(dataTypeArray, markerIdArray, forceTypeArray, dataArray)
 
         currentSlide.json = json
-        currentSlide.preview = preview
         currentSlide.dataTypeArray = dataTypeArray
         currentSlide.markerIdArray = markerIdArray
         currentSlide.forceTypeArray = forceTypeArray
         currentSlide.dataArray = dataArray
         currentSlide.isErasePathArray = isErasePathArray
         currentSlide.origOpacityArray = origOpacityArray
-
-        // 生成总览的预览（合并所有幻灯片）
-        generateOverviewPreview()
+        generateSlidePreview(
+            upperLayerPreview,
+            currentOverview.overviewId,
+            canvasInstance.width || 400,
+            canvasInstance.height || 400,
+            2,
+        ).then((preview) => {
+            currentSlide.preview = preview
+            // 生成总览的预览（合并所有幻灯片）
+            generateOverviewPreview()
+        })
     }
 
     // 生成总览预览
@@ -220,15 +301,10 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             try {
                 const slideData = typeof slide.json === 'string' ? JSON.parse(slide.json) : slide.json
                 if (slideData.objects && Array.isArray(slideData.objects)) {
-                    // 为每个对象添加来源信息，跳过背景对象
-                    slideData.objects.forEach((obj: any, objIndex: number) => {
-                        // 跳过背景对象 - 检查dataTypeArray而不是obj.dataType
-                        if (slide.dataTypeArray[objIndex] === 'background') return
-
+                    // 为每个对象添加来源信息
+                    slideData.objects.forEach((obj: any) => {
                         const mergedObj = {
                             ...obj,
-                            slideIndex: slideIndex,
-                            originalObjIndex: objIndex
                         }
                         mergedObjects.push(mergedObj)
                     })
@@ -237,64 +313,6 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 console.error(`解析幻灯片 ${slideIndex} 的 JSON 时出错:`, error)
             }
         })
-
-        // 如果有总览背景，添加到合并对象的最前面（最底层）
-        const backgroundStore = useBackgroundStore()
-        const overviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
-        if (overviewBackground) {
-            try {
-                // 使用fabric.js的Promise方式加载背景图片
-                const fabricImg = await FabricImage.fromURL(overviewBackground)
-
-                // 设置背景图片属性
-                fabricImg.set({
-                    selectable: false,
-                    evented: false,
-                    dataType: 'background'
-                })
-
-                // 背景必须按 overview 记录的 transform 对齐，不能重新居中 fit
-                const tf = backgroundStore.getCurrentOverviewBackgroundTransform(currentOverview.overviewId)
-                if (tf) {
-                    fabricImg.set({
-                        left: tf.left,
-                        top: tf.top,
-                        originX: tf.originX,
-                        originY: tf.originY,
-                        scaleX: tf.scaleX,
-                        scaleY: tf.scaleY,
-                    } as any)
-                } else {
-                    // 兼容旧数据：如果没有 transform，才 fallback 到居中 fit 一次
-                    fabricImg.set({
-                        left: (canvasInstance.width || 400) / 2,
-                        top: (canvasInstance.height || 400) / 2,
-                        originX: 'center',
-                        originY: 'center',
-                    } as any)
-
-                    const canvasWidth = canvasInstance.width || 400
-                    const canvasHeight = canvasInstance.height || 400
-                    const scaleX = canvasWidth / fabricImg.width
-                    const scaleY = canvasHeight / fabricImg.height
-                    const scale = Math.min(scaleX, scaleY)
-                    fabricImg.set({
-                        scaleX: scale,
-                        scaleY: scale
-                    })
-                }
-
-                // 将背景对象添加到合并对象的最前面（最底层）
-                const backgroundObj = {
-                    ...fabricImg.toObject(),
-                    slideIndex: -1, // 背景对象特殊标记
-                    originalObjIndex: -1
-                }
-                mergedObjects.unshift(backgroundObj)
-            } catch (error) {
-                console.error('加载总览背景时出错:', error)
-            }
-        }
 
         // 创建合并后的 JSON 数据
         const mergedJsonData = {
@@ -322,11 +340,29 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             await tempCanvas.loadFromJSON(mergedJsonData)
             tempCanvas.renderAll()
 
-            // 生成总览预览
-            const overviewPreview = tempCanvas.toDataURL({
+            // 先导出上层（无背景）图，再与背景进行分层合成，避免 destination-out 把背景也抠除
+            const upperLayerPreview = tempCanvas.toDataURL({
                 format: 'png',
                 multiplier: 2
             })
+            const backgroundStore = useBackgroundStore()
+            const overviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
+            const tf = backgroundStore.getCurrentOverviewBackgroundTransform(currentOverview.overviewId)
+
+            let overviewPreview = upperLayerPreview
+            if (overviewBackground) {
+                const baseWidth = canvasInstance.width || 400
+                const baseHeight = canvasInstance.height || 400
+                const multiplier = 2
+                overviewPreview = await composeUpperWithBackground(
+                    upperLayerPreview,
+                    overviewBackground,
+                    tf,
+                    baseWidth,
+                    baseHeight,
+                    multiplier,
+                )
+            }
 
             // 将预览保存到总览对象中
             currentOverview.preview = overviewPreview
@@ -363,11 +399,6 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             return
         }
 
-        // 检查当前总览是否有背景
-        const backgroundStore = useBackgroundStore()
-        const currentOverviewBackground = backgroundStore.getCurrentOverviewBackground(currentOverview.overviewId)
-        const currentOverviewBgTransform = backgroundStore.getCurrentOverviewBackgroundTransform(currentOverview.overviewId)
-
         // 清空画布
         clearCanvas()
 
@@ -380,86 +411,18 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         let dataArray: any[] = []
         let isErasePathArray: boolean[] = []
 
-        // 如果当前总览有背景，添加到JSON数据中
-        if (currentOverviewBackground) {
-            try {
-                // 解析JSON数据
-                const slideData = JSON.parse(json)
-                // 使用fabric.js的Promise方式加载图片
-                const fabricImg = await FabricImage.fromURL(currentOverviewBackground)
-
-                // 设置图片属性
-                fabricImg.set({
-                    selectable: false,
-                    evented: false,
-                    dataType: 'background'
-                })
-
-                // 强制复用当前 overview 记录的背景几何信息（位置/缩放/origin），避免 renderResult/rerun 重新居中
-                if (currentOverviewBgTransform) {
-                    fabricImg.set({
-                        left: currentOverviewBgTransform.left,
-                        top: currentOverviewBgTransform.top,
-                        originX: currentOverviewBgTransform.originX,
-                        originY: currentOverviewBgTransform.originY,
-                        scaleX: currentOverviewBgTransform.scaleX,
-                        scaleY: currentOverviewBgTransform.scaleY,
-                    } as any)
-                } else {
-                    // 若没有记录（兼容旧数据），才按画布 fit 一次
-                    fabricImg.set({
-                        left: canvasInstance.width / 2,
-                        top: canvasInstance.height / 2,
-                        originX: 'center',
-                        originY: 'center',
-                    } as any)
-                    const canvasWidth = canvasInstance.width || 400
-                    const canvasHeight = canvasInstance.height || 400
-                    const scaleX = canvasWidth / fabricImg.width
-                    const scaleY = canvasHeight / fabricImg.height
-                    const scale = Math.min(scaleX, scaleY)
-                    fabricImg.set({
-                        scaleX: scale,
-                        scaleY: scale
-                    })
-                }
-
-                slideData.objects.unshift(fabricImg.toObject())
-
-                // 更新JSON数据
-                json = JSON.stringify(slideData)
-
-                // 更新数组
-                dataTypeArray.unshift('background')
-                markerIdArray.unshift(null)
-                forceTypeArray.unshift(null)
-                dataArray.unshift(null)
-                isErasePathArray.unshift(false)
-
-                canvasInstance.add(fabricImg)
-                canvasInstance.renderAll()
-
-                // 生成包含背景的preview
-                preview = canvasInstance.toDataURL({
-                    format: 'png',
-                    multiplier: 2
-                })
-
-            } catch (error) {
-                console.error('为新slide添加背景时出错:', error)
-                // 如果出错，使用默认的空白preview
-                preview = canvasInstance.toDataURL({
-                    format: 'png',
-                    multiplier: 2
-                })
-            }
-        } else {
-            // 没有背景时，使用默认的空白preview
-            preview = canvasInstance.toDataURL({
-                format: 'png',
-                multiplier: 2
-            })
-        }
+        // 背景迁移到静态底层 canvas，thumbnail 需做背景+上层合成
+        const upperLayerPreview = canvasInstance.toDataURL({
+            format: 'png',
+            multiplier: 2
+        })
+        preview = await generateSlidePreview(
+            upperLayerPreview,
+            currentOverview.overviewId,
+            canvasInstance.width || 400,
+            canvasInstance.height || 400,
+            2,
+        )
 
         const slideId = generateSlideId()
 
@@ -530,8 +493,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
             await new Promise<void>((resolve) => {
                 canvasInstance.loadFromJSON(json, () => {
                     setTimeout(() => {
-                        // 确保背景色为白色
-                        canvasInstance.backgroundColor = '#fffef8'
+                        // 顶层 Fabric 保持透明，底层静态背景层负责显示背景
+                        canvasInstance.backgroundColor = 'rgba(0,0,0,0)'
                         canvasInstance.renderAll()
                         // 恢复自定义属性
                         restoreCustomProperties(
@@ -550,8 +513,8 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
                 })
             })
         } else {
-            // 确保空白画布也有白色背景
-            canvasInstance.backgroundColor = '#fffef8'
+            // 顶层 Fabric 保持透明
+            canvasInstance.backgroundColor = 'rgba(0,0,0,0)'
             canvasInstance.renderAll()
             stopListen.value = false
         }
@@ -695,153 +658,53 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
 
 
 
-    // 为当前总览的所有slide添加背景对象
-    async function addBackgroundToAllSlides(backgroundObject: any) {
+    // 背景变更后的统一处理：刷新当前 overview 下全部 slide 及 overview preview
+    async function handleBackgroundChange() {
         if (overviews.value.length === 0) return
         const currentOverview = overviews.value[currentOverviewIndex.value]
         if (!currentOverview || currentOverview.collageSeries.length === 0) return
 
-        stopListen.value = true
-
-        // 使用for...of循环支持await，排除当前slide
         for (let index = 0; index < currentOverview.collageSeries.length; index++) {
-            // 跳过当前slide，因为它的背景已经在画布中了
-            if (index === currentSlideIndex.value) continue
-
-            const slide = currentOverview.collageSeries[index]
             try {
-                // 解析slide的JSON数据
-                const slideData = JSON.parse(slide.json)
+                const slide = currentOverview.collageSeries[index]
+                const slideData = typeof slide.json === 'string' ? JSON.parse(slide.json) : slide.json
+                const canvas = canvasRef.value?.()
+                if (!canvas) continue
 
-                // 检查是否已经存在背景对象
-                const existingBackgroundIndex = slide.dataTypeArray.findIndex((dataType: any) =>
-                    dataType === 'background'
-                )
-                // 如果存在背景对象，替换它；如果不存在，添加到最前面（最底层）
-                if (existingBackgroundIndex !== -1) {
-                    slideData.objects[existingBackgroundIndex] = backgroundObject
-                } else {
-                    slideData.objects.unshift(backgroundObject) // 添加到最前面，确保在最底层
-                }
+                const originalWidth = canvas.width
+                const originalHeight = canvas.height
+                const tempCanvas = new Canvas(document.createElement('canvas'), {
+                    width: originalWidth,
+                    height: originalHeight
+                })
 
-                // 更新slide的JSON数据
-                currentOverview.collageSeries[index].json = JSON.stringify(slideData)
+                try {
+                    await tempCanvas.loadFromJSON(slideData)
+                    tempCanvas.renderAll()
 
-                // 更新数组，确保数据一致性
-                if (existingBackgroundIndex !== -1) {
-                    // 如果存在背景对象，更新对应位置的数组数据
-                    slide.dataTypeArray[existingBackgroundIndex] = 'background'
-                    // markerId、forceType 和 data 保持为 null，因为背景对象没有这些属性
-                    slide.markerIdArray[existingBackgroundIndex] = null
-                    slide.forceTypeArray[existingBackgroundIndex] = null
-                    slide.dataArray[existingBackgroundIndex] = null
-                    slide.isErasePathArray = slide.isErasePathArray || []
-                    slide.isErasePathArray[existingBackgroundIndex] = false
-                } else {
-                    // 如果不存在背景对象，在数组开头添加对应的数据
-                    slide.dataTypeArray.unshift('background')
-                    slide.markerIdArray.unshift(null)
-                    slide.forceTypeArray.unshift(null)
-                    slide.dataArray.unshift(null)
-                    slide.isErasePathArray = slide.isErasePathArray || []
-                    slide.isErasePathArray.unshift(false)
-                }
-
-                // 重新生成preview
-                await regenerateSlidePreview(index, slideData)
-
-            } catch (error) {
-                console.error(`更新slide ${index} 背景时出错:`, error)
-            }
-        }
-        stopListen.value = false
-    }
-
-    // 从当前总览的所有slide中移除背景对象
-    async function removeBackgroundFromAllSlides() {
-        if (overviews.value.length === 0) return
-        const currentOverview = overviews.value[currentOverviewIndex.value]
-        if (!currentOverview || currentOverview.collageSeries.length === 0) return
-
-        stopListen.value = true
-
-        // 使用for...of循环支持await，排除当前slide
-        for (let index = 0; index < currentOverview.collageSeries.length; index++) {
-            // 跳过当前slide，因为它的背景已经通过backgroundStore.clearBackground()清除了
-            if (index === currentSlideIndex.value) continue
-
-            const slide = currentOverview.collageSeries[index]
-            try {
-                // 解析slide的JSON数据
-                const slideData = JSON.parse(slide.json)
-
-                if (slideData.objects) {
-                    // 找到背景对象的索引
-                    const backgroundIndex = slide.dataTypeArray.findIndex((dataType: any) =>
-                        dataType === 'background'
+                    const upperLayerPreview = tempCanvas.toDataURL({
+                        format: 'png',
+                        multiplier: 2
+                    })
+                    const newPreview = await generateSlidePreview(
+                        upperLayerPreview,
+                        currentOverview.overviewId,
+                        originalWidth || 400,
+                        originalHeight || 400,
+                        2,
                     )
 
-                    if (backgroundIndex !== -1) {
-                        // 移除背景对象
-                        slideData.objects.splice(backgroundIndex, 1)
-
-                        // 更新slide的JSON数据
-                        currentOverview.collageSeries[index].json = JSON.stringify(slideData)
-
-                        // 从相关数组中移除对应的数据
-                        slide.dataTypeArray.splice(backgroundIndex, 1)
-                        slide.markerIdArray.splice(backgroundIndex, 1)
-                        slide.forceTypeArray.splice(backgroundIndex, 1)
-                        slide.dataArray.splice(backgroundIndex, 1)
-                        slide.isErasePathArray?.splice(backgroundIndex, 1)
-
-                        // 重新生成preview
-                        await regenerateSlidePreview(index, slideData)
-                    }
+                    currentOverview.collageSeries[index].preview = newPreview
+                } finally {
+                    tempCanvas.dispose()
                 }
-
             } catch (error) {
-                console.error(`从slide ${index} 移除背景时出错:`, error)
+                console.error(`批量重建 slide ${index} preview 时出错:`, error)
             }
         }
-        stopListen.value = false
-        generateOverviewPreview()
-    }
 
-    // 重新生成slide的preview
-    async function regenerateSlidePreview(slideIndex: number, slideData: any) {
-        try {
-            const canvas = canvasRef.value?.()
-            if (!canvas) return
-            //新建临时画布
-            // 画布大小与原fabric画布一致
-            const originalWidth = canvas.width
-            const originalHeight = canvas.height
-
-            const tempCanvas = new Canvas(document.createElement('canvas'), {
-                width: originalWidth,
-                height: originalHeight
-            })
-            //加载幻灯片数据
-            await tempCanvas.loadFromJSON(slideData)
-            //渲染画布
-            tempCanvas.renderAll()
-
-            // 生成新的preview
-            const newPreview = tempCanvas.toDataURL({
-                format: 'png',
-                multiplier: 2
-            })
-
-            // 更新slide的preview
-            collageSeries.value[slideIndex].preview = newPreview
-
-            // 清理临时画布
-            tempCanvas.dispose()
-
-        } catch (error) {
-            console.error(`重新生成slide ${slideIndex} preview时出错:`, error)
-        }
+        // 同步刷新当前 overview 的合成预览
+        await generateOverviewPreview()
     }
 
 
@@ -956,9 +819,7 @@ export const useCollageSeriesStore = defineStore('collageSeries', () => {
         handleDuplicateSlide,
         handleDeleteCollageSeries,
         restoreCustomProperties,
-        addBackgroundToAllSlides,
-        removeBackgroundFromAllSlides,
-        regenerateSlidePreview,
+        handleBackgroundChange,
         addNewOverview,
         selectOverview,
         handleDeleteOverview,

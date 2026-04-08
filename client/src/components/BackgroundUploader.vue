@@ -1,16 +1,15 @@
 <script setup lang="ts"> 
 import { storeToRefs } from 'pinia'
-import { FabricImage } from 'fabric'
 import { useBackgroundStore } from '~/stores/background'
 import { useCollageSeriesStore } from '~/stores/collageSeries'
 
 const backgroundStore = useBackgroundStore()
-const { canvasRef, creatingBackground } = storeToRefs(backgroundStore)
+const { creatingBackground } = storeToRefs(backgroundStore)
 const { getCurrentOverviewBackground, setCurrentOverviewBackground, setCurrentOverviewBackgroundTransform } = backgroundStore
 
 const collageSeriesStore = useCollageSeriesStore()
-const { overviews, currentOverviewIndex } = storeToRefs(collageSeriesStore)
-const { addBackgroundToAllSlides, removeBackgroundFromAllSlides, updateCurrentSlide } = collageSeriesStore
+const { overviews, currentOverviewIndex, canvasRef } = storeToRefs(collageSeriesStore)
+const { handleBackgroundChange } = collageSeriesStore
 
 // 计算当前总览的背景
 const currentBackground = computed(() => {
@@ -61,63 +60,40 @@ const setBackgroundImage = async (imageDataUrl: string, fileName: string) => {
   // 先清空之前的背景
   backgroundStore.clearBackground(currentOverview.overviewId)
   
-  // 设置新的背景值到当前总览
-  setCurrentOverviewBackground(currentOverview.overviewId, imageDataUrl)
-  
   try {
-    // 使用fabric.js的Promise方式加载图片
-    const fabricImg = await FabricImage.fromURL(imageDataUrl) 
-    
-    // 设置图片属性
-    fabricImg.set({
-      left: canvasInstance.width / 2,
-      top: canvasInstance.height / 2,
-      originX: 'center',
-      originY: 'center',
-      selectable: false,
-      evented: false,
-      dataType: 'background'
-    })
-    
-    // 计算合适的缩放比例，使图片完全适应画布
+    // 计算合适的缩放比例，使图片完全适应画布（用于底层静态背景 canvas）
     const canvasWidth = canvasInstance.width || 400
     const canvasHeight = canvasInstance.height || 400
-    
-    const scaleX = canvasWidth / fabricImg.width
-    const scaleY = canvasHeight / fabricImg.height
-    const scale = Math.min(scaleX, scaleY) // 使用Math.min确保图片完全适应画布，不会超出边界
-    
-    fabricImg.set({
-      scaleX: scale,
-      scaleY: scale
+    const image = new Image()
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve()
+      image.onerror = () => reject(new Error('背景图片加载失败'))
+      image.src = imageDataUrl
     })
 
-    // 将背景图片添加到画布
-    canvasInstance.add(fabricImg)
-    
-    // 将背景图片移动到最底层
-    canvasInstance.sendObjectToBack(fabricImg)
-    //保证当前幻灯片的缩略图更新
-    updateCurrentSlide()
-    // 重新渲染画布
-    canvasInstance.renderAll()
+    const scaleX = canvasWidth / image.width
+    const scaleY = canvasHeight / image.height
+    const scale = Math.min(scaleX, scaleY)
+
+    // 先写入 transform，再写入背景 URL，避免先按默认尺寸闪一下再适配
+    setCurrentOverviewBackgroundTransform(currentOverview.overviewId, {
+      left: canvasInstance.width / 2,
+      top: canvasInstance.height / 2,
+      scaleX: scale,
+      scaleY: scale,
+      originX: 'center',
+      originY: 'center',
+    })
+    setCurrentOverviewBackground(currentOverview.overviewId, imageDataUrl)
+
+    // 背景更新后，重建当前 overview 下所有 slide 缩略图
+    await handleBackgroundChange()
     creatingBackground.value = false 
 
-    // 记录当前 overview 背景的几何信息，供新 slide 复用（避免 rerun/renderResult 重新居中）
-    setCurrentOverviewBackgroundTransform(currentOverview.overviewId, {
-      left: (fabricImg.left as number) ?? canvasInstance.width / 2,
-      top: (fabricImg.top as number) ?? canvasInstance.height / 2,
-      scaleX: (fabricImg.scaleX as number) ?? scale,
-      scaleY: (fabricImg.scaleY as number) ?? scale,
-      originX: (fabricImg.originX as any) ?? 'center',
-      originY: (fabricImg.originY as any) ?? 'center',
-    })
-    
-    // 为当前总览的所有slide添加背景对象
-    await addBackgroundToAllSlides(fabricImg.toObject())
-    
   } catch (error) {
     console.error('背景图片加载失败:', error)
+  } finally {
+    creatingBackground.value = false
   }
 }
 
@@ -133,8 +109,7 @@ const clearBackground = async () => {
   if (!currentOverview) return
   
   backgroundStore.clearBackground(currentOverview.overviewId)
-  // 从当前总览的所有slide中移除背景对象
-  await removeBackgroundFromAllSlides()
+  await handleBackgroundChange()
 }
 </script>
 
