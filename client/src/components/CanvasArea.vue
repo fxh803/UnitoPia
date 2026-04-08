@@ -228,7 +228,6 @@ function updateCanvasSize() {
     canvasHeight.value = Math.max(height, 200)
     if (canvas) {
       resizeCanvasForDPR()
-      renderBackgroundLayer()
     }
   }
 }
