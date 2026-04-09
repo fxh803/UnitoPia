@@ -112,62 +112,6 @@ function adaptOverviewSnapshotToCurrentCanvas(snapshot: any) {
   return snapshot
 }
 
-// 临时迁移工具：清理旧 snapshot 中仍以 Fabric 对象形式存储的 background
-function cleanupLegacyBackgroundFromSnapshot(snapshot: any) {
-  const overviews = Array.isArray(snapshot) ? snapshot : [snapshot]
-  overviews.forEach((overview: any) => {
-    const slides = Array.isArray(overview?.collageSeries) ? overview.collageSeries : []
-    slides.forEach((slide: any) => {
-      if (!slide) return
-      try {
-        const jsonObj = typeof slide.json === 'string' ? JSON.parse(slide.json) : slide.json
-        const objects = Array.isArray(jsonObj?.objects) ? jsonObj.objects : []
-        const dataTypeArray = Array.isArray(slide.dataTypeArray) ? slide.dataTypeArray : []
-        if (objects.length === 0) return
-
-        const keepIndices: number[] = []
-        objects.forEach((obj: any, index: number) => {
-          const byArray = dataTypeArray[index] === 'background'
-          const byObject = obj?.dataType === 'background'
-          if (!byArray && !byObject) keepIndices.push(index)
-        })
-
-        // 没有旧 background 对象，不做任何改动
-        if (keepIndices.length === objects.length) return
-
-        jsonObj.objects = keepIndices.map(i => objects[i])
-        slide.dataTypeArray = keepIndices.map(i => slide.dataTypeArray?.[i])
-        slide.markerIdArray = keepIndices.map(i => slide.markerIdArray?.[i])
-        slide.forceTypeArray = keepIndices.map(i => slide.forceTypeArray?.[i])
-        slide.dataArray = keepIndices.map(i => slide.dataArray?.[i])
-        if (Array.isArray(slide.isErasePathArray))
-          slide.isErasePathArray = keepIndices.map(i => slide.isErasePathArray?.[i])
-        if (Array.isArray(slide.origOpacityArray))
-          slide.origOpacityArray = keepIndices.map(i => slide.origOpacityArray?.[i])
-
-        slide.json = JSON.stringify(jsonObj)
-      } catch (error) {
-        console.error('cleanupLegacyBackgroundFromSnapshot error', error)
-      }
-    })
-  })
-
-  return snapshot
-}
-
-// 临时迁移工具：将清理后的 snapshot 下载到本地，便于后续替换为新文件
-function downloadCleanedSnapshotToLocal(itemTitle: string) {
-  const safeTitle = (itemTitle || 'example').replace(/[^\w\-]+/g, '_')
-  const filename = `${safeTitle}-cleaned-collageSeriesSnapshot.json`
-  const payload = JSON.parse(JSON.stringify(collageSeriesStore.overviews))
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
-}
 
 async function getFitBackgroundTransform(
   imageUrl: string,
@@ -314,10 +258,8 @@ async function loadExampleToStores(item: ExampleItem) {
       const overviewRes = await fetch(item.collageSeriesSnapshotUrl)
       if (overviewRes.ok) {
         const overviewSnapshot = await overviewRes.json()
-        // const cleanedOverviewSnapshot = cleanupLegacyBackgroundFromSnapshot(overviewSnapshot)
         const adaptedOverviewSnapshot = adaptOverviewSnapshotToCurrentCanvas(overviewSnapshot)
         collageSeriesStore.loadOverviewSnapshot(adaptedOverviewSnapshot as any)
-        // downloadCleanedSnapshotToLocal(item.title)
 
         const targetOverview = collageSeriesStore.overviews[collageSeriesStore.currentOverviewIndex] ||
           collageSeriesStore.overviews[0]
@@ -421,12 +363,12 @@ onBeforeUnmount(() => {
         class="h-full flex flex-shrink-0 border-r border-[var(--border-color)]"
         :style="{ width: showMarkDetailPanel ? `${leftColumnWidth * 2}px` : `${leftColumnWidth}px` }"
       >
-        <LeftSidebar 
+        <LeftSidebar
           :style="{ width: `${leftColumnWidth}px` }"
         />
-       
+
         <MarkDetailPanel
-          v-if="showMarkDetailPanel" 
+          v-if="showMarkDetailPanel"
           :style="{ width: `${leftColumnWidth}px` }"
         />
          <!-- 中间折叠按钮组件：填满高度，控制详情面板显隐 -->
