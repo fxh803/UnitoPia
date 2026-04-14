@@ -38,6 +38,18 @@ html.dark {
   color-scheme: dark;
 }
 
+/* 隐藏普通文本区域的插入光标（Edge Caret Browsing 兜底） */
+* {
+  caret-color: transparent;
+}
+
+/* 保留可编辑控件中的插入光标 */
+input,
+textarea,
+[contenteditable="true"] {
+  caret-color: auto;
+}
+
 /* 自定义滚动条样式 */
 ::-webkit-scrollbar {
   width: 6px;

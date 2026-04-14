@@ -1,78 +1,45 @@
 <template>
   <div
-    class="h-screen w-screen flex flex-col bg-[var(--primary-light-color)] text-[var(--title-color)] dark:bg-gray-900 dark:text-gray-100"
+    class="h-screen w-screen flex flex-col bg-[#f8f7f4] text-[var(--title-color)] dark:bg-gray-900 dark:text-gray-100"
     style="font-family: var(--font-sans);"
   >
     <MainHeader />
 
-    <!-- Hero 区域：Unitopia 上下布局 -->
-    <section class="relative w-full flex-1 flex flex-col">
-      <!-- 上半部分：Unitopia 背景 -->
-      <div
-        class="relative h-3/5 w-full"
-        style="background: linear-gradient(to bottom, rgba(251, 191, 36, 0.8), rgba(246, 103, 108, 0.9));"
-      >
-        <div class="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <h1 class="text-4xl md:text-5xl font-bold tracking-wide text-white mb-4">
-            UnitoPia: Pictorial Unit Visualization Framework
-          </h1>
-          <p class="max-w-3xl text-sm md:text-base text-slate-100 leading-relaxed">
-            A pictorial unit visualization framework for one-to-one mapping between data units and visual elements.
-          </p>
-        </div>
-      </div>
-
-      <!-- 下半部分：三列卡片（Unitopia 卖点） -->
-      <div class="w-full h-2/5 flex items-center">
-        <div class="w-full max-w-6xl mx-auto flex flex-col md:flex-row gap-8 pt-8">
-          <!-- 卡片一 -->
-          <article class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-[var(--border-color)] dark:border-gray-700 p-7 md:p-8 flex flex-col">
-            <h2 class="text-base font-semibold mb-3 text-[var(--title-color)] dark:text-gray-50">
-              Unit Visualization at Data Granularity
-            </h2>
-            <p class="text-sm text-[var(--text-muted)] dark:text-gray-300 mb-5">
-              Encode every data item as an individual pictorial unit for precise, story-driven visualizations.
-            </p>
-            <button
-              class="mt-auto inline-flex items-center justify-center w-full rounded-md bg-[var(--primary-color)] text-white text-sm font-semibold py-2.5 hover:bg-[var(--primary-hover-color)] transition-colors cursor-pointer"
-              @click="$router.push('/gallery')"
+    <section class="relative w-full flex-1 overflow-hidden">
+      <div class="absolute inset-0 hero-bg" />
+      <div class="relative z-10 h-full w-full flex items-center justify-center px-8">
+        <div class="w-full max-w-6xl flex flex-col lg:flex-row items-center gap-12 lg:gap-20">
+          <div class="w-full lg:w-auto flex justify-center">
+            <div
+              class="rounded-[34px] bg-white/55 backdrop-blur-[2px] shadow-[0_16px_45px_rgba(0,0,0,0.12)] border border-white/50 p-4"
             >
-              Browse Examples
-            </button>
-          </article>
+              <img
+                src="/favicon.svg"
+                alt="UnitoPia Logo"
+                class="w-[220px] h-[160px]  object-contain"
+              >
+              <p class="text-center text-[52px] leading-none text-[#4a4a4a] unitopia-wordmark transform translate-y-[-10px]">
+                unitopia
+              </p>
+            </div>
+          </div>
 
-          <!-- 卡片二 -->
-          <article class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-[var(--border-color)] dark:border-gray-700 p-7 md:p-8 flex flex-col">
-            <h2 class="text-base font-semibold mb-3 text-[var(--title-color)] dark:text-gray-50">
-              Scalable Layout Engine & Integration
-            </h2>
-            <p class="text-sm text-[var(--text-muted)] dark:text-gray-300 mb-5">
-              Automatically arrange complex pictorial units and integrate with existing analysis workflows.
+          <div class="w-full max-w-[800px] text-center lg:text-left">
+            <h1 class="text-[44px] md:text-[58px] leading-[1.2] font-medium tracking-[0.01em] text-[#2f2d37]">
+              The Easy Creating Tool for
+              <br>
+              Pictorial Unit Visualization
+            </h1>
+            <p class="mt-5 text-base md:text-lg italic text-[#53505f]/80">
+              Pictorial Unit Visualization, Made Easy
             </p>
             <button
-              class="mt-auto inline-flex items-center justify-center w-full rounded-md bg-[var(--primary-color)] text-white text-sm font-semibold py-2.5 hover:bg-[var(--primary-hover-color)] transition-colors cursor-pointer"
-            >
-              Get Started
-            </button>
-          </article>
-
-          <!-- 卡片三 -->
-          <article
-            class="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-[var(--border-color)] dark:border-gray-700 p-7 md:p-8 flex flex-col"
-          >
-            <h2 class="text-base font-semibold mb-3 text-[var(--title-color)] dark:text-gray-50">
-              Visual Editor
-            </h2>
-            <p class="text-sm text-[var(--text-muted)] dark:text-gray-300 mb-5">
-              Design unit visualizations interactively with marks, containers, emitters, and forces.
-            </p>
-            <button
-              class="mt-auto inline-flex items-center justify-center w-full rounded-md bg-[var(--primary-color)] text-white text-sm font-semibold py-2.5 hover:bg-[var(--primary-hover-color)] transition-colors cursor-pointer"
+              class="mt-8 inline-flex items-center rounded-lg bg-[#f6d767] px-6 py-2.5 text-base font-semibold text-[#5c4314] shadow-[0_6px_16px_rgba(246,215,103,0.5)] hover:bg-[#efca4b] transition-colors cursor-pointer"
               @click.stop="goEditorFresh"
             >
-              Try Online
+              Try Online >>
             </button>
-          </article>
+          </div>
         </div>
       </div>
     </section>
@@ -94,5 +61,19 @@ const goEditorFresh = () => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Kirang+Haerang&display=swap');
+
+.hero-bg {
+  background:
+    radial-gradient(circle at 60% 48%, rgba(249, 82, 91, 0.5) 0%, rgba(249, 82, 91, 0.16) 26%, transparent 46%),
+    radial-gradient(circle at 21% 42%, rgba(170, 232, 189, 0.72) 0%, transparent 36%),
+    radial-gradient(circle at 86% 32%, rgba(205, 233, 242, 0.64) 0%, transparent 35%),
+    radial-gradient(circle at 77% 80%, rgba(249, 196, 196, 0.5) 0%, transparent 42%),
+    #f7f5f1;
+}
+
+.unitopia-wordmark {
+  font-family: 'Kirang Haerang', 'Comic Sans MS', cursive;
+}
 </style>
 
