@@ -22,25 +22,21 @@ flowchart LR
   subgraph client [client 前端]
     Pages["pages/*.vue"]
     Stores["stores/*.ts"]
-    Editor["editor + components"]
+    Components["components/*.vue"]
     ServerTs["composables/server.ts"]
     Pages --> Stores
-    Editor --> Stores
+    Components --> Stores
     Stores --> ServerTs
   end
   subgraph server [server 后端]
-    Flask["Flask server.py"]
-    Workdir["workdir/ 任务目录"]
-    Lib["unitopia.Unitopia"]
-    Flask --> Workdir
+    Flask["Flask server.py"] 
+    Lib["unitopia.Unitopia"] 
     Flask --> Lib
   end
   subgraph external [外部依赖]
-    SegAPI["分割 HTTP 服务"]
-    UnitopiaLib["unitopia 运行库"]
+    SegAPI["分割 HTTP 服务"] 
   end
-  ServerTs -->|REST| Flask
-  Flask --> UnitopiaLib
+  ServerTs -->|REST| Flask 
   Flask -->|转发 segmentAll/segmentPoint| SegAPI
 ```
 
