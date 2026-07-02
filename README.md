@@ -54,9 +54,9 @@ flowchart LR
 
 ### 技术栈
 
-- Vue 3、Vite、TypeScript、Pinia、Vue Router（`unplugin-vue-router` 文件式路由）
+- Vue 3、Vite、TypeScript、Pinia、Vue Router
 - 画布：**Fabric.js**；部分能力：**Paper.js**
-- UI：Element Plus、UnoCSS、vxe-table 等（详见 `client/package.json`）
+- UI：Element Plus、UnoCSS、vxe-table
 
 ### 目录要点
 
@@ -89,8 +89,7 @@ pnpm dev
 ### 技术栈
 
 - Flask
-- **`from unitopia import Unitopia`**：拼贴核心由独立包 **unitopia-lib** 提供（需自行安装到当前 Python 环境）
-- Dataset 页数据：`openpyxl` 读取 `server/data/images.xlsx`
+- **unitopia-lib** 核心运行库（需提前安装，详见 [unitopia-lib](https://github.com/fxh803/unitopia-lib) 仓库内 `README.md` 与 `collage_config_zh.md`） 
 
 ### HTTP 接口一览（与前端调用对应）
 
@@ -122,10 +121,6 @@ python server.py
 
 - 任务输出与中间文件位于 **`server/workdir/`**（若不存在会在处理时创建）。
 - 同一时刻 **`processDataApi`** 通过全局标志避免并发重入（忙时返回 503）。
-
-### DSL 与运行库说明
-
-见 [unitopia-lib](https://github.com/fxh803/unitopia-lib) 仓库内 `README.md` 与 `collage_config_zh.md`。
 
 ---
 
